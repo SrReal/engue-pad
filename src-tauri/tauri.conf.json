@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "enguepad-scaffold",
+  "productName": "EnguePad",
   "version": "0.1.0",
-  "identifier": "com.ruben.enguepad-scaffold",
+  "identifier": "com.srreal.enguepad",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -10,13 +10,7 @@
     "frontendDist": "../build"
   },
   "app": {
-    "windows": [
-      {
-        "title": "enguepad-scaffold",
-        "width": 800,
-        "height": 600
-      }
-    ],
+    "windows": [],
     "security": {
       "csp": null
     }
