@@ -25,11 +25,11 @@ Objetivo: abrir un proyecto, navegar archivos, editar con pestañas y persistir 
 
 ### 1.3 Árbol de archivos
 
-- [ ] Comando Tauri para listar directorios con filtros de ignore (`.git`, `node_modules`).
-- [ ] Componente Svelte de árbol de archivos con carga lazy por nivel.
-- [ ] Soporte de expandir/contraer carpetas.
-- [ ] Click para abrir archivo en pestaña.
-- [ ] Menú contextual básico: abrir, copiar ruta.
+- [x] Comando Tauri para listar directorios con filtros de ignore (`.git`, `node_modules`).
+- [x] Componente Svelte de árbol de archivos con carga lazy por nivel.
+- [x] Soporte de expandir/contraer carpetas.
+- [x] Click para abrir archivo en pestaña.
+- [x] Menú contextual básico: abrir, copiar ruta.
 - [ ] Watcher de cambios en filesystem (crear/eliminar/renombrar) y refresco selectivo.
 
 ### 1.4 Editor de archivos
