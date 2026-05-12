@@ -13,7 +13,7 @@
   import { lineNumbers, highlightActiveLineGutter } from "@codemirror/view";
   import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
   import { bracketMatching, syntaxHighlighting, defaultHighlightStyle, foldGutter, foldKeymap } from "@codemirror/language";
-  import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
+  import { highlightSelectionMatches, searchKeymap, search } from "@codemirror/search";
   import { updateTabContent, markTabSaved, setTabLineEnding } from "$lib/layout/store.svelte";
 
   let { nodeId, tabId, path, language, initialContent = "" }: {
@@ -113,6 +113,7 @@
       highlightActiveLineGutter(),
       history(),
       keymap.of([...defaultKeymap, ...historyKeymap, ...foldKeymap, ...searchKeymap]),
+      search({ top: true }),
       bracketMatching(),
       foldGutter(),
       highlightSelectionMatches(),
