@@ -77,17 +77,17 @@ Objetivo: terminales integradas con PTY y preview web dentro del layout.
 
 ### 2.1 Backend de terminal (Rust)
 
-- [ ] Investigar e integrar crate de PTY compatible con Windows (ConPTY) y Unix.
-- [ ] Comando Tauri para crear proceso de shell (PowerShell / bash / zsh).
-- [ ] Pipe bidireccional: stdin del proceso desde frontend, stdout/stderr hacia frontend.
-- [ ] Manejo de procesos: crear, matar, verificar estado.
+- [x] Investigar e integrar crate de PTY compatible con Windows (ConPTY) y Unix.
+- [x] Comando Tauri para crear proceso de shell (PowerShell / bash / zsh).
+- [x] Pipe bidireccional: stdin del proceso desde frontend, stdout/stderr hacia frontend.
+- [x] Manejo de procesos: crear, matar, verificar estado.
 
 ### 2.2 Terminal en frontend
 
-- [ ] Integrar xterm.js en componente Svelte.
-- [ ] Conectar xterm.js con backend PTY vía Tauri events/commands.
-- [ ] Soporte de múltiples terminales en pestañas.
-- [ ] Soporte de splits verticales/horizontales con terminales.
+- [x] Integrar xterm.js en componente Svelte.
+- [x] Conectar xterm.js con backend PTY vía Tauri events/commands.
+- [x] Soporte de múltiples terminales en pestañas.
+- [x] Soporte de splits verticales/horizontales con terminales.
 - [ ] Renombrar terminal.
 - [ ] Guardar y restaurar terminales en workspace (id, título, shell, cwd, restore).
 
