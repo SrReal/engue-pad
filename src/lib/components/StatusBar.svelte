@@ -20,6 +20,7 @@
   <span class="info path">{activeTab?.path ?? ""}</span>
   <span class="info">{activeTab?.lineEnding ?? "LF"}</span>
   <span class="info">UTF-8</span>
+  <span class="info">{activeTab?.language ?? ""}</span>
 </div>
 
 <style>

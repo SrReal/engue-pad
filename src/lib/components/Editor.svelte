@@ -12,7 +12,7 @@
   import { python } from "@codemirror/lang-python";
   import { lineNumbers, highlightActiveLineGutter } from "@codemirror/view";
   import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
-  import { bracketMatching, syntaxHighlighting, defaultHighlightStyle } from "@codemirror/language";
+  import { bracketMatching, syntaxHighlighting, defaultHighlightStyle, foldGutter, foldKeymap } from "@codemirror/language";
   import { updateTabContent, markTabSaved, setTabLineEnding } from "$lib/layout/store.svelte";
 
   let { nodeId, tabId, path, language, initialContent = "" }: {
@@ -111,8 +111,9 @@
       lineNumbers(),
       highlightActiveLineGutter(),
       history(),
-      keymap.of([...defaultKeymap, ...historyKeymap]),
+      keymap.of([...defaultKeymap, ...historyKeymap, ...foldKeymap]),
       bracketMatching(),
+      foldGutter(),
       syntaxHighlighting(defaultHighlightStyle),
       saveKeymap,
       updateListener,
