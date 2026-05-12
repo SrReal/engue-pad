@@ -45,16 +45,16 @@ Objetivo: abrir un proyecto, navegar archivos, editar con pestañas y persistir 
 
 ### 1.5 Workspace básico
 
-- [ ] Crear `.enguepad/` al abrir carpeta por primera vez.
-- [ ] Generar `workspaceId` (UUID) y guardar en `workspace.json`.
-- [ ] Persistir pestañas abiertas (rutas relativas, archivo activo).
-- [ ] Persistir layout básico (splits, tamaños).
-- [ ] Restaurar pestañas y layout al reabrir proyecto.
-- [ ] Comando Tauri para abrir carpeta de proyecto (`dialog::open`).
+- [x] Crear `.enguepad/` al abrir carpeta por primera vez.
+- [x] Generar `workspaceId` (UUID) y guardar en `workspace.json`.
+- [x] Persistir pestañas abiertas (rutas relativas, archivo activo).
+- [x] Persistir layout básico (splits, tamaños).
+- [x] Restaurar pestañas y layout al reabrir proyecto.
+- [x] Comando Tauri para abrir carpeta de proyecto (`dialog::open`).
 
 ### 1.6 Status bar
 
-- [ ] Barra de estado inferior con información básica: ruta del archivo activo, encoding, fin de línea.
+- [x] Barra de estado inferior con información básica: ruta del archivo activo, encoding, fin de línea.
 
 ### Criterios de aceptación (test manual)
 
