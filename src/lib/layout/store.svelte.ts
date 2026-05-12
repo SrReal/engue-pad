@@ -163,6 +163,22 @@ export function closeTab(nodeId: string, tabId: string): void {
   layoutState.root = updateTree(layoutState.root);
 }
 
+export function moveTab(nodeId: string, fromIndex: number, toIndex: number): void {
+  function updateTree(node: LayoutNode): LayoutNode {
+    if (node.kind === "tab-group" && node.id === nodeId) {
+      const tabs = [...node.tabs];
+      const [moved] = tabs.splice(fromIndex, 1);
+      tabs.splice(toIndex, 0, moved);
+      return { ...node, tabs };
+    }
+    if (node.kind === "split") {
+      return { ...node, first: updateTree(node.first), second: updateTree(node.second) };
+    }
+    return node;
+  }
+  layoutState.root = updateTree(layoutState.root);
+}
+
 export function setActiveTab(nodeId: string, tabId: string): void {
   function updateTree(node: LayoutNode): LayoutNode {
     if (node.kind === "tab-group" && node.id === nodeId) {

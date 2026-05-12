@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { TabGroup, Tab } from "$lib/layout/types";
-  import { layoutState, closeTab, setActiveTab, setActiveNode, splitNode, pinTab, addTerminal, removeNode } from "$lib/layout/store.svelte";
+  import { layoutState, closeTab, setActiveTab, setActiveNode, splitNode, pinTab, addTerminal, removeNode, moveTab } from "$lib/layout/store.svelte";
   import Editor from "./Editor.svelte";
   import MarkdownViewer from "./MarkdownViewer.svelte";
   import Terminal from "./Terminal.svelte";
@@ -10,6 +10,36 @@
   let tabContextMenu = $state<{ x: number; y: number; tabId: string } | null>(null);
   let panelContextMenu = $state<{ x: number; y: number } | null>(null);
   let terminalRef = $state<Terminal | null>(null);
+  let dragOverIndex = $state<number | null>(null);
+
+  function getTabIndex(tabId: string): number {
+    return node.tabs.findIndex((t) => t.id === tabId);
+  }
+
+  function handleDragStart(e: DragEvent, tabId: string) {
+    e.dataTransfer?.setData("text/plain", tabId);
+    e.dataTransfer!.effectAllowed = "move";
+  }
+
+  function handleDragOver(e: DragEvent, index: number) {
+    e.preventDefault();
+    e.dataTransfer!.dropEffect = "move";
+    dragOverIndex = index;
+  }
+
+  function handleDragLeave() {
+    dragOverIndex = null;
+  }
+
+  function handleDrop(e: DragEvent, targetIndex: number) {
+    e.preventDefault();
+    const tabId = e.dataTransfer?.getData("text/plain");
+    if (!tabId) return;
+    const fromIndex = getTabIndex(tabId);
+    if (fromIndex === -1 || fromIndex === targetIndex) return;
+    moveTab(node.id, fromIndex, targetIndex);
+    dragOverIndex = null;
+  }
 
   $effect(() => {
     const activeTab = node.tabs.find((t) => t.id === node.activeTabId);
@@ -76,11 +106,18 @@
 
 <div class="tab-panel" class:active={isActive} onclick={handlePanelClick} onkeydown={(e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handlePanelClick(); } }} role="tabpanel" tabindex="0">
   <div class="tab-bar" oncontextmenu={handlePanelContextMenu} role="toolbar" aria-label="Tabs" tabindex="0">
-    {#each node.tabs as tab (tab.id)}
+    {#each node.tabs as tab, index (tab.id)}
       <div
         class="tab"
         class:active={node.activeTabId === tab.id}
         class:preview={tab.preview}
+        class:drag-over-left={dragOverIndex === index}
+        class:drag-over-right={dragOverIndex !== null && dragOverIndex === index + 1 && index === node.tabs.length - 1}
+        draggable="true"
+        ondragstart={(e) => handleDragStart(e, tab.id)}
+        ondragover={(e) => handleDragOver(e, index)}
+        ondragleave={handleDragLeave}
+        ondrop={(e) => handleDrop(e, index)}
         onclick={() => handleActivate(tab.id)}
         oncontextmenu={(e) => handleTabContextMenu(e, tab.id)}
         onkeydown={(e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleActivate(tab.id); } }}
@@ -93,7 +130,7 @@
         <button class="tab-close" onclick={(e) => handleClose(tab.id, e)} type="button" aria-label="Close tab">×</button>
       </div>
     {/each}
-    <button class="tab-add" onclick={() => addTerminal(node.id)} title="New terminal" type="button">+</button>
+    <button class="tab-add" onclick={() => addTerminal(node.id)} title="New terminal" type="button"><span class="term-icon">&gt;_</span></button>
   </div>
   <div class="tab-content">
     {#if node.activeTabId}
@@ -129,7 +166,6 @@
     {:else}
       <div class="content-placeholder empty">
         <div class="empty-actions">
-          <button class="action-btn" onclick={() => addTerminal(node.id)}>Open Terminal</button>
           <span class="hint">Click a file in the sidebar to open</span>
         </div>
       </div>
@@ -240,6 +276,20 @@
     background: var(--bg-tab-hover, #3d3d3d);
   }
 
+  .term-icon {
+    font-family: monospace;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .drag-over-left {
+    border-left: 2px solid var(--accent-color, #4a9eff);
+  }
+
+  .drag-over-right {
+    border-right: 2px solid var(--accent-color, #4a9eff);
+  }
+
   .tab-content {
     flex: 1;
     overflow: hidden;
@@ -259,22 +309,6 @@
     flex-direction: column;
     align-items: center;
     gap: 12px;
-  }
-
-  .action-btn {
-    background: var(--bg-tab-hover, #3d3d3d);
-    border: 1px solid var(--border-color, #333);
-    color: var(--text-color, #ccc);
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 13px;
-  }
-
-  .action-btn:hover {
-    background: var(--accent-color, #4a9eff);
-    border-color: var(--accent-color, #4a9eff);
-    color: white;
   }
 
   .hint {
