@@ -11,14 +11,20 @@
   let panelContextMenu = $state<{ x: number; y: number } | null>(null);
   let terminalRef = $state<Terminal | null>(null);
   let dragOverIndex = $state<number | null>(null);
+  let draggedTabId = $state<string | null>(null);
 
   function getTabIndex(tabId: string): number {
     return node.tabs.findIndex((t) => t.id === tabId);
   }
 
   function handleDragStart(e: DragEvent, tabId: string) {
-    e.dataTransfer?.setData("text/plain", tabId);
+    draggedTabId = tabId;
     e.dataTransfer!.effectAllowed = "move";
+  }
+
+  function handleDragEnd() {
+    draggedTabId = null;
+    dragOverIndex = null;
   }
 
   function handleDragOver(e: DragEvent, index: number) {
@@ -34,7 +40,8 @@
 
   function handleDrop(e: DragEvent, targetIndex: number) {
     e.preventDefault();
-    const tabId = e.dataTransfer?.getData("text/plain");
+    const tabId = draggedTabId;
+    draggedTabId = null;
     if (!tabId) return;
     const fromIndex = getTabIndex(tabId);
     if (fromIndex === -1) return;
@@ -120,6 +127,7 @@
         class:drop-after={dragOverIndex === index + 1}
         draggable="true"
         ondragstart={(e) => handleDragStart(e, tab.id)}
+        ondragend={handleDragEnd}
         ondragover={(e) => handleDragOver(e, index)}
         ondragleave={handleDragLeave}
         ondrop={(e) => handleDrop(e, index)}
@@ -132,7 +140,7 @@
         <span class="tab-title">
           {tab.title}{#if tab.dirty}●{/if}
         </span>
-        <button class="tab-close" onclick={(e) => handleClose(tab.id, e)} type="button" aria-label="Close tab">×</button>
+        <button class="tab-close" onclick={(e) => handleClose(tab.id, e)} type="button" aria-label="Close tab" draggable="false">×</button>
       </div>
     {/each}
     <button class="tab-add" onclick={() => addTerminal(node.id)} title="New terminal" type="button"><span class="term-icon">&gt;_</span></button>
