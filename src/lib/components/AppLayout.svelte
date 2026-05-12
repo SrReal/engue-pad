@@ -1,6 +1,8 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { layoutState, splitNode } from "$lib/layout/store.svelte";
   import { workspaceInfo, loadWorkspace, scheduleSaveWorkspace } from "$lib/workspace/store.svelte";
+  import { loadSettings, saveSettings } from "$lib/workspace/settings";
   import LayoutNode from "./LayoutNode.svelte";
   import FileTree from "./FileTree.svelte";
   import StatusBar from "./StatusBar.svelte";
@@ -8,6 +10,13 @@
 
   let sidebarWidth = $state(240);
   let isResizingSidebar = $state(false);
+
+  onMount(async () => {
+    const settings = await loadSettings();
+    if (settings.lastProjectPath) {
+      workspaceInfo.rootPath = settings.lastProjectPath;
+    }
+  });
 
   $effect(() => {
     const root = workspaceInfo.rootPath;
@@ -52,6 +61,7 @@
     const selected = await open({ directory: true });
     if (selected && typeof selected === "string") {
       workspaceInfo.rootPath = selected;
+      await saveSettings({ lastProjectPath: selected });
     }
   }
 </script>

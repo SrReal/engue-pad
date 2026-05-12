@@ -1,13 +1,13 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
+use tauri::{AppHandle, Manager, WebviewUrl};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FileContent {
     content: String,
     line_ending: String,
 }
-use tauri::{AppHandle, WebviewUrl};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FileEntry {
@@ -95,6 +95,15 @@ fn write_file(path: String, contents: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn get_app_data_dir(app_handle: AppHandle) -> Result<String, String> {
+    app_handle
+        .path()
+        .app_data_dir()
+        .map(|p| p.to_string_lossy().to_string())
+        .map_err(|e| format!("Failed to get app data dir: {}", e))
+}
+
+#[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
@@ -129,7 +138,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
-        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, write_file, ensure_dir, read_file_meta])
+        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, write_file, ensure_dir, read_file_meta, get_app_data_dir])
         .setup(|app| {
             create_main_window(&app.handle().clone());
             Ok(())
