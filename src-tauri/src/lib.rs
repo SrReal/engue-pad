@@ -63,6 +63,16 @@ fn list_directory(path: String) -> Result<DirListResult, String> {
 }
 
 #[tauri::command]
+fn read_file(path: String) -> Result<String, String> {
+    fs::read_to_string(&path).map_err(|e| format!("Failed to read file: {}", e))
+}
+
+#[tauri::command]
+fn write_file(path: String, contents: String) -> Result<(), String> {
+    fs::write(&path, contents).map_err(|e| format!("Failed to write file: {}", e))
+}
+
+#[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
@@ -96,7 +106,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![greet, list_directory])
+        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, write_file])
         .setup(|app| {
             create_main_window(&app.handle().clone());
             Ok(())

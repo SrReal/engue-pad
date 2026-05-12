@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { TabGroup, Tab } from "$lib/layout/types";
   import { layoutState, closeTab, setActiveTab, setActiveNode } from "$lib/layout/store.svelte";
+  import Editor from "./Editor.svelte";
 
   let { node }: { node: TabGroup } = $props();
   let isActive = $derived(layoutState.activeNodeId === node.id);
@@ -31,7 +32,9 @@
         role="tab"
         tabindex="0"
       >
-        <span class="tab-title">{tab.title}</span>
+        <span class="tab-title">
+          {tab.title}{#if tab.dirty}●{/if}
+        </span>
         <button class="tab-close" onclick={(e) => handleClose(tab.id, e)} type="button" aria-label="Close tab">×</button>
       </div>
     {/each}
@@ -40,13 +43,19 @@
     {#if node.activeTabId}
       {@const activeTab = node.tabs.find((t) => t.id === node.activeTabId)}
       {#if activeTab}
-        <div class="content-placeholder">
-          {#if activeTab.path}
-            <span class="file-path">{activeTab.path}</span>
-          {:else}
+        {#if activeTab.path}
+          <Editor
+            nodeId={node.id}
+            tabId={activeTab.id}
+            path={activeTab.path}
+            language={activeTab.language}
+            initialContent={activeTab.content ?? ""}
+          />
+        {:else}
+          <div class="content-placeholder">
             <span>{activeTab.title}</span>
-          {/if}
-        </div>
+          </div>
+        {/if}
       {/if}
     {:else}
       <div class="content-placeholder empty">No tabs open</div>
@@ -122,7 +131,7 @@
 
   .tab-content {
     flex: 1;
-    overflow: auto;
+    overflow: hidden;
   }
 
   .content-placeholder {
@@ -132,11 +141,5 @@
     height: 100%;
     color: var(--text-muted, #888);
     font-size: 14px;
-  }
-
-  .file-path {
-    font-family: monospace;
-    font-size: 12px;
-    color: var(--text-muted, #888);
   }
 </style>

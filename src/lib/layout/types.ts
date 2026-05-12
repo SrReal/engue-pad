@@ -2,6 +2,9 @@ export type Tab = {
   id: string;
   title: string;
   path?: string;
+  content?: string;
+  dirty?: boolean;
+  language?: string;
 };
 
 export type TabGroup = {

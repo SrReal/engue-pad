@@ -70,9 +70,12 @@ export function addTab(nodeId: string, tab: Tab): void {
       if (exists) {
         return { ...node, activeTabId: tab.id };
       }
+      const enrichedTab = tab.path
+        ? { ...tab, language: detectLanguage(tab.path), dirty: false }
+        : tab;
       return {
         ...node,
-        tabs: [...node.tabs, tab],
+        tabs: [...node.tabs, enrichedTab],
         activeTabId: tab.id,
       };
     }
@@ -113,4 +116,71 @@ export function setActiveTab(nodeId: string, tabId: string): void {
     return node;
   }
   layoutState.root = updateTree(layoutState.root);
+}
+
+export function updateTabContent(nodeId: string, tabId: string, content: string): void {
+  function updateTree(node: LayoutNode): LayoutNode {
+    if (node.kind === "tab-group" && node.id === nodeId) {
+      const tabs = node.tabs.map((t) =>
+        t.id === tabId ? { ...t, content, dirty: true } : t
+      );
+      return { ...node, tabs };
+    }
+    if (node.kind === "split") {
+      return { ...node, first: updateTree(node.first), second: updateTree(node.second) };
+    }
+    return node;
+  }
+  layoutState.root = updateTree(layoutState.root);
+}
+
+export function markTabSaved(nodeId: string, tabId: string): void {
+  function updateTree(node: LayoutNode): LayoutNode {
+    if (node.kind === "tab-group" && node.id === nodeId) {
+      const tabs = node.tabs.map((t) =>
+        t.id === tabId ? { ...t, dirty: false } : t
+      );
+      return { ...node, tabs };
+    }
+    if (node.kind === "split") {
+      return { ...node, first: updateTree(node.first), second: updateTree(node.second) };
+    }
+    return node;
+  }
+  layoutState.root = updateTree(layoutState.root);
+}
+
+export function detectLanguage(path: string): string {
+  const ext = path.split(".").pop()?.toLowerCase() ?? "";
+  const map: Record<string, string> = {
+    js: "javascript",
+    ts: "typescript",
+    jsx: "javascript",
+    tsx: "typescript",
+    json: "json",
+    html: "html",
+    htm: "html",
+    css: "css",
+    scss: "css",
+    sass: "css",
+    md: "markdown",
+    markdown: "markdown",
+    py: "python",
+    rs: "rust",
+    go: "go",
+    java: "java",
+    c: "c",
+    cpp: "cpp",
+    h: "c",
+    hpp: "cpp",
+    xml: "xml",
+    yaml: "yaml",
+    yml: "yaml",
+    sql: "sql",
+    sh: "shell",
+    bash: "shell",
+    zsh: "shell",
+    dockerfile: "dockerfile",
+  };
+  return map[ext] ?? "plaintext";
 }
