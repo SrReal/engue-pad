@@ -30,7 +30,7 @@ Objetivo: abrir un proyecto, navegar archivos, editar con pestañas y persistir 
 - [x] Soporte de expandir/contraer carpetas.
 - [x] Click para abrir archivo en pestaña.
 - [x] Menú contextual básico: abrir, copiar ruta.
-- [ ] Watcher de cambios en filesystem (crear/eliminar/renombrar) y refresco selectivo.
+- [x] Watcher de cambios en filesystem (crear/eliminar/renombrar) y refresco selectivo.
 
 ### 1.4 Editor de archivos
 
@@ -39,7 +39,7 @@ Objetivo: abrir un proyecto, navegar archivos, editar con pestañas y persistir 
 - [x] Abrir archivo desde árbol en pestaña del editor.
 - [x] Guardar archivo (`Ctrl+S`) con comando Tauri de escritura.
 - [x] Indicador de cambios sin guardar (dot en pestaña).
-- [ ] Búsqueda y reemplazo en archivo.
+- [x] Búsqueda y reemplazo en archivo.
 - [x] Números de línea y detección básica de fin de línea.
 - [x] Soporte de múltiples pestañas de editor.
 
