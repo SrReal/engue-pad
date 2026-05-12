@@ -24,7 +24,8 @@
   function handleDragOver(e: DragEvent, index: number) {
     e.preventDefault();
     e.dataTransfer!.dropEffect = "move";
-    dragOverIndex = index;
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    dragOverIndex = e.clientX > rect.left + rect.width / 2 ? index + 1 : index;
   }
 
   function handleDragLeave() {
@@ -36,8 +37,12 @@
     const tabId = e.dataTransfer?.getData("text/plain");
     if (!tabId) return;
     const fromIndex = getTabIndex(tabId);
-    if (fromIndex === -1 || fromIndex === targetIndex) return;
-    moveTab(node.id, fromIndex, targetIndex);
+    if (fromIndex === -1) return;
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const isAfter = e.clientX > rect.left + rect.width / 2;
+    const insertIndex = isAfter ? targetIndex + 1 : targetIndex;
+    if (fromIndex === insertIndex || fromIndex + 1 === insertIndex) return;
+    moveTab(node.id, fromIndex, insertIndex);
     dragOverIndex = null;
   }
 
@@ -111,8 +116,8 @@
         class="tab"
         class:active={node.activeTabId === tab.id}
         class:preview={tab.preview}
-        class:drag-over-left={dragOverIndex === index}
-        class:drag-over-right={dragOverIndex !== null && dragOverIndex === index + 1 && index === node.tabs.length - 1}
+        class:drop-before={dragOverIndex === index}
+        class:drop-after={dragOverIndex === index + 1}
         draggable="true"
         ondragstart={(e) => handleDragStart(e, tab.id)}
         ondragover={(e) => handleDragOver(e, index)}
@@ -282,11 +287,11 @@
     font-size: 14px;
   }
 
-  .drag-over-left {
+  .drop-before {
     border-left: 2px solid var(--accent-color, #4a9eff);
   }
 
-  .drag-over-right {
+  .drop-after {
     border-right: 2px solid var(--accent-color, #4a9eff);
   }
 

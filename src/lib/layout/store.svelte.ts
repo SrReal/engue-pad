@@ -166,9 +166,11 @@ export function closeTab(nodeId: string, tabId: string): void {
 export function moveTab(nodeId: string, fromIndex: number, toIndex: number): void {
   function updateTree(node: LayoutNode): LayoutNode {
     if (node.kind === "tab-group" && node.id === nodeId) {
+      if (fromIndex === toIndex) return node;
       const tabs = [...node.tabs];
       const [moved] = tabs.splice(fromIndex, 1);
-      tabs.splice(toIndex, 0, moved);
+      const adjusted = toIndex > fromIndex ? toIndex - 1 : toIndex;
+      tabs.splice(adjusted, 0, moved);
       return { ...node, tabs };
     }
     if (node.kind === "split") {
