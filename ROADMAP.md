@@ -10,10 +10,10 @@ Objetivo: abrir un proyecto, navegar archivos, editar con pestañas y persistir 
 
 ### 1.1 Scaffolding y configuración del proyecto
 
-- [ ] Inicializar proyecto Tauri v2 con plantilla Svelte 5 + TypeScript.
-- [ ] Configurar `vite.config.ts`, `tsconfig.json` y estructura de carpetas (`src/`, `src-tauri/`).
-- [ ] Configurar Rust toolchain (fmt, clippy) y frontend lint (ESLint + Prettier).
-- [ ] Crear script de desarrollo (`npm run tauri dev`) y build (`npm run tauri build`).
+- [x] Inicializar proyecto Tauri v2 con plantilla Svelte 5 + TypeScript.
+- [x] Configurar `vite.config.ts`, `tsconfig.json` y estructura de carpetas (`src/`, `src-tauri/`).
+- [x] Configurar Rust toolchain (fmt, clippy) y frontend lint (ESLint + Prettier).
+- [x] Crear script de desarrollo (`npm run tauri dev`) y build (`npm run tauri build`).
 
 ### 1.2 Ventana principal y layout base
 
