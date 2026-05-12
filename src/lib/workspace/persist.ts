@@ -1,0 +1,107 @@
+import type { LayoutNode, Split, TabGroup, Tab } from "$lib/layout/types";
+import { detectLanguage } from "$lib/layout/store.svelte";
+
+export type PersistedTab = {
+  id: string;
+  title: string;
+  path?: string;
+  preview?: boolean;
+};
+
+export type PersistedTabGroup = {
+  kind: "tab-group";
+  id: string;
+  tabs: PersistedTab[];
+  activeTabId: string | null;
+};
+
+export type PersistedSplit = {
+  kind: "split";
+  id: string;
+  direction: "horizontal" | "vertical";
+  ratio: number;
+  first: PersistedNode;
+  second: PersistedNode;
+};
+
+export type PersistedNode = PersistedSplit | PersistedTabGroup;
+
+export type WorkspaceData = {
+  workspaceId: string;
+  version: number;
+  layout: {
+    root: PersistedNode;
+    activeNodeId: string | null;
+  };
+};
+
+function toRelative(path: string, rootPath: string): string {
+  if (!path) return path;
+  const normalizedPath = path.replace(/\\/g, "/");
+  const normalizedRoot = rootPath.replace(/\\/g, "/");
+  if (normalizedPath.startsWith(normalizedRoot)) {
+    const rel = normalizedPath.slice(normalizedRoot.length);
+    return rel.startsWith("/") ? rel.slice(1) : rel;
+  }
+  return path;
+}
+
+function toAbsolute(relPath: string, rootPath: string): string {
+  if (!relPath) return relPath;
+  if (relPath.startsWith("/") || /^[a-zA-Z]:/.test(relPath)) {
+    return relPath;
+  }
+  const normalizedRoot = rootPath.replace(/\\/g, "/");
+  const sep = normalizedRoot.endsWith("/") ? "" : "/";
+  return `${normalizedRoot}${sep}${relPath}`;
+}
+
+export function serializeNode(node: LayoutNode, rootPath: string): PersistedNode {
+  if (node.kind === "tab-group") {
+    return {
+      kind: "tab-group",
+      id: node.id,
+      activeTabId: node.activeTabId,
+      tabs: node.tabs.map((t) => ({
+        id: t.id,
+        title: t.title,
+        path: t.path ? toRelative(t.path, rootPath) : undefined,
+        preview: t.preview,
+      })),
+    };
+  }
+  return {
+    kind: "split",
+    id: node.id,
+    direction: node.direction,
+    ratio: node.ratio,
+    first: serializeNode(node.first, rootPath),
+    second: serializeNode(node.second, rootPath),
+  };
+}
+
+export function deserializeNode(node: PersistedNode, rootPath: string): LayoutNode {
+  if (node.kind === "tab-group") {
+    return {
+      kind: "tab-group",
+      id: node.id,
+      activeTabId: node.activeTabId,
+      tabs: node.tabs.map((t) => ({
+        id: t.id,
+        title: t.title,
+        path: t.path ? toAbsolute(t.path, rootPath) : undefined,
+        language: t.path ? detectLanguage(t.path) : undefined,
+        dirty: false,
+        preview: t.preview,
+      })),
+    };
+  }
+  return {
+    kind: "split",
+    id: node.id,
+    direction: node.direction,
+    ratio: node.ratio,
+    first: deserializeNode(node.first, rootPath),
+    second: deserializeNode(node.second, rootPath),
+  };
+}

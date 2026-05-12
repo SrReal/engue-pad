@@ -63,6 +63,11 @@ fn list_directory(path: String) -> Result<DirListResult, String> {
 }
 
 #[tauri::command]
+fn ensure_dir(path: String) -> Result<(), String> {
+    fs::create_dir_all(&path).map_err(|e| format!("Failed to create directory: {}", e))
+}
+
+#[tauri::command]
 fn read_file(path: String) -> Result<String, String> {
     fs::read_to_string(&path).map_err(|e| format!("Failed to read file: {}", e))
 }
@@ -106,7 +111,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, write_file])
+        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, write_file, ensure_dir])
         .setup(|app| {
             create_main_window(&app.handle().clone());
             Ok(())

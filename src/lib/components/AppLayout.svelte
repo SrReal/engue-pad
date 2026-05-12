@@ -1,12 +1,27 @@
 <script lang="ts">
   import { layoutState, splitNode } from "$lib/layout/store.svelte";
+  import { workspaceInfo, loadWorkspace, scheduleSaveWorkspace } from "$lib/workspace/store.svelte";
   import LayoutNode from "./LayoutNode.svelte";
   import FileTree from "./FileTree.svelte";
   import { open } from "@tauri-apps/plugin-dialog";
 
   let sidebarWidth = $state(240);
   let isResizingSidebar = $state(false);
-  let rootPath = $state<string | null>(null);
+
+  $effect(() => {
+    const root = workspaceInfo.rootPath;
+    if (root) {
+      loadWorkspace(root);
+    }
+  });
+
+  $effect(() => {
+    const root = workspaceInfo.rootPath;
+    if (!root) return;
+    const _ = layoutState.root;
+    const __ = layoutState.activeNodeId;
+    scheduleSaveWorkspace();
+  });
 
   function onSidebarPointerDown(e: PointerEvent) {
     isResizingSidebar = true;
@@ -35,7 +50,7 @@
   async function openFolder() {
     const selected = await open({ directory: true });
     if (selected && typeof selected === "string") {
-      rootPath = selected;
+      workspaceInfo.rootPath = selected;
     }
   }
 </script>
@@ -49,8 +64,8 @@
       <button class="icon-btn" onclick={addVerticalSplit} title="Split vertical">⧉</button>
     </div>
     <div class="sidebar-content">
-      {#if rootPath}
-        <FileTree {rootPath} />
+      {#if workspaceInfo.rootPath}
+        <FileTree rootPath={workspaceInfo.rootPath} />
       {:else}
         <div class="placeholder">
           <button class="open-btn" onclick={openFolder}>Open folder</button>
