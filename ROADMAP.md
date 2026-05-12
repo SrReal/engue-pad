@@ -34,14 +34,14 @@ Objetivo: abrir un proyecto, navegar archivos, editar con pestañas y persistir 
 
 ### 1.4 Editor de archivos
 
-- [ ] Integrar CodeMirror 6 en componente Svelte.
-- [ ] Soporte de resaltado de sintaxis para JS, TS, JSON, HTML, CSS, Markdown, Python.
-- [ ] Abrir archivo desde árbol en pestaña del editor.
-- [ ] Guardar archivo (`Ctrl+S`) con comando Tauri de escritura.
-- [ ] Indicador de cambios sin guardar (dot en pestaña).
+- [x] Integrar CodeMirror 6 en componente Svelte.
+- [x] Soporte de resaltado de sintaxis para JS, TS, JSON, HTML, CSS, Markdown, Python.
+- [x] Abrir archivo desde árbol en pestaña del editor.
+- [x] Guardar archivo (`Ctrl+S`) con comando Tauri de escritura.
+- [x] Indicador de cambios sin guardar (dot en pestaña).
 - [ ] Búsqueda y reemplazo en archivo.
-- [ ] Números de línea y detección básica de fin de línea.
-- [ ] Soporte de múltiples pestañas de editor.
+- [x] Números de línea y detección básica de fin de línea.
+- [x] Soporte de múltiples pestañas de editor.
 
 ### 1.5 Workspace básico
 
