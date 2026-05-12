@@ -1,8 +1,9 @@
 <script lang="ts">
   import type { TabGroup, Tab } from "$lib/layout/types";
-  import { closeTab, setActiveTab, setActiveNode } from "$lib/layout/store.svelte";
+  import { layoutState, closeTab, setActiveTab, setActiveNode } from "$lib/layout/store.svelte";
 
   let { node }: { node: TabGroup } = $props();
+  let isActive = $derived(layoutState.activeNodeId === node.id);
 
   function handleClose(tabId: string, e: MouseEvent) {
     e.stopPropagation();
@@ -19,7 +20,7 @@
   }
 </script>
 
-<div class="tab-panel" onclick={handlePanelClick} onkeydown={(e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handlePanelClick(); } }} role="tabpanel" tabindex="0">
+<div class="tab-panel" class:active={isActive} onclick={handlePanelClick} onkeydown={(e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handlePanelClick(); } }} role="tabpanel" tabindex="0">
   <div class="tab-bar">
     {#each node.tabs as tab (tab.id)}
       <div
@@ -59,6 +60,13 @@
     flex-direction: column;
     height: 100%;
     background: var(--bg-panel, #1e1e1e);
+    outline: 2px solid transparent;
+    outline-offset: -2px;
+    transition: outline-color 0.15s ease;
+  }
+
+  .tab-panel.active {
+    outline-color: var(--accent-color, #4a9eff);
   }
 
   .tab-bar {
