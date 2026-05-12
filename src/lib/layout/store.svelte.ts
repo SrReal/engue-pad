@@ -88,13 +88,23 @@ export function addTab(nodeId: string, tab: Tab): void {
       if (exists) {
         return { ...node, activeTabId: tab.id };
       }
+
+      const previewIndex = node.tabs.findIndex((t) => t.preview);
       const enrichedTab = tab.path
-        ? { ...tab, language: detectLanguage(tab.path), dirty: false }
+        ? { ...tab, language: detectLanguage(tab.path), dirty: false, preview: true }
         : tab;
+
+      let newTabs: Tab[];
+      if (previewIndex >= 0) {
+        newTabs = node.tabs.map((t, i) => (i === previewIndex ? enrichedTab : t));
+      } else {
+        newTabs = [...node.tabs, enrichedTab];
+      }
+
       return {
         ...node,
-        tabs: [...node.tabs, enrichedTab],
-        activeTabId: tab.id,
+        tabs: newTabs,
+        activeTabId: enrichedTab.id,
       };
     }
     if (node.kind === "split") {
@@ -140,7 +150,23 @@ export function updateTabContent(nodeId: string, tabId: string, content: string)
   function updateTree(node: LayoutNode): LayoutNode {
     if (node.kind === "tab-group" && node.id === nodeId) {
       const tabs = node.tabs.map((t) =>
-        t.id === tabId ? { ...t, content, dirty: true } : t
+        t.id === tabId ? { ...t, content, dirty: true, preview: false } : t
+      );
+      return { ...node, tabs };
+    }
+    if (node.kind === "split") {
+      return { ...node, first: updateTree(node.first), second: updateTree(node.second) };
+    }
+    return node;
+  }
+  layoutState.root = updateTree(layoutState.root);
+}
+
+export function pinTab(nodeId: string, tabId: string): void {
+  function updateTree(node: LayoutNode): LayoutNode {
+    if (node.kind === "tab-group" && node.id === nodeId) {
+      const tabs = node.tabs.map((t) =>
+        t.id === tabId ? { ...t, preview: false } : t
       );
       return { ...node, tabs };
     }

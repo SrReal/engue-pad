@@ -5,6 +5,7 @@ export type Tab = {
   content?: string;
   dirty?: boolean;
   language?: string;
+  preview?: boolean;
 };
 
 export type TabGroup = {

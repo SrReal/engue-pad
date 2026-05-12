@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { addTab, layoutState } from "$lib/layout/store.svelte";
+  import { addTab, layoutState, pinTab } from "$lib/layout/store.svelte";
+  import type { Tab } from "$lib/layout/types";
   import TreeItem from "./TreeItem.svelte";
 
   type FileEntry = {
@@ -50,11 +51,34 @@
     if (node.entry.is_file) {
       const activeNodeId = layoutState.activeNodeId ?? layoutState.root.id;
       addTab(activeNodeId, {
-        id: crypto.randomUUID(),
+        id: node.entry.path,
         title: node.entry.name,
         path: node.entry.path,
       });
     }
+  }
+
+  function handleDoubleClick() {
+    if (node.entry.is_file) {
+      const activeNodeId = layoutState.activeNodeId ?? layoutState.root.id;
+      const activeGroup = findTabGroup(layoutState.root, activeNodeId);
+      if (activeGroup) {
+        const previewTab = activeGroup.tabs.find((t: Tab) => t.preview && t.path === node.entry.path);
+        if (previewTab) {
+          pinTab(activeNodeId, previewTab.id);
+        } else {
+          handleFileClick();
+        }
+      }
+    }
+  }
+
+  function findTabGroup(root: any, nodeId: string): any {
+    if (root.kind === "tab-group" && root.id === nodeId) return root;
+    if (root.kind === "split") {
+      return findTabGroup(root.first, nodeId) ?? findTabGroup(root.second, nodeId);
+    }
+    return null;
   }
 
   function handleClick() {
@@ -88,6 +112,7 @@
     class:directory={node.entry.is_dir}
     class:file={node.entry.is_file}
     onclick={handleClick}
+    ondblclick={handleDoubleClick}
     oncontextmenu={handleContextMenu}
     role="treeitem"
     tabindex="0"

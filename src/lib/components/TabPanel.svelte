@@ -1,11 +1,12 @@
 <script lang="ts">
   import type { TabGroup, Tab } from "$lib/layout/types";
-  import { layoutState, closeTab, setActiveTab, setActiveNode, splitNode } from "$lib/layout/store.svelte";
+  import { layoutState, closeTab, setActiveTab, setActiveNode, splitNode, pinTab } from "$lib/layout/store.svelte";
   import Editor from "./Editor.svelte";
   import MarkdownViewer from "./MarkdownViewer.svelte";
 
   let { node }: { node: TabGroup } = $props();
   let isActive = $derived(layoutState.activeNodeId === node.id);
+  let tabContextMenu = $state<{ x: number; y: number; tabId: string } | null>(null);
 
   function handleClose(tabId: string, e: MouseEvent) {
     e.stopPropagation();
@@ -21,14 +22,32 @@
     setActiveNode(node.id);
   }
 
-  function addHorizontalSplit() {
-    splitNode(node.id, "horizontal");
+  function handleTabContextMenu(e: MouseEvent, tabId: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    tabContextMenu = { x: e.clientX, y: e.clientY, tabId };
   }
 
-  function addVerticalSplit() {
-    splitNode(node.id, "vertical");
+  function closeTabContextMenu() {
+    tabContextMenu = null;
+  }
+
+  function handlePinTab() {
+    if (tabContextMenu) {
+      pinTab(node.id, tabContextMenu.tabId);
+    }
+    closeTabContextMenu();
+  }
+
+  function handleCloseFromMenu() {
+    if (tabContextMenu) {
+      closeTab(node.id, tabContextMenu.tabId);
+    }
+    closeTabContextMenu();
   }
 </script>
+
+<svelte:window onclick={closeTabContextMenu} />
 
 <div class="tab-panel" class:active={isActive} onclick={handlePanelClick} onkeydown={(e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handlePanelClick(); } }} role="tabpanel" tabindex="0">
   <div class="tab-bar">
@@ -36,7 +55,9 @@
       <div
         class="tab"
         class:active={node.activeTabId === tab.id}
+        class:preview={tab.preview}
         onclick={() => handleActivate(tab.id)}
+        oncontextmenu={(e) => handleTabContextMenu(e, tab.id)}
         onkeydown={(e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleActivate(tab.id); } }}
         role="tab"
         tabindex="0"
@@ -80,14 +101,20 @@
     {:else}
       <div class="content-placeholder empty">
         <div class="empty-actions">
-          <button class="action-btn" onclick={addHorizontalSplit}>⧈ Split horizontal</button>
-          <button class="action-btn" onclick={addVerticalSplit}>⧉ Split vertical</button>
+          <button class="action-btn">Open Terminal</button>
           <span class="hint">Click a file in the sidebar to open</span>
         </div>
       </div>
     {/if}
   </div>
 </div>
+
+{#if tabContextMenu}
+  <div class="context-menu" style:left="{tabContextMenu.x}px" style:top="{tabContextMenu.y}px">
+    <button onclick={handleCloseFromMenu}>Close</button>
+    <button onclick={handlePinTab}>Pin</button>
+  </div>
+{/if}
 
 <style>
   .tab-panel {
@@ -132,6 +159,11 @@
   .tab.active {
     background: var(--bg-panel, #1e1e1e);
     border-bottom: 1px solid var(--bg-panel, #1e1e1e);
+  }
+
+  .tab.preview .tab-title {
+    font-style: italic;
+    opacity: 0.8;
   }
 
   .tab-title {
@@ -195,5 +227,31 @@
   .hint {
     font-size: 12px;
     color: var(--text-muted, #666);
+  }
+
+  .context-menu {
+    position: fixed;
+    background: var(--bg-sidebar, #252526);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 4px;
+    padding: 4px 0;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+
+  .context-menu button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 6px 16px;
+    background: none;
+    border: none;
+    color: var(--text-color, #ccc);
+    cursor: pointer;
+    font-size: 13px;
+  }
+
+  .context-menu button:hover {
+    background: var(--bg-tab-hover, #3d3d3d);
   }
 </style>
