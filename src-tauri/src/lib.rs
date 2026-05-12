@@ -1,6 +1,9 @@
+mod terminal;
+
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
+use std::sync::Arc;
 use tauri::{AppHandle, Manager, WebviewUrl};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -138,11 +141,14 @@ fn create_main_window(app: &AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let terminal_manager = Arc::new(terminal::TerminalManager::new());
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
-        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, write_file, ensure_dir, read_file_meta, get_app_data_dir])
+        .manage(Arc::clone(&terminal_manager))
+        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, write_file, ensure_dir, read_file_meta, get_app_data_dir, terminal::create_terminal, terminal::write_terminal, terminal::kill_terminal])
         .setup(|app| {
             create_main_window(&app.handle().clone());
             Ok(())

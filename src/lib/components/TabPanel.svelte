@@ -1,12 +1,21 @@
 <script lang="ts">
   import type { TabGroup, Tab } from "$lib/layout/types";
-  import { layoutState, closeTab, setActiveTab, setActiveNode, splitNode, pinTab } from "$lib/layout/store.svelte";
+  import { layoutState, closeTab, setActiveTab, setActiveNode, splitNode, pinTab, addTerminal } from "$lib/layout/store.svelte";
   import Editor from "./Editor.svelte";
   import MarkdownViewer from "./MarkdownViewer.svelte";
+  import Terminal from "./Terminal.svelte";
 
   let { node }: { node: TabGroup } = $props();
   let isActive = $derived(layoutState.activeNodeId === node.id);
   let tabContextMenu = $state<{ x: number; y: number; tabId: string } | null>(null);
+  let terminalRef = $state<Terminal | null>(null);
+
+  $effect(() => {
+    const activeTab = node.tabs.find((t) => t.id === node.activeTabId);
+    if (activeTab?.type === "terminal" && terminalRef) {
+      terminalRef.focusTerminal();
+    }
+  });
 
   function handleClose(tabId: string, e: MouseEvent) {
     e.stopPropagation();
@@ -73,7 +82,9 @@
     {#if node.activeTabId}
       {@const activeTab = node.tabs.find((t) => t.id === node.activeTabId)}
       {#if activeTab}
-        {#if activeTab.path}
+        {#if activeTab.type === "terminal"}
+          <Terminal bind:this={terminalRef} nodeId={node.id} tabId={activeTab.id} />
+        {:else if activeTab.path}
           {#key activeTab.id}
             {#if activeTab.language === "markdown"}
               <MarkdownViewer
@@ -101,7 +112,7 @@
     {:else}
       <div class="content-placeholder empty">
         <div class="empty-actions">
-          <button class="action-btn">Open Terminal</button>
+          <button class="action-btn" onclick={() => addTerminal(node.id)}>Open Terminal</button>
           <span class="hint">Click a file in the sidebar to open</span>
         </div>
       </div>

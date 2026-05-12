@@ -1,6 +1,9 @@
+export type TabType = "editor" | "terminal";
+
 export type Tab = {
   id: string;
   title: string;
+  type?: TabType;
   path?: string;
   content?: string;
   dirty?: boolean;

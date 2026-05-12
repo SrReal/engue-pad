@@ -72,6 +72,15 @@ function findTabByPath(root: LayoutNode, path: string): { nodeId: string; tabId:
   return findTabByPath(root.first, path) ?? findTabByPath(root.second, path);
 }
 
+export function addTerminal(nodeId: string, title = "Terminal"): void {
+  const tab: Tab = {
+    id: crypto.randomUUID(),
+    title,
+    type: "terminal",
+  };
+  addTab(nodeId, tab);
+}
+
 export function addTab(nodeId: string, tab: Tab): void {
   if (tab.path) {
     const existing = findTabByPath(layoutState.root, tab.path);
