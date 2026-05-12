@@ -12,45 +12,58 @@
   let terminalRef = $state<Terminal | null>(null);
   let dragOverIndex = $state<number | null>(null);
   let draggedTabId = $state<string | null>(null);
+  let dragOffsetX = $state(0);
+  let dragPosX = $state(0);
+  let dragPosY = $state(0);
+  let tabBarRef = $state<HTMLDivElement | null>(null);
+  let isMouseDown = $state(false);
 
   function getTabIndex(tabId: string): number {
     return node.tabs.findIndex((t) => t.id === tabId);
   }
 
-  function handleDragStart(e: DragEvent, tabId: string) {
+  function getInsertIndex(clientX: number): number {
+    if (!tabBarRef) return 0;
+    const children = Array.from(tabBarRef.children).filter(
+      (c) => c.classList.contains("tab")
+    ) as HTMLElement[];
+    for (let i = 0; i < children.length; i++) {
+      const rect = children[i].getBoundingClientRect();
+      const center = rect.left + rect.width / 2;
+      if (clientX < center) return i;
+    }
+    return children.length;
+  }
+
+  function handleMouseDown(e: MouseEvent, tabId: string) {
+    const target = e.target as HTMLElement;
+    if (target.closest(".tab-close")) return;
+    isMouseDown = true;
     draggedTabId = tabId;
-    e.dataTransfer!.effectAllowed = "move";
+    const tabRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    dragOffsetX = e.clientX - tabRect.left;
+    dragPosX = tabRect.left;
+    dragPosY = tabRect.top;
   }
 
-  function handleDragEnd() {
-    draggedTabId = null;
-    dragOverIndex = null;
+  function handleGlobalMouseMove(e: MouseEvent) {
+    if (!draggedTabId || !isMouseDown) return;
+    dragPosX = e.clientX - dragOffsetX;
+    dragPosY = (tabBarRef?.getBoundingClientRect().top ?? 0);
+    dragOverIndex = getInsertIndex(e.clientX);
   }
 
-  function handleDragOver(e: DragEvent, index: number) {
-    e.preventDefault();
-    e.dataTransfer!.dropEffect = "move";
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    dragOverIndex = e.clientX > rect.left + rect.width / 2 ? index + 1 : index;
-  }
-
-  function handleDragLeave() {
-    dragOverIndex = null;
-  }
-
-  function handleDrop(e: DragEvent, targetIndex: number) {
-    e.preventDefault();
+  function handleGlobalMouseUp(e: MouseEvent) {
+    if (!draggedTabId || !isMouseDown) return;
     const tabId = draggedTabId;
+    const insertIndex = getInsertIndex(e.clientX);
     draggedTabId = null;
-    if (!tabId) return;
+    isMouseDown = false;
+    dragOverIndex = null;
     const fromIndex = getTabIndex(tabId);
     if (fromIndex === -1) return;
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const isAfter = e.clientX > rect.left + rect.width / 2;
-    const insertIndex = isAfter ? targetIndex + 1 : targetIndex;
     if (fromIndex === insertIndex || fromIndex + 1 === insertIndex) return;
     moveTab(node.id, fromIndex, insertIndex);
-    dragOverIndex = null;
   }
 
   $effect(() => {
@@ -114,10 +127,14 @@
   }
 </script>
 
-<svelte:window onclick={() => { closeTabContextMenu(); closePanelContextMenu(); }} />
+<svelte:window
+  onclick={() => { closeTabContextMenu(); closePanelContextMenu(); }}
+  onmousemove={handleGlobalMouseMove}
+  onmouseup={handleGlobalMouseUp}
+/>
 
 <div class="tab-panel" class:active={isActive} onclick={handlePanelClick} onkeydown={(e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handlePanelClick(); } }} role="tabpanel" tabindex="0">
-  <div class="tab-bar" oncontextmenu={handlePanelContextMenu} role="toolbar" aria-label="Tabs" tabindex="0">
+  <div class="tab-bar" bind:this={tabBarRef} oncontextmenu={handlePanelContextMenu} role="toolbar" aria-label="Tabs" tabindex="0">
     {#each node.tabs as tab, index (tab.id)}
       <div
         class="tab"
@@ -125,12 +142,8 @@
         class:preview={tab.preview}
         class:drop-before={dragOverIndex === index}
         class:drop-after={dragOverIndex === index + 1}
-        draggable="true"
-        ondragstart={(e) => handleDragStart(e, tab.id)}
-        ondragend={handleDragEnd}
-        ondragover={(e) => handleDragOver(e, index)}
-        ondragleave={handleDragLeave}
-        ondrop={(e) => handleDrop(e, index)}
+        class:is-dragging={draggedTabId === tab.id}
+        onmousedown={(e) => handleMouseDown(e, tab.id)}
         onclick={() => handleActivate(tab.id)}
         oncontextmenu={(e) => handleTabContextMenu(e, tab.id)}
         onkeydown={(e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleActivate(tab.id); } }}
@@ -140,11 +153,19 @@
         <span class="tab-title">
           {tab.title}{#if tab.dirty}●{/if}
         </span>
-        <button class="tab-close" onclick={(e) => handleClose(tab.id, e)} type="button" aria-label="Close tab" draggable="false">×</button>
+        <button class="tab-close" onclick={(e) => handleClose(tab.id, e)} type="button" aria-label="Close tab">×</button>
       </div>
     {/each}
     <button class="tab-add" onclick={() => addTerminal(node.id)} title="New terminal" type="button"><span class="term-icon">&gt;_</span></button>
   </div>
+  {#if draggedTabId}
+    {@const draggedTab = node.tabs.find((t) => t.id === draggedTabId)}
+    {#if draggedTab}
+      <div class="drag-ghost" style:left="{dragPosX}px" style:top="{dragPosY}px">
+        <span>{draggedTab.title}</span>
+      </div>
+    {/if}
+  {/if}
   <div class="tab-content">
     {#if node.activeTabId}
       {@const activeTab = node.tabs.find((t) => t.id === node.activeTabId)}
@@ -301,6 +322,27 @@
 
   .drop-after {
     border-right: 2px solid var(--accent-color, #4a9eff);
+  }
+
+  .is-dragging {
+    opacity: 0.3;
+  }
+
+  .drag-ghost {
+    position: fixed;
+    z-index: 9999;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--bg-tab, #2d2d2d);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 4px;
+    color: var(--text-color, #ccc);
+    font-size: 13px;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   }
 
   .tab-content {
