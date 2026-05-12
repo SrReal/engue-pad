@@ -27,6 +27,7 @@
   let view = $state<EditorView | null>(null);
   let isLoading = $state(false);
   let currentContent = $state("");
+  let isSettingContent = $state(false);
 
   $effect(() => {
     currentContent = initialContent;
@@ -59,9 +60,11 @@
       const content = await invoke<string>("read_file", { path });
       currentContent = content;
       if (view) {
+        isSettingContent = true;
         view.dispatch({
           changes: { from: 0, to: view.state.doc.length, insert: content },
         });
+        isSettingContent = false;
       }
     } catch (e) {
       console.error("Failed to read file:", e);
@@ -95,7 +98,7 @@
     ]);
 
     const updateListener = EditorView.updateListener.of((update) => {
-      if (update.docChanged) {
+      if (update.docChanged && !isSettingContent) {
         const content = update.state.doc.toString();
         currentContent = content;
         updateTabContent(nodeId, tabId, content);

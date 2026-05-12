@@ -63,7 +63,25 @@ export function setSplitRatio(nodeId: string, ratio: number): void {
   layoutState.root = updateTree(layoutState.root);
 }
 
+function findTabByPath(root: LayoutNode, path: string): { nodeId: string; tabId: string } | null {
+  if (root.kind === "tab-group") {
+    const tab = root.tabs.find((t) => t.path === path);
+    if (tab) return { nodeId: root.id, tabId: tab.id };
+    return null;
+  }
+  return findTabByPath(root.first, path) ?? findTabByPath(root.second, path);
+}
+
 export function addTab(nodeId: string, tab: Tab): void {
+  if (tab.path) {
+    const existing = findTabByPath(layoutState.root, tab.path);
+    if (existing) {
+      setActiveTab(existing.nodeId, existing.tabId);
+      setActiveNode(existing.nodeId);
+      return;
+    }
+  }
+
   function updateTree(node: LayoutNode): LayoutNode {
     if (node.kind === "tab-group" && node.id === nodeId) {
       const exists = node.tabs.find((t) => t.id === tab.id);

@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { TabGroup, Tab } from "$lib/layout/types";
-  import { layoutState, closeTab, setActiveTab, setActiveNode } from "$lib/layout/store.svelte";
+  import { layoutState, closeTab, setActiveTab, setActiveNode, splitNode } from "$lib/layout/store.svelte";
   import Editor from "./Editor.svelte";
+  import MarkdownViewer from "./MarkdownViewer.svelte";
 
   let { node }: { node: TabGroup } = $props();
   let isActive = $derived(layoutState.activeNodeId === node.id);
@@ -18,6 +19,14 @@
 
   function handlePanelClick() {
     setActiveNode(node.id);
+  }
+
+  function addHorizontalSplit() {
+    splitNode(node.id, "horizontal");
+  }
+
+  function addVerticalSplit() {
+    splitNode(node.id, "vertical");
   }
 </script>
 
@@ -44,13 +53,24 @@
       {@const activeTab = node.tabs.find((t) => t.id === node.activeTabId)}
       {#if activeTab}
         {#if activeTab.path}
-          <Editor
-            nodeId={node.id}
-            tabId={activeTab.id}
-            path={activeTab.path}
-            language={activeTab.language}
-            initialContent={activeTab.content ?? ""}
-          />
+          {#key activeTab.id}
+            {#if activeTab.language === "markdown"}
+              <MarkdownViewer
+                nodeId={node.id}
+                tabId={activeTab.id}
+                path={activeTab.path}
+                initialContent={activeTab.content ?? ""}
+              />
+            {:else}
+              <Editor
+                nodeId={node.id}
+                tabId={activeTab.id}
+                path={activeTab.path}
+                language={activeTab.language}
+                initialContent={activeTab.content ?? ""}
+              />
+            {/if}
+          {/key}
         {:else}
           <div class="content-placeholder">
             <span>{activeTab.title}</span>
@@ -58,7 +78,13 @@
         {/if}
       {/if}
     {:else}
-      <div class="content-placeholder empty">No tabs open</div>
+      <div class="content-placeholder empty">
+        <div class="empty-actions">
+          <button class="action-btn" onclick={addHorizontalSplit}>⧈ Split horizontal</button>
+          <button class="action-btn" onclick={addVerticalSplit}>⧉ Split vertical</button>
+          <span class="hint">Click a file in the sidebar to open</span>
+        </div>
+      </div>
     {/if}
   </div>
 </div>
@@ -141,5 +167,33 @@
     height: 100%;
     color: var(--text-muted, #888);
     font-size: 14px;
+  }
+
+  .empty-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .action-btn {
+    background: var(--bg-tab-hover, #3d3d3d);
+    border: 1px solid var(--border-color, #333);
+    color: var(--text-color, #ccc);
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+
+  .action-btn:hover {
+    background: var(--accent-color, #4a9eff);
+    border-color: var(--accent-color, #4a9eff);
+    color: white;
+  }
+
+  .hint {
+    font-size: 12px;
+    color: var(--text-muted, #666);
   }
 </style>
