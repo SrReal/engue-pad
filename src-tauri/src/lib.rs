@@ -96,11 +96,15 @@ fn write_file(path: String, contents: String) -> Result<(), String> {
 
 #[tauri::command]
 fn get_app_data_dir(app_handle: AppHandle) -> Result<String, String> {
-    app_handle
+    let result = app_handle
         .path()
         .app_data_dir()
         .map(|p| p.to_string_lossy().to_string())
-        .map_err(|e| format!("Failed to get app data dir: {}", e))
+        .map_err(|e| format!("Failed to get app data dir: {}", e));
+    if let Ok(ref path) = result {
+        println!("[rust] get_app_data_dir: {}", path);
+    }
+    result
 }
 
 #[tauri::command]
