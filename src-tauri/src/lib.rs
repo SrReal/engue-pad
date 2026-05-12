@@ -19,8 +19,8 @@ fn create_main_window(app: &AppHandle) {
     };
 
     let size = monitor.size();
-    let width = (size.width as f64 * 0.7).round();
-    let height = (size.height as f64 * 0.7).round();
+    let width = (size.width as f64 * 0.5).round();
+    let height = (size.height as f64 * 0.5).round();
 
     let _ = tauri::WebviewWindowBuilder::new(app, "main", WebviewUrl::App("/".into()))
         .title("EnguePad")

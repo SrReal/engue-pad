@@ -3,13 +3,18 @@ import { createDefaultLayout, createTabGroup, createSplit } from "./types";
 
 export type LayoutState = {
   root: LayoutNode;
+  activeNodeId: string | null;
 };
 
 function createLayoutState(): LayoutState {
-  return { root: createDefaultLayout() };
+  return { root: createDefaultLayout(), activeNodeId: null };
 }
 
 export const layoutState = $state<LayoutState>(createLayoutState());
+
+export function setActiveNode(nodeId: string): void {
+  layoutState.activeNodeId = nodeId;
+}
 
 export function splitNode(nodeId: string, direction: "horizontal" | "vertical"): void {
   function replaceInTree(node: LayoutNode): LayoutNode {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { layoutState, splitNode, removeNode } from "$lib/layout/store.svelte";
+  import { layoutState, splitNode, removeNode, setActiveNode } from "$lib/layout/store.svelte";
   import LayoutNode from "./LayoutNode.svelte";
 
   let sidebarWidth = $state(240);
@@ -20,11 +20,13 @@
   }
 
   function addHorizontalSplit() {
-    splitNode(layoutState.root.id, "horizontal");
+    const targetId = layoutState.activeNodeId ?? layoutState.root.id;
+    splitNode(targetId, "horizontal");
   }
 
   function addVerticalSplit() {
-    splitNode(layoutState.root.id, "vertical");
+    const targetId = layoutState.activeNodeId ?? layoutState.root.id;
+    splitNode(targetId, "vertical");
   }
 </script>
 

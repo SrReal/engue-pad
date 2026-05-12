@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { TabGroup, Tab } from "$lib/layout/types";
-  import { closeTab, setActiveTab } from "$lib/layout/store.svelte";
+  import { closeTab, setActiveTab, setActiveNode } from "$lib/layout/store.svelte";
 
   let { node }: { node: TabGroup } = $props();
 
@@ -11,10 +11,15 @@
 
   function handleActivate(tabId: string) {
     setActiveTab(node.id, tabId);
+    setActiveNode(node.id);
+  }
+
+  function handlePanelClick() {
+    setActiveNode(node.id);
   }
 </script>
 
-<div class="tab-panel">
+<div class="tab-panel" onclick={handlePanelClick} onkeydown={(e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handlePanelClick(); } }} role="tabpanel" tabindex="0">
   <div class="tab-bar">
     {#each node.tabs as tab (tab.id)}
       <div
