@@ -1,9 +1,12 @@
 <script lang="ts">
-  import { layoutState, splitNode, removeNode, setActiveNode } from "$lib/layout/store.svelte";
+  import { layoutState, splitNode } from "$lib/layout/store.svelte";
   import LayoutNode from "./LayoutNode.svelte";
+  import FileTree from "./FileTree.svelte";
+  import { open } from "@tauri-apps/plugin-dialog";
 
   let sidebarWidth = $state(240);
   let isResizingSidebar = $state(false);
+  let rootPath = $state<string | null>(null);
 
   function onSidebarPointerDown(e: PointerEvent) {
     isResizingSidebar = true;
@@ -28,18 +31,31 @@
     const targetId = layoutState.activeNodeId ?? layoutState.root.id;
     splitNode(targetId, "vertical");
   }
+
+  async function openFolder() {
+    const selected = await open({ directory: true });
+    if (selected && typeof selected === "string") {
+      rootPath = selected;
+    }
+  }
 </script>
 
 <div class="app-layout">
   <aside class="sidebar" style:width="{sidebarWidth}px">
     <div class="sidebar-header">
       <span class="logo">EnguePad</span>
+      <button class="icon-btn" onclick={openFolder} title="Open folder">📂</button>
       <button class="icon-btn" onclick={addHorizontalSplit} title="Split horizontal">⧈</button>
       <button class="icon-btn" onclick={addVerticalSplit} title="Split vertical">⧉</button>
     </div>
     <div class="sidebar-content">
-      <!-- File tree will go here -->
-      <div class="placeholder">File Tree</div>
+      {#if rootPath}
+        <FileTree {rootPath} />
+      {:else}
+        <div class="placeholder">
+          <button class="open-btn" onclick={openFolder}>Open folder</button>
+        </div>
+      {/if}
     </div>
   </aside>
   <div
@@ -110,10 +126,24 @@
   }
 
   .placeholder {
-    color: var(--text-muted, #666);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+  }
+
+  .open-btn {
+    background: var(--accent-color, #4a9eff);
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
     font-size: 13px;
-    text-align: center;
-    margin-top: 20px;
+  }
+
+  .open-btn:hover {
+    opacity: 0.9;
   }
 
   .sidebar-divider {
