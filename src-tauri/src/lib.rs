@@ -1,6 +1,12 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FileContent {
+    content: String,
+    line_ending: String,
+}
 use tauri::{AppHandle, WebviewUrl};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -73,6 +79,17 @@ fn read_file(path: String) -> Result<String, String> {
 }
 
 #[tauri::command]
+fn read_file_meta(path: String) -> Result<FileContent, String> {
+    let content = fs::read_to_string(&path).map_err(|e| format!("Failed to read file: {}", e))?;
+    let line_ending = if content.contains("\r\n") {
+        "CRLF".to_string()
+    } else {
+        "LF".to_string()
+    };
+    Ok(FileContent { content, line_ending })
+}
+
+#[tauri::command]
 fn write_file(path: String, contents: String) -> Result<(), String> {
     fs::write(&path, contents).map_err(|e| format!("Failed to write file: {}", e))
 }
@@ -111,7 +128,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, write_file, ensure_dir])
+        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, write_file, ensure_dir, read_file_meta])
         .setup(|app| {
             create_main_window(&app.handle().clone());
             Ok(())

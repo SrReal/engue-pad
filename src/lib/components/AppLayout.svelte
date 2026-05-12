@@ -3,6 +3,7 @@
   import { workspaceInfo, loadWorkspace, scheduleSaveWorkspace } from "$lib/workspace/store.svelte";
   import LayoutNode from "./LayoutNode.svelte";
   import FileTree from "./FileTree.svelte";
+  import StatusBar from "./StatusBar.svelte";
   import { open } from "@tauri-apps/plugin-dialog";
 
   let sidebarWidth = $state(240);
@@ -82,7 +83,10 @@
     aria-orientation="vertical"
   ></div>
   <main class="main-area">
-    <LayoutNode node={layoutState.root} />
+    <div class="editor-area">
+      <LayoutNode node={layoutState.root} />
+    </div>
+    <StatusBar />
   </main>
 </div>
 
@@ -174,7 +178,15 @@
 
   .main-area {
     flex: 1;
+    display: flex;
+    flex-direction: column;
     min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .editor-area {
+    flex: 1;
     min-height: 0;
     overflow: hidden;
   }

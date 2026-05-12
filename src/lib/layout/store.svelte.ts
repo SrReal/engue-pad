@@ -194,6 +194,22 @@ export function markTabSaved(nodeId: string, tabId: string): void {
   layoutState.root = updateTree(layoutState.root);
 }
 
+export function setTabLineEnding(nodeId: string, tabId: string, lineEnding: string): void {
+  function updateTree(node: LayoutNode): LayoutNode {
+    if (node.kind === "tab-group" && node.id === nodeId) {
+      const tabs = node.tabs.map((t) =>
+        t.id === tabId ? { ...t, lineEnding } : t
+      );
+      return { ...node, tabs };
+    }
+    if (node.kind === "split") {
+      return { ...node, first: updateTree(node.first), second: updateTree(node.second) };
+    }
+    return node;
+  }
+  layoutState.root = updateTree(layoutState.root);
+}
+
 export function detectLanguage(path: string): string {
   const ext = path.split(".").pop()?.toLowerCase() ?? "";
   const map: Record<string, string> = {

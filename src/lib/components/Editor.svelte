@@ -13,7 +13,7 @@
   import { lineNumbers, highlightActiveLineGutter } from "@codemirror/view";
   import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
   import { bracketMatching, syntaxHighlighting, defaultHighlightStyle } from "@codemirror/language";
-  import { updateTabContent, markTabSaved } from "$lib/layout/store.svelte";
+  import { updateTabContent, markTabSaved, setTabLineEnding } from "$lib/layout/store.svelte";
 
   let { nodeId, tabId, path, language, initialContent = "" }: {
     nodeId: string;
@@ -57,12 +57,13 @@
     if (!path) return;
     isLoading = true;
     try {
-      const content = await invoke<string>("read_file", { path });
-      currentContent = content;
+      const result = await invoke<{ content: string; lineEnding: string }>("read_file_meta", { path });
+      currentContent = result.content;
+      setTabLineEnding(nodeId, tabId, result.lineEnding);
       if (view) {
         isSettingContent = true;
         view.dispatch({
-          changes: { from: 0, to: view.state.doc.length, insert: content },
+          changes: { from: 0, to: view.state.doc.length, insert: result.content },
         });
         isSettingContent = false;
       }

@@ -6,6 +6,7 @@ export type Tab = {
   dirty?: boolean;
   language?: string;
   preview?: boolean;
+  lineEnding?: string;
 };
 
 export type TabGroup = {
