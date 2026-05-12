@@ -17,11 +17,11 @@ Objetivo: abrir un proyecto, navegar archivos, editar con pestañas y persistir 
 
 ### 1.2 Ventana principal y layout base
 
-- [ ] Crear ventana principal de Tauri con tamaño y posición restaurables.
-- [ ] Implementar layout base: sidebar izquierda + área principal con sistema de splits.
-- [ ] Sistema de paneles/splits: horizontal y vertical.
-- [ ] Soporte de arrastre de pestañas entre splits.
-- [ ] Serializar y deserializar layout básico.
+- [x] Crear ventana principal de Tauri con tamaño y posición restaurables.
+- [x] Implementar layout base: sidebar izquierda + área principal con sistema de splits.
+- [x] Sistema de paneles/splits: horizontal y vertical.
+- [x] Soporte de arrastre de pestañas entre splits.
+- [x] Serializar y deserializar layout básico.
 
 ### 1.3 Árbol de archivos
 
