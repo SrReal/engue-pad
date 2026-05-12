@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { TabGroup, Tab } from "$lib/layout/types";
-  import { layoutState, closeTab, setActiveTab, setActiveNode, splitNode, pinTab, addTerminal } from "$lib/layout/store.svelte";
+  import { layoutState, closeTab, setActiveTab, setActiveNode, splitNode, pinTab, addTerminal, removeNode } from "$lib/layout/store.svelte";
   import Editor from "./Editor.svelte";
   import MarkdownViewer from "./MarkdownViewer.svelte";
   import Terminal from "./Terminal.svelte";
@@ -8,6 +8,7 @@
   let { node }: { node: TabGroup } = $props();
   let isActive = $derived(layoutState.activeNodeId === node.id);
   let tabContextMenu = $state<{ x: number; y: number; tabId: string } | null>(null);
+  let panelContextMenu = $state<{ x: number; y: number } | null>(null);
   let terminalRef = $state<Terminal | null>(null);
 
   $effect(() => {
@@ -54,12 +55,27 @@
     }
     closeTabContextMenu();
   }
+
+  function handlePanelContextMenu(e: MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    panelContextMenu = { x: e.clientX, y: e.clientY };
+  }
+
+  function closePanelContextMenu() {
+    panelContextMenu = null;
+  }
+
+  function handleClosePanel() {
+    removeNode(node.id);
+    closePanelContextMenu();
+  }
 </script>
 
-<svelte:window onclick={closeTabContextMenu} />
+<svelte:window onclick={() => { closeTabContextMenu(); closePanelContextMenu(); }} />
 
 <div class="tab-panel" class:active={isActive} onclick={handlePanelClick} onkeydown={(e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handlePanelClick(); } }} role="tabpanel" tabindex="0">
-  <div class="tab-bar">
+  <div class="tab-bar" oncontextmenu={handlePanelContextMenu} role="toolbar" aria-label="Tabs" tabindex="0">
     {#each node.tabs as tab (tab.id)}
       <div
         class="tab"
@@ -77,6 +93,7 @@
         <button class="tab-close" onclick={(e) => handleClose(tab.id, e)} type="button" aria-label="Close tab">×</button>
       </div>
     {/each}
+    <button class="tab-add" onclick={() => addTerminal(node.id)} title="New terminal" type="button">+</button>
   </div>
   <div class="tab-content">
     {#if node.activeTabId}
@@ -124,6 +141,12 @@
   <div class="context-menu" style:left="{tabContextMenu.x}px" style:top="{tabContextMenu.y}px">
     <button onclick={handleCloseFromMenu}>Close</button>
     <button onclick={handlePinTab}>Pin</button>
+  </div>
+{/if}
+
+{#if panelContextMenu}
+  <div class="context-menu" style:left="{panelContextMenu.x}px" style:top="{panelContextMenu.y}px">
+    <button onclick={handleClosePanel}>Close panel</button>
   </div>
 {/if}
 
@@ -196,6 +219,25 @@
 
   .tab-close:hover {
     background: var(--bg-tab-close-hover, #c44);
+  }
+
+  .tab-add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin: 2px 4px;
+    background: transparent;
+    border: none;
+    color: var(--text-color, #ccc);
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 3px;
+  }
+
+  .tab-add:hover {
+    background: var(--bg-tab-hover, #3d3d3d);
   }
 
   .tab-content {

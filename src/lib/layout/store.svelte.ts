@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import type { LayoutNode, TabGroup, Split, Tab } from "./types";
 import { createDefaultLayout, createTabGroup, createSplit } from "./types";
 
@@ -33,9 +34,25 @@ export function splitNode(nodeId: string, direction: "horizontal" | "vertical"):
   layoutState.root = replaceInTree(layoutState.root);
 }
 
+function killTerminalsInNode(node: LayoutNode): void {
+  if (node.kind === "tab-group") {
+    for (const tab of node.tabs) {
+      if (tab.type === "terminal") {
+        invoke("kill_terminal", { terminalId: tab.id }).catch(() => {});
+      }
+    }
+  } else if (node.kind === "split") {
+    killTerminalsInNode(node.first);
+    killTerminalsInNode(node.second);
+  }
+}
+
 export function removeNode(nodeId: string): void {
   function pruneTree(node: LayoutNode): LayoutNode | null {
-    if (node.id === nodeId) return null;
+    if (node.id === nodeId) {
+      killTerminalsInNode(node);
+      return null;
+    }
     if (node.kind === "split") {
       const first = pruneTree(node.first);
       const second = pruneTree(node.second);
@@ -127,6 +144,10 @@ export function addTab(nodeId: string, tab: Tab): void {
 export function closeTab(nodeId: string, tabId: string): void {
   function updateTree(node: LayoutNode): LayoutNode {
     if (node.kind === "tab-group" && node.id === nodeId) {
+      const closed = node.tabs.find((t) => t.id === tabId);
+      if (closed?.type === "terminal") {
+        invoke("kill_terminal", { terminalId: tabId }).catch(() => {});
+      }
       const tabs = node.tabs.filter((t) => t.id !== tabId);
       let activeTabId = node.activeTabId;
       if (activeTabId === tabId) {
