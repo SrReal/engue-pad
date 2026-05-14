@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { TabGroup, Tab } from "$lib/layout/types";
   import { layoutState, closeTab, setActiveTab, setActiveNode, splitNode, pinTab, addTerminal, removeNode, moveTab } from "$lib/layout/store.svelte";
+  import { workspaceInfo } from "$lib/workspace/store.svelte";
+  import { confirm } from "@tauri-apps/plugin-dialog";
   import Editor from "./Editor.svelte";
   import MarkdownViewer from "./MarkdownViewer.svelte";
   import Terminal from "./Terminal.svelte";
@@ -9,7 +11,7 @@
   let isActive = $derived(layoutState.activeNodeId === node.id);
   let tabContextMenu = $state<{ x: number; y: number; tabId: string } | null>(null);
   let panelContextMenu = $state<{ x: number; y: number } | null>(null);
-  let terminalRef = $state<Terminal | null>(null);
+  let terminalRefs = $state<Record<string, Terminal>>({});
   let dragOverIndex = $state<number | null>(null);
   let draggedTabId = $state<string | null>(null);
   let dragOffsetX = $state(0);
@@ -68,13 +70,21 @@
 
   $effect(() => {
     const activeTab = node.tabs.find((t) => t.id === node.activeTabId);
-    if (activeTab?.type === "terminal" && terminalRef) {
-      terminalRef.focusTerminal();
+    if (activeTab?.type === "terminal" && isActive) {
+      terminalRefs[activeTab.id]?.focusTerminal();
+      setTimeout(() => {
+        terminalRefs[activeTab.id]?.resizeTerminal();
+      }, 50);
     }
   });
 
-  function handleClose(tabId: string, e: MouseEvent) {
+  async function handleClose(tabId: string, e: MouseEvent) {
     e.stopPropagation();
+    const tab = node.tabs.find((t) => t.id === tabId);
+    if (tab?.dirty) {
+      const confirmed = await confirm(`"${tab.title}" has unsaved changes. Close without saving?`, { title: "Unsaved Changes", kind: "warning" });
+      if (!confirmed) return;
+    }
     closeTab(node.id, tabId);
   }
 
@@ -104,8 +114,16 @@
     closeTabContextMenu();
   }
 
-  function handleCloseFromMenu() {
+  async function handleCloseFromMenu() {
     if (tabContextMenu) {
+      const tab = node.tabs.find((t) => t.id === tabContextMenu!.tabId);
+      if (tab?.dirty) {
+        const confirmed = await confirm(`"${tab.title}" has unsaved changes. Close without saving?`, { title: "Unsaved Changes", kind: "warning" });
+        if (!confirmed) {
+          closeTabContextMenu();
+          return;
+        }
+      }
       closeTab(node.id, tabContextMenu.tabId);
     }
     closeTabContextMenu();
@@ -121,7 +139,16 @@
     panelContextMenu = null;
   }
 
-  function handleClosePanel() {
+  async function handleClosePanel() {
+    const dirtyTabs = node.tabs.filter((t) => t.dirty);
+    if (dirtyTabs.length > 0) {
+      const names = dirtyTabs.map((t) => `"${t.title}"`).join(", ");
+      const confirmed = await confirm(`${names} has unsaved changes. Close the panel without saving?`, { title: "Unsaved Changes", kind: "warning" });
+      if (!confirmed) {
+        closePanelContextMenu();
+        return;
+      }
+    }
     removeNode(node.id);
     closePanelContextMenu();
   }
@@ -133,7 +160,21 @@
   onmouseup={handleGlobalMouseUp}
 />
 
-<div class="tab-panel" class:active={isActive} onclick={handlePanelClick} onkeydown={(e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handlePanelClick(); } }} role="tabpanel" tabindex="0">
+<div
+  class="tab-panel"
+  class:active={isActive}
+  onclick={handlePanelClick}
+  onkeydown={(e: KeyboardEvent) => {
+    // Only handle Enter/Space when focus is on the panel itself, not bubbled from xterm/editor.
+    if (e.target !== e.currentTarget) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handlePanelClick();
+    }
+  }}
+  role="tabpanel"
+  tabindex="0"
+>
   <div class="tab-bar" bind:this={tabBarRef} oncontextmenu={handlePanelContextMenu} role="toolbar" aria-label="Tabs" tabindex="0">
     {#each node.tabs as tab, index (tab.id)}
       <div
@@ -156,7 +197,7 @@
         <button class="tab-close" onclick={(e) => handleClose(tab.id, e)} type="button" aria-label="Close tab">×</button>
       </div>
     {/each}
-    <button class="tab-add" onclick={() => addTerminal(node.id)} title="New terminal" type="button"><span class="term-icon">&gt;_</span></button>
+    <button class="tab-add" onclick={() => addTerminal(node.id, "Terminal", workspaceInfo.rootPath ?? undefined)} title="New terminal" type="button"><span class="term-icon">&gt;_</span></button>
   </div>
   {#if draggedTabId}
     {@const draggedTab = node.tabs.find((t) => t.id === draggedTabId)}
@@ -167,37 +208,42 @@
     {/if}
   {/if}
   <div class="tab-content">
-    {#if node.activeTabId}
-      {@const activeTab = node.tabs.find((t) => t.id === node.activeTabId)}
-      {#if activeTab}
-        {#if activeTab.type === "terminal"}
-          <Terminal bind:this={terminalRef} nodeId={node.id} tabId={activeTab.id} />
-        {:else if activeTab.path}
-          {#key activeTab.id}
-            {#if activeTab.language === "markdown"}
+    {#each node.tabs as tab (tab.id)}
+      {#if tab.type === "terminal"}
+        <div class="terminal-tab-content" class:hidden={tab.id !== node.activeTabId}>
+          <Terminal bind:this={terminalRefs[tab.id]} nodeId={node.id} tabId={tab.id} cwd={tab.cwd ?? workspaceInfo.rootPath ?? undefined} />
+        </div>
+      {:else if tab.id === node.activeTabId}
+        {#if tab.path}
+          {#key tab.id}
+            {#if tab.language === "markdown"}
               <MarkdownViewer
                 nodeId={node.id}
-                tabId={activeTab.id}
-                path={activeTab.path}
-                initialContent={activeTab.content ?? ""}
+                tabId={tab.id}
+                path={tab.path}
+                initialContent={tab.content ?? ""}
+                dirty={tab.dirty}
               />
             {:else}
               <Editor
                 nodeId={node.id}
-                tabId={activeTab.id}
-                path={activeTab.path}
-                language={activeTab.language}
-                initialContent={activeTab.content ?? ""}
+                tabId={tab.id}
+                path={tab.path}
+                language={tab.language}
+                initialContent={tab.content ?? ""}
+                dirty={tab.dirty}
               />
             {/if}
           {/key}
         {:else}
           <div class="content-placeholder">
-            <span>{activeTab.title}</span>
+            <span>{tab.title}</span>
           </div>
         {/if}
       {/if}
-    {:else}
+    {/each}
+
+    {#if !node.activeTabId}
       <div class="content-placeholder empty">
         <div class="empty-actions">
           <span class="hint">Click a file in the sidebar to open</span>
@@ -224,7 +270,8 @@
   .tab-panel {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    flex: 1;
+    min-height: 0;
     background: var(--bg-panel, #1e1e1e);
     outline: 2px solid transparent;
     outline-offset: -2px;
@@ -348,6 +395,19 @@
   .tab-content {
     flex: 1;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .terminal-tab-content {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+  }
+
+  .terminal-tab-content.hidden {
+    display: none;
   }
 
   .content-placeholder {

@@ -16,12 +16,13 @@
   import { highlightSelectionMatches, searchKeymap, search } from "@codemirror/search";
   import { updateTabContent, markTabSaved, setTabLineEnding } from "$lib/layout/store.svelte";
 
-  let { nodeId, tabId, path, language, initialContent = "" }: {
+  let { nodeId, tabId, path, language, initialContent = "", dirty = false }: {
     nodeId: string;
     tabId: string;
     path?: string;
     language?: string;
     initialContent?: string;
+    dirty?: boolean;
   } = $props();
 
   let containerRef = $state<HTMLDivElement | null>(null);
@@ -151,7 +152,7 @@
       parent: containerRef,
     });
 
-    if (path) {
+    if (path && !dirty) {
       loadFile();
     }
   });

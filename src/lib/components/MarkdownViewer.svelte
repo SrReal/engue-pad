@@ -3,11 +3,12 @@
   import { invoke } from "@tauri-apps/api/core";
   import Editor from "./Editor.svelte";
 
-  let { nodeId, tabId, path, initialContent = "" }: {
+  let { nodeId, tabId, path, initialContent = "", dirty = false }: {
     nodeId: string;
     tabId: string;
     path?: string;
     initialContent?: string;
+    dirty?: boolean;
   } = $props();
 
   let showRendered = $state(true);
@@ -41,7 +42,11 @@
   }
 
   onMount(() => {
-    if (path) loadAndRender();
+    if (path && !dirty) {
+      loadAndRender();
+    } else if (initialContent) {
+      renderedHtml = renderMarkdown(initialContent);
+    }
   });
 </script>
 
@@ -59,7 +64,7 @@
       {/if}
     </div>
   {:else}
-    <Editor {nodeId} {tabId} {path} language="markdown" {initialContent} />
+    <Editor {nodeId} {tabId} {path} language="markdown" {initialContent} {dirty} />
   {/if}
 </div>
 

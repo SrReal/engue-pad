@@ -1,12 +1,16 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { layoutState, splitNode } from "$lib/layout/store.svelte";
+  import { listen } from "@tauri-apps/api/event";
+  import { invoke } from "@tauri-apps/api/core";
+  import { layoutState, splitNode, findAllDirtyTabs } from "$lib/layout/store.svelte";
   import { workspaceInfo, loadWorkspace, scheduleSaveWorkspace } from "$lib/workspace/store.svelte";
   import { loadSettings, saveSettings } from "$lib/workspace/settings";
   import LayoutNode from "./LayoutNode.svelte";
   import FileTree from "./FileTree.svelte";
   import StatusBar from "./StatusBar.svelte";
-  import { open } from "@tauri-apps/plugin-dialog";
+  import ProcessFooter from "./ProcessFooter.svelte";
+  import UrlToast from "./UrlToast.svelte";
+  import { open, confirm } from "@tauri-apps/plugin-dialog";
 
   let sidebarWidth = $state(240);
   let isResizingSidebar = $state(false);
@@ -16,6 +20,23 @@
     if (settings.lastProjectPath) {
       workspaceInfo.rootPath = settings.lastProjectPath;
     }
+
+    const unlistenClose = await listen("request-app-close", async () => {
+      const dirtyTabs = findAllDirtyTabs(layoutState.root);
+      if (dirtyTabs.length > 0) {
+        const names = dirtyTabs.map((t) => `"${t.title}"`).join(", ");
+        const confirmed = await confirm(`${names} has unsaved changes. Quit without saving?`, { title: "Quit", kind: "warning" });
+        if (confirmed) {
+          await invoke("exit_app");
+        }
+      } else {
+        await invoke("exit_app");
+      }
+    });
+
+    return () => {
+      unlistenClose();
+    };
   });
 
   $effect(() => {
@@ -96,8 +117,10 @@
     <div class="editor-area">
       <LayoutNode node={layoutState.root} />
     </div>
+    <ProcessFooter />
     <StatusBar />
   </main>
+  <UrlToast />
 </div>
 
 <style>
@@ -199,5 +222,7 @@
     flex: 1;
     min-height: 0;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 </style>

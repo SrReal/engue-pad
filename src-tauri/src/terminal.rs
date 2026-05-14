@@ -1,7 +1,8 @@
-use portable_pty::{CommandBuilder, NativePtySystem, PtySize, PtySystem};
-use std::collections::HashMap;
+use portable_pty::{CommandBuilder, NativePtySystem, PtyPair, PtySize, PtySystem};
+use std::collections::{HashMap, HashSet};
 use std::io::{Read, Write};
 use std::sync::{Arc, Mutex};
+use sysinfo::{Pid, System};
 use tauri::{AppHandle, Emitter};
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -12,16 +13,37 @@ struct TerminalOutput {
 
 pub struct TerminalSession {
     writer: Arc<Mutex<Box<dyn Write + Send>>>,
+    _pair: PtyPair,
+    _child: Box<dyn portable_pty::Child + Send + Sync>,
+    child_pid: Option<u32>,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct ProcessInfo {
+    pub pid: u32,
+    pub name: String,
+    pub cpu: f32,
+    pub memory_mb: u64,
+    pub cwd: String,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct TerminalProcessTree {
+    pub processes: Vec<ProcessInfo>,
+    pub total_cpu: f32,
+    pub total_memory_mb: u64,
 }
 
 pub struct TerminalManager {
     sessions: Arc<Mutex<HashMap<String, TerminalSession>>>,
+    terminal_pids: Arc<Mutex<HashMap<String, u32>>>,
 }
 
 impl TerminalManager {
     pub fn new() -> Self {
         Self {
             sessions: Arc::new(Mutex::new(HashMap::new())),
+            terminal_pids: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -34,6 +56,13 @@ impl TerminalManager {
         cols: u16,
         rows: u16,
     ) -> Result<(), String> {
+        {
+            let sessions = self.sessions.lock().unwrap();
+            if sessions.contains_key(&terminal_id) {
+                return Ok(());
+            }
+        }
+
         let pty_system = NativePtySystem::default();
 
         let pair = pty_system
@@ -50,10 +79,12 @@ impl TerminalManager {
             cmd.cwd(dir);
         }
 
-        let _child = pair
+        let child = pair
             .slave
             .spawn_command(cmd)
             .map_err(|e| format!("Failed to spawn shell: {}", e))?;
+
+        let child_pid = child.process_id();
 
         let mut reader = pair.master.try_clone_reader()
             .map_err(|e| format!("Failed to clone reader: {}", e))?;
@@ -84,7 +115,17 @@ impl TerminalManager {
         });
 
         self.sessions.lock().unwrap().insert(
-            terminal_id, TerminalSession { writer });
+            terminal_id.clone(),
+            TerminalSession {
+                writer,
+                _pair: pair,
+                _child: child,
+                child_pid,
+            },
+        );
+        if let Some(pid) = child_pid {
+            self.terminal_pids.lock().unwrap().insert(terminal_id, pid);
+        }
 
         Ok(())
     }
@@ -98,10 +139,116 @@ impl TerminalManager {
         Ok(())
     }
 
+    pub fn resize(&self, terminal_id: String, cols: u16, rows: u16) -> Result<(), String> {
+        let sessions = self.sessions.lock().unwrap();
+        let session = sessions.get(&terminal_id).ok_or("Terminal not found")?;
+        session._pair.master.resize(portable_pty::PtySize {
+            rows,
+            cols,
+            pixel_width: 0,
+            pixel_height: 0,
+        }).map_err(|e| format!("Resize error: {}", e))?;
+        Ok(())
+    }
+
+    pub fn get_cwd(&self, terminal_id: String) -> Result<String, String> {
+        let sessions = self.sessions.lock().unwrap();
+        let session = sessions.get(&terminal_id).ok_or("Terminal not found")?;
+        let pid = session.child_pid.ok_or("No process ID")?;
+
+        let mut system = System::new_all();
+        system.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
+
+        let process = system.process(Pid::from(pid as usize))
+            .ok_or("Process not found")?;
+        let cwd = process.cwd()
+            .ok_or("Process cwd not available")?;
+        cwd.to_str()
+            .map(|s| s.to_string())
+            .ok_or("Invalid cwd path".to_string())
+    }
+
     pub fn kill(&self, terminal_id: String) -> Result<(), String> {
         let mut sessions = self.sessions.lock().unwrap();
         sessions.remove(&terminal_id);
+        self.terminal_pids.lock().unwrap().remove(&terminal_id);
         Ok(())
+    }
+
+    pub fn get_terminal_root_pids(&self) -> Vec<u32> {
+        let terminal_pids = self.terminal_pids.lock().unwrap();
+        terminal_pids.values().copied().collect()
+    }
+
+    pub fn get_terminal_processes(&self) -> TerminalProcessTree {
+        let terminal_pids = self.terminal_pids.lock().unwrap();
+        if terminal_pids.is_empty() {
+            return TerminalProcessTree {
+                processes: Vec::new(),
+                total_cpu: 0.0,
+                total_memory_mb: 0,
+            };
+        }
+
+        let mut system = System::new_all();
+        system.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
+        system.refresh_cpu_usage();
+
+        let root_pids: HashSet<u32> = terminal_pids.values().copied().collect();
+        let mut app_pids = root_pids.clone();
+
+        let processes = system.processes();
+        let mut changed = true;
+        while changed {
+            changed = false;
+            for (pid, process) in processes {
+                if app_pids.contains(&(pid.as_u32())) {
+                    continue;
+                }
+                if let Some(parent) = process.parent() {
+                    if app_pids.contains(&(parent.as_u32())) {
+                        app_pids.insert(pid.as_u32());
+                        changed = true;
+                    }
+                }
+            }
+        }
+
+        let child_pids: Vec<u32> = app_pids.into_iter()
+            .filter(|pid| !root_pids.contains(pid))
+            .collect();
+
+        let mut result = Vec::new();
+        let mut total_cpu = 0.0f32;
+        let mut total_memory_mb = 0u64;
+
+        for pid in child_pids {
+            if let Some(proc) = system.process(Pid::from(pid as usize)) {
+                let name = proc.name().to_string_lossy().to_string();
+                let cpu = proc.cpu_usage();
+                let memory_mb = proc.memory() / 1024 / 1024;
+                let cwd = proc.cwd()
+                    .and_then(|p| p.to_str())
+                    .unwrap_or("-")
+                    .to_string();
+                total_cpu += cpu;
+                total_memory_mb += memory_mb;
+                result.push(ProcessInfo {
+                    pid,
+                    name,
+                    cpu,
+                    memory_mb,
+                    cwd,
+                });
+            }
+        }
+        result.sort_by(|a, b| a.pid.cmp(&b.pid));
+
+        TerminalProcessTree {
+            processes: result,
+            total_cpu,
+            total_memory_mb,
+        }
     }
 }
 
@@ -125,6 +272,31 @@ pub fn write_terminal(
     data: Vec<u8>,
 ) -> Result<(), String> {
     state.write(terminal_id, data)
+}
+
+#[tauri::command]
+pub fn resize_terminal(
+    state: tauri::State<Arc<TerminalManager>>,
+    terminal_id: String,
+    cols: u16,
+    rows: u16,
+) -> Result<(), String> {
+    state.resize(terminal_id, cols, rows)
+}
+
+#[tauri::command]
+pub fn get_terminal_cwd(
+    state: tauri::State<Arc<TerminalManager>>,
+    terminal_id: String,
+) -> Result<String, String> {
+    state.get_cwd(terminal_id)
+}
+
+#[tauri::command]
+pub fn get_terminal_processes(
+    state: tauri::State<Arc<TerminalManager>>,
+) -> TerminalProcessTree {
+    state.get_terminal_processes()
 }
 
 #[tauri::command]

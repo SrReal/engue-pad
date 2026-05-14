@@ -81,7 +81,9 @@
   .split-container {
     display: flex;
     width: 100%;
-    height: 100%;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
     overflow: hidden;
   }
 
@@ -97,6 +99,8 @@
     min-width: 0;
     min-height: 0;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   .divider {

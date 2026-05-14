@@ -89,11 +89,12 @@ function findTabByPath(root: LayoutNode, path: string): { nodeId: string; tabId:
   return findTabByPath(root.first, path) ?? findTabByPath(root.second, path);
 }
 
-export function addTerminal(nodeId: string, title = "Terminal"): void {
+export function addTerminal(nodeId: string, title = "Terminal", cwd?: string): void {
   const tab: Tab = {
     id: crypto.randomUUID(),
     title,
     type: "terminal",
+    cwd,
   };
   addTab(nodeId, tab);
 }
@@ -256,6 +257,37 @@ export function setTabLineEnding(nodeId: string, tabId: string, lineEnding: stri
     return node;
   }
   layoutState.root = updateTree(layoutState.root);
+}
+
+export function findAllDirtyTabs(root: LayoutNode): Tab[] {
+  if (root.kind === "tab-group") {
+    return root.tabs.filter((t) => t.dirty);
+  }
+  return [...findAllDirtyTabs(root.first), ...findAllDirtyTabs(root.second)];
+}
+
+export async function syncTerminalCwds(root: LayoutNode): Promise<LayoutNode> {
+  if (root.kind === "tab-group") {
+    const tabs = await Promise.all(
+      root.tabs.map(async (t) => {
+        if (t.type === "terminal") {
+          try {
+            const cwd = await invoke<string>("get_terminal_cwd", { terminalId: t.id });
+            return { ...t, cwd };
+          } catch {
+            return t;
+          }
+        }
+        return t;
+      })
+    );
+    return { ...root, tabs };
+  }
+  const [first, second] = await Promise.all([
+    syncTerminalCwds(root.first),
+    syncTerminalCwds(root.second),
+  ]);
+  return { ...root, first, second };
 }
 
 export function detectLanguage(path: string): string {

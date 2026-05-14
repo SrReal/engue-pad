@@ -4,8 +4,10 @@ import { detectLanguage } from "$lib/layout/store.svelte";
 export type PersistedTab = {
   id: string;
   title: string;
+  type?: string;
   path?: string;
   preview?: boolean;
+  cwd?: string;
 };
 
 export type PersistedTabGroup = {
@@ -65,8 +67,10 @@ export function serializeNode(node: LayoutNode, rootPath: string): PersistedNode
       tabs: node.tabs.map((t) => ({
         id: t.id,
         title: t.title,
+        type: t.type,
         path: t.path ? toRelative(t.path, rootPath) : undefined,
         preview: t.preview,
+        cwd: t.cwd,
       })),
     };
   }
@@ -89,10 +93,12 @@ export function deserializeNode(node: PersistedNode, rootPath: string): LayoutNo
       tabs: node.tabs.map((t) => ({
         id: t.id,
         title: t.title,
+        type: t.type as "editor" | "terminal" | undefined,
         path: t.path ? toAbsolute(t.path, rootPath) : undefined,
-        language: t.path ? detectLanguage(t.path) : undefined,
+        language: t.type !== "terminal" && t.path ? detectLanguage(t.path) : undefined,
         dirty: false,
         preview: t.preview,
+        cwd: t.cwd,
       })),
     };
   }

@@ -10,6 +10,7 @@ export type Tab = {
   language?: string;
   preview?: boolean;
   lineEnding?: string;
+  cwd?: string;
 };
 
 export type TabGroup = {

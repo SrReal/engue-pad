@@ -1,4 +1,4 @@
-import { layoutState } from "$lib/layout/store.svelte";
+import { layoutState, syncTerminalCwds } from "$lib/layout/store.svelte";
 import { serializeNode, deserializeNode, type WorkspaceData } from "./persist";
 
 export type WorkspaceInfo = {
@@ -60,11 +60,13 @@ async function saveWorkspace(rootPath: string): Promise<void> {
   const { invoke } = await import("@tauri-apps/api/core");
   const workspacePath = `${rootPath}/.enguepad/workspace.json`;
 
+  const updatedRoot = await syncTerminalCwds(layoutState.root);
+
   const data: WorkspaceData = {
     workspaceId: workspaceInfo.workspaceId ?? crypto.randomUUID(),
     version: 1,
     layout: {
-      root: serializeNode(layoutState.root, rootPath),
+      root: serializeNode(updatedRoot, rootPath),
       activeNodeId: layoutState.activeNodeId,
     },
   };

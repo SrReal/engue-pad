@@ -3,13 +3,20 @@ mod terminal;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
+use std::collections::HashSet;
 use std::sync::Arc;
-use tauri::{AppHandle, Manager, WebviewUrl};
+use tauri::{AppHandle, Emitter, Manager, WebviewUrl};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FileContent {
     content: String,
     line_ending: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct AppStats {
+    cpu: f32,
+    memory_mb: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -115,6 +122,80 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+#[tauri::command]
+fn exit_app(app_handle: AppHandle) {
+    app_handle.exit(0);
+}
+
+#[tauri::command]
+fn get_app_stats(
+    state: tauri::State<Arc<terminal::TerminalManager>>,
+) -> Result<AppStats, String> {
+    use sysinfo::{Pid, System};
+    let mut system = System::new_all();
+    system.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
+    system.refresh_cpu_usage();
+
+    let terminal_root_pids: HashSet<u32> = state.get_terminal_root_pids().into_iter().collect();
+
+    // Build full app tree (all descendants of main process).
+    let root_pid = Pid::from(std::process::id() as usize);
+    let mut app_pids = HashSet::new();
+    app_pids.insert(root_pid);
+
+    let processes = system.processes();
+    let mut changed = true;
+    while changed {
+        changed = false;
+        for (pid, process) in processes {
+            if app_pids.contains(pid) {
+                continue;
+            }
+            if let Some(parent) = process.parent() {
+                if app_pids.contains(&parent) {
+                    app_pids.insert(*pid);
+                    changed = true;
+                }
+            }
+        }
+    }
+
+    // Build terminal descendant tree.
+    let mut terminal_pids = terminal_root_pids.clone();
+    let mut t_changed = true;
+    while t_changed {
+        t_changed = false;
+        for (pid, process) in processes {
+            if terminal_pids.contains(&pid.as_u32()) {
+                continue;
+            }
+            if let Some(parent) = process.parent() {
+                if terminal_pids.contains(&parent.as_u32()) {
+                    terminal_pids.insert(pid.as_u32());
+                    t_changed = true;
+                }
+            }
+        }
+    }
+
+    let mut total_cpu = 0.0f32;
+    let mut total_memory = 0u64;
+    for pid in &app_pids {
+        if terminal_pids.contains(&pid.as_u32()) {
+            continue;
+        }
+        if let Some(proc) = system.process(*pid) {
+            total_cpu += proc.cpu_usage();
+            total_memory += proc.memory();
+        }
+    }
+
+    Ok(AppStats {
+        cpu: total_cpu,
+        memory_mb: total_memory / 1024 / 1024,
+    })
+}
+
 fn create_main_window(app: &AppHandle) {
     let monitor = match app.primary_monitor().unwrap_or(None) {
         Some(m) => m,
@@ -148,10 +229,17 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .manage(Arc::clone(&terminal_manager))
-        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, write_file, ensure_dir, read_file_meta, get_app_data_dir, terminal::create_terminal, terminal::write_terminal, terminal::kill_terminal])
+        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, write_file, ensure_dir, read_file_meta, get_app_data_dir, exit_app, terminal::create_terminal, terminal::write_terminal, terminal::resize_terminal, terminal::get_terminal_cwd, terminal::kill_terminal, terminal::get_terminal_processes, get_app_stats])
         .setup(|app| {
             create_main_window(&app.handle().clone());
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let app_handle = window.app_handle().clone();
+                let _ = app_handle.emit("request-app-close", ());
+            }
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
