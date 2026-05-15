@@ -1,4 +1,4 @@
-export type TabType = "editor" | "terminal";
+export type TabType = "editor" | "terminal" | "preview";
 
 export type Tab = {
   id: string;
@@ -11,6 +11,8 @@ export type Tab = {
   preview?: boolean;
   lineEnding?: string;
   cwd?: string;
+  shell?: string;
+  url?: string;
 };
 
 export type TabGroup = {

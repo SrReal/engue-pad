@@ -1,11 +1,14 @@
 <script lang="ts">
   import type { TabGroup, Tab } from "$lib/layout/types";
-  import { layoutState, closeTab, setActiveTab, setActiveNode, splitNode, pinTab, addTerminal, removeNode, moveTab } from "$lib/layout/store.svelte";
+  import { layoutState, closeTab, setActiveTab, setActiveNode, splitNode, pinTab, addTerminal, removeNode, moveTab, renameTab } from "$lib/layout/store.svelte";
   import { workspaceInfo } from "$lib/workspace/store.svelte";
   import { confirm } from "@tauri-apps/plugin-dialog";
   import Editor from "./Editor.svelte";
   import MarkdownViewer from "./MarkdownViewer.svelte";
   import Terminal from "./Terminal.svelte";
+  import WebPreview from "./WebPreview.svelte";
+  import ImageViewer from "./ImageViewer.svelte";
+  import AudioPlayer from "./AudioPlayer.svelte";
 
   let { node }: { node: TabGroup } = $props();
   let isActive = $derived(layoutState.activeNodeId === node.id);
@@ -19,6 +22,23 @@
   let dragPosY = $state(0);
   let tabBarRef = $state<HTMLDivElement | null>(null);
   let isMouseDown = $state(false);
+  let renamingTabId = $state<string | null>(null);
+  let renameValue = $state("");
+  let renameInputRef = $state<HTMLInputElement | null>(null);
+
+  function isImage(path: string): boolean {
+    return /\.(png|jpe?g|gif|webp|svg|bmp|ico|tiff?)$/i.test(path);
+  }
+  function isAudio(path: string): boolean {
+    return /\.(mp3|wav|ogg|flac|m4a|aac|wma|opus)$/i.test(path);
+  }
+
+  $effect(() => {
+    if (renamingTabId && renameInputRef) {
+      renameInputRef.focus();
+      renameInputRef.select();
+    }
+  });
 
   function getTabIndex(tabId: string): number {
     return node.tabs.findIndex((t) => t.id === tabId);
@@ -129,6 +149,34 @@
     closeTabContextMenu();
   }
 
+  function startTabRename(tabId: string) {
+    const tab = node.tabs.find((t) => t.id === tabId);
+    if (tab) {
+      renamingTabId = tabId;
+      renameValue = tab.title;
+    }
+  }
+
+  function handleRenameTab() {
+    if (tabContextMenu) {
+      startTabRename(tabContextMenu.tabId);
+    }
+    closeTabContextMenu();
+  }
+
+  function submitRename(tabId: string) {
+    if (renamingTabId === tabId) {
+      renameTab(node.id, tabId, renameValue.trim() || "Untitled");
+      renamingTabId = null;
+      renameValue = "";
+    }
+  }
+
+  function cancelRename() {
+    renamingTabId = null;
+    renameValue = "";
+  }
+
   function handlePanelContextMenu(e: MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
@@ -186,14 +234,29 @@
         class:is-dragging={draggedTabId === tab.id}
         onmousedown={(e) => handleMouseDown(e, tab.id)}
         onclick={() => handleActivate(tab.id)}
+        ondblclick={() => { if (tab.type === "terminal") startTabRename(tab.id); }}
         oncontextmenu={(e) => handleTabContextMenu(e, tab.id)}
         onkeydown={(e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleActivate(tab.id); } }}
         role="tab"
         tabindex="0"
       >
-        <span class="tab-title">
-          {tab.title}{#if tab.dirty}●{/if}
-        </span>
+        {#if renamingTabId === tab.id}
+          <input
+            class="rename-input"
+            type="text"
+            bind:value={renameValue}
+            bind:this={renameInputRef}
+            onkeydown={(e: KeyboardEvent) => {
+              if (e.key === "Enter") { e.preventDefault(); submitRename(tab.id); }
+              if (e.key === "Escape") { e.preventDefault(); cancelRename(); }
+            }}
+            onblur={() => submitRename(tab.id)}
+          />
+        {:else}
+          <span class="tab-title">
+            {tab.title}{#if tab.dirty}●{/if}
+          </span>
+        {/if}
         <button class="tab-close" onclick={(e) => handleClose(tab.id, e)} type="button" aria-label="Close tab">×</button>
       </div>
     {/each}
@@ -211,30 +274,40 @@
     {#each node.tabs as tab (tab.id)}
       {#if tab.type === "terminal"}
         <div class="terminal-tab-content" class:hidden={tab.id !== node.activeTabId}>
-          <Terminal bind:this={terminalRefs[tab.id]} nodeId={node.id} tabId={tab.id} cwd={tab.cwd ?? workspaceInfo.rootPath ?? undefined} />
+          <Terminal bind:this={terminalRefs[tab.id]} nodeId={node.id} tabId={tab.id} cwd={tab.cwd ?? workspaceInfo.rootPath ?? undefined} shell={tab.shell} />
+        </div>
+      {:else if tab.type === "preview"}
+        <div class="preview-tab-content" class:hidden={tab.id !== node.activeTabId}>
+          <WebPreview url={tab.url ?? ""} />
         </div>
       {:else if tab.id === node.activeTabId}
         {#if tab.path}
-          {#key tab.id}
-            {#if tab.language === "markdown"}
-              <MarkdownViewer
-                nodeId={node.id}
-                tabId={tab.id}
-                path={tab.path}
-                initialContent={tab.content ?? ""}
-                dirty={tab.dirty}
-              />
-            {:else}
-              <Editor
-                nodeId={node.id}
-                tabId={tab.id}
-                path={tab.path}
-                language={tab.language}
-                initialContent={tab.content ?? ""}
-                dirty={tab.dirty}
-              />
-            {/if}
-          {/key}
+          {#if isImage(tab.path)}
+            <ImageViewer path={tab.path} />
+          {:else if isAudio(tab.path)}
+            <AudioPlayer path={tab.path} />
+          {:else}
+            {#key tab.id}
+              {#if tab.language === "markdown"}
+                <MarkdownViewer
+                  nodeId={node.id}
+                  tabId={tab.id}
+                  path={tab.path}
+                  initialContent={tab.content ?? ""}
+                  dirty={tab.dirty}
+                />
+              {:else}
+                <Editor
+                  nodeId={node.id}
+                  tabId={tab.id}
+                  path={tab.path}
+                  language={tab.language}
+                  initialContent={tab.content ?? ""}
+                  dirty={tab.dirty}
+                />
+              {/if}
+            {/key}
+          {/if}
         {:else}
           <div class="content-placeholder">
             <span>{tab.title}</span>
@@ -256,6 +329,7 @@
 {#if tabContextMenu}
   <div class="context-menu" style:left="{tabContextMenu.x}px" style:top="{tabContextMenu.y}px">
     <button onclick={handleCloseFromMenu}>Close</button>
+    <button onclick={handleRenameTab}>Rename</button>
     <button onclick={handlePinTab}>Pin</button>
   </div>
 {/if}
@@ -301,6 +375,8 @@
     cursor: pointer;
     white-space: nowrap;
     font-size: 13px;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .tab:hover {
@@ -351,6 +427,8 @@
     cursor: pointer;
     font-size: 16px;
     border-radius: 3px;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .tab-add:hover {
@@ -390,6 +468,8 @@
     font-size: 13px;
     white-space: nowrap;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .tab-content {
@@ -408,6 +488,28 @@
 
   .terminal-tab-content.hidden {
     display: none;
+  }
+
+  .preview-tab-content {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+  }
+
+  .preview-tab-content.hidden {
+    display: none;
+  }
+
+  .rename-input {
+    background: var(--bg-panel, #1e1e1e);
+    border: 1px solid var(--accent-color, #4a9eff);
+    color: var(--text-color, #ccc);
+    padding: 2px 6px;
+    font-size: 13px;
+    border-radius: 3px;
+    outline: none;
+    max-width: 140px;
   }
 
   .content-placeholder {

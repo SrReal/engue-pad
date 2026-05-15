@@ -4,13 +4,16 @@
   import { invoke } from "@tauri-apps/api/core";
   import { Terminal as XTerm } from "@xterm/xterm";
   import { FitAddon } from "@xterm/addon-fit";
+  import { WebLinksAddon } from "@xterm/addon-web-links";
   import "@xterm/xterm/css/xterm.css";
   import { reportUrl } from "$lib/terminal/urlDetector";
+  import { addPreview } from "$lib/layout/store.svelte";
 
-  let { nodeId, tabId, cwd }: {
+  let { nodeId, tabId, cwd, shell }: {
     nodeId: string;
     tabId: string;
     cwd?: string;
+    shell?: string;
   } = $props();
 
   let containerRef = $state<HTMLDivElement | null>(null);
@@ -38,6 +41,24 @@
     const fit = new FitAddon();
     term.loadAddon(fit);
 
+    const webLinks = new WebLinksAddon(
+      (e, uri) => {
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+          addPreview(nodeId, uri);
+        }
+      },
+      {
+        hover: (e, uri) => {
+          (e.target as HTMLElement).title = "Ctrl+Click to open preview";
+        },
+        leave: (e, uri) => {
+          (e.target as HTMLElement).title = "";
+        },
+      }
+    );
+    term.loadAddon(webLinks);
+
     term.open(containerRef);
     term.focus();
 
@@ -49,12 +70,12 @@
     const cols = term.cols;
     const rows = term.rows;
 
-    const shell = navigator.platform.startsWith("Win") ? "powershell.exe" : "zsh";
+    const effectiveShell = shell ?? (navigator.platform.startsWith("Win") ? "powershell.exe" : "zsh");
 
     try {
       await invoke("create_terminal", {
         terminalId: tabId,
-        shell,
+        shell: effectiveShell,
         cwd,
         cols,
         rows,
@@ -64,16 +85,22 @@
       return;
     }
 
-    const urlRegex = /https?:\/\/localhost:\d+[^\s'"\)\]>]+/g;
+    const urlRegex = /https?:\/\/[^\s'"\)\]>]+/g;
+
+    function stripAnsi(str: string): string {
+      // eslint-disable-next-line no-control-regex
+      return str.replace(/\x1b\[[0-9;]*m/g, "");
+    }
 
     const listener = await listen<{ terminal_id: string; data: number[] }>("terminal-output", (event) => {
       if (event.payload.terminal_id === tabId) {
         const data = new Uint8Array(event.payload.data);
         term.write(data);
 
-        // Scan output for local URLs.
+        // Scan output for URLs (strip ANSI color codes first).
         const text = textDecoder.decode(data, { stream: true });
-        urlBuffer += text;
+        const cleanText = stripAnsi(text);
+        urlBuffer += cleanText;
         if (urlBuffer.length > 4096) {
           urlBuffer = urlBuffer.slice(-2048);
         }

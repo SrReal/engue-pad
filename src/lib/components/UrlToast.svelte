@@ -1,17 +1,25 @@
 <script lang="ts">
   import { detectedUrls, clearUrl } from "$lib/terminal/urlDetector";
   import { openUrl } from "@tauri-apps/plugin-opener";
+  import { addPreview, layoutState } from "$lib/layout/store.svelte";
 
   function dismiss(url: string, terminalId: string) {
     clearUrl(url, terminalId);
   }
 
-  async function openExternal(url: string) {
+  function openPreview(url: string, terminalId: string) {
+    const nodeId = layoutState.activeNodeId ?? layoutState.root.id;
+    addPreview(nodeId, url);
+    clearUrl(url, terminalId);
+  }
+
+  async function openExternal(url: string, terminalId: string) {
     try {
       await openUrl(url);
     } catch {
       window.open(url, "_blank");
     }
+    clearUrl(url, terminalId);
   }
 </script>
 
@@ -20,8 +28,11 @@
     {#each $detectedUrls as detected (detected.timestamp)}
       <div class="url-toast">
         <span class="url-text">{detected.url}</span>
-        <button class="url-action" onclick={() => openExternal(detected.url)} type="button">
-          Open
+        <button class="url-action" onclick={() => openPreview(detected.url, detected.terminalId)} type="button">
+          Open preview
+        </button>
+        <button class="url-action secondary" onclick={() => openExternal(detected.url, detected.terminalId)} type="button">
+          External
         </button>
         <button
           class="url-dismiss"
@@ -94,6 +105,11 @@
 
   .url-action:hover {
     opacity: 0.9;
+  }
+
+  .url-action.secondary {
+    background: var(--bg-tab-hover, #3d3d3d);
+    border: 1px solid var(--border-color, #333);
   }
 
   .url-dismiss {

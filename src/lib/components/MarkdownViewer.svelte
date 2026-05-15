@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
+  import { addPreview } from "$lib/layout/store.svelte";
   import Editor from "./Editor.svelte";
 
   let { nodeId, tabId, path, initialContent = "", dirty = false }: {
@@ -36,9 +37,20 @@
       .replace(/^\> (.*$)/gim, "<blockquote>$1</blockquote>")
       .replace(/\*\*(.*)\*\*/gim, "<b>$1</b>")
       .replace(/\*(.*)\*/gim, "<i>$1</i>")
-      .replace(/\[([^\]]+)\]\(([^\)]+)\)/gim, '<a href="$2" target="_blank">$1</a>')
+      .replace(/\[([^\]]+)\]\(([^\)]+)\)/gim, '<a href="$2" title="Ctrl+Click to open">$1</a>')
       .replace(/\n/gim, "<br>");
     return html;
+  }
+
+  function handleRenderedClick(e: MouseEvent) {
+    if (!e.ctrlKey && !e.metaKey) return;
+    const target = e.target as HTMLElement;
+    const anchor = target.closest("a") as HTMLAnchorElement | null;
+    if (!anchor) return;
+    const href = anchor.getAttribute("href");
+    if (!href) return;
+    e.preventDefault();
+    addPreview(nodeId, href);
   }
 
   onMount(() => {
@@ -56,7 +68,7 @@
     <button class="toggle-btn" class:active={showRendered} onclick={() => showRendered = true}>Preview</button>
   </div>
   {#if showRendered}
-    <div class="rendered">
+    <div class="rendered" onclick={handleRenderedClick}>
       {#if isLoading}
         <div class="loading">Loading...</div>
       {:else}
@@ -121,6 +133,8 @@
 
   .rendered :global(a) {
     color: var(--accent-color, #4a9eff);
+    cursor: pointer;
+    text-decoration: underline;
   }
 
   .loading {

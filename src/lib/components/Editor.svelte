@@ -15,6 +15,7 @@
   import { bracketMatching, syntaxHighlighting, defaultHighlightStyle, foldGutter, foldKeymap } from "@codemirror/language";
   import { highlightSelectionMatches, searchKeymap, search } from "@codemirror/search";
   import { updateTabContent, markTabSaved, setTabLineEnding } from "$lib/layout/store.svelte";
+  import { urlLinksFor } from "$lib/editor/urlLinks";
 
   let { nodeId, tabId, path, language, initialContent = "", dirty = false }: {
     nodeId: string;
@@ -121,6 +122,7 @@
       syntaxHighlighting(defaultHighlightStyle),
       saveKeymap,
       updateListener,
+      ...urlLinksFor(nodeId),
       EditorView.theme({
         "&": {
           fontSize: "14px",
@@ -184,6 +186,17 @@
 
   .editor-container :global(.cm-editor) {
     height: 100%;
+  }
+
+  .editor-container :global(.cm-url-link) {
+    text-decoration: underline;
+    text-decoration-color: var(--accent-color, #4a9eff);
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
+  .editor-container :global(.cm-url-link:hover) {
+    color: var(--accent-color, #4a9eff);
   }
 
   .loading {

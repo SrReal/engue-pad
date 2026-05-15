@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { listen } from "@tauri-apps/api/event";
   import { invoke } from "@tauri-apps/api/core";
-  import { layoutState, splitNode, findAllDirtyTabs } from "$lib/layout/store.svelte";
+  import { layoutState, splitNode, findAllDirtyTabs, resetLayout } from "$lib/layout/store.svelte";
   import { workspaceInfo, loadWorkspace, scheduleSaveWorkspace } from "$lib/workspace/store.svelte";
   import { loadSettings, saveSettings } from "$lib/workspace/settings";
   import LayoutNode from "./LayoutNode.svelte";
@@ -14,6 +14,7 @@
 
   let sidebarWidth = $state(240);
   let isResizingSidebar = $state(false);
+  let refreshSignal = $state(0);
 
   onMount(async () => {
     const settings = await loadSettings();
@@ -81,10 +82,22 @@
   async function openFolder() {
     const selected = await open({ directory: true });
     if (selected && typeof selected === "string") {
+      const dirtyTabs = findAllDirtyTabs(layoutState.root);
+      if (dirtyTabs.length > 0) {
+        const names = dirtyTabs.map((t) => `"${t.title}"`).join(", ");
+        const confirmed = await confirm(`${names} has unsaved changes. Switch project without saving?`, { title: "Switch Project", kind: "warning" });
+        if (!confirmed) return;
+      }
+      resetLayout();
       workspaceInfo.rootPath = selected;
       await saveSettings({ lastProjectPath: selected });
     }
   }
+
+  function triggerRefresh() {
+    refreshSignal++;
+  }
+
 </script>
 
 <div class="app-layout">
@@ -92,12 +105,13 @@
     <div class="sidebar-header">
       <span class="logo">EnguePad</span>
       <button class="icon-btn" onclick={openFolder} title="Open folder">📂</button>
+      <button class="icon-btn" onclick={triggerRefresh} title="Refresh tree">🔄</button>
       <button class="icon-btn" onclick={addHorizontalSplit} title="Split horizontal">⧈</button>
       <button class="icon-btn" onclick={addVerticalSplit} title="Split vertical">⧉</button>
     </div>
     <div class="sidebar-content">
       {#if workspaceInfo.rootPath}
-        <FileTree rootPath={workspaceInfo.rootPath} />
+        <FileTree rootPath={workspaceInfo.rootPath} {refreshSignal} />
       {:else}
         <div class="placeholder">
           <button class="open-btn" onclick={openFolder}>Open folder</button>
@@ -155,6 +169,8 @@
   .logo {
     flex: 1;
     color: var(--accent-color, #4a9eff);
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .icon-btn {
@@ -164,6 +180,8 @@
     cursor: pointer;
     padding: 2px 6px;
     border-radius: 3px;
+    user-select: none;
+    -webkit-user-select: none;
     font-size: 16px;
   }
 

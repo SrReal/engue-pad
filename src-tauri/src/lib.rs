@@ -89,6 +89,11 @@ fn read_file(path: String) -> Result<String, String> {
 }
 
 #[tauri::command]
+fn read_file_bytes(path: String) -> Result<Vec<u8>, String> {
+    fs::read(&path).map_err(|e| format!("Failed to read file: {}", e))
+}
+
+#[tauri::command]
 fn read_file_meta(path: String) -> Result<FileContent, String> {
     let content = fs::read_to_string(&path).map_err(|e| format!("Failed to read file: {}", e))?;
     let line_ending = if content.contains("\r\n") {
@@ -125,6 +130,11 @@ fn greet(name: &str) -> String {
 #[tauri::command]
 fn exit_app(app_handle: AppHandle) {
     app_handle.exit(0);
+}
+
+#[tauri::command]
+fn rename_file(from: String, to: String) -> Result<(), String> {
+    fs::rename(&from, &to).map_err(|e| format!("Failed to rename: {}", e))
 }
 
 #[tauri::command]
@@ -229,7 +239,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .manage(Arc::clone(&terminal_manager))
-        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, write_file, ensure_dir, read_file_meta, get_app_data_dir, exit_app, terminal::create_terminal, terminal::write_terminal, terminal::resize_terminal, terminal::get_terminal_cwd, terminal::kill_terminal, terminal::get_terminal_processes, get_app_stats])
+        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, read_file_bytes, write_file, ensure_dir, read_file_meta, get_app_data_dir, exit_app, rename_file, terminal::create_terminal, terminal::write_terminal, terminal::resize_terminal, terminal::get_terminal_cwd, terminal::kill_terminal, terminal::get_terminal_processes, get_app_stats])
         .setup(|app| {
             create_main_window(&app.handle().clone());
             Ok(())

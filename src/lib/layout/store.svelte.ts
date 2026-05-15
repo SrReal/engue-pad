@@ -13,6 +13,12 @@ function createLayoutState(): LayoutState {
 
 export const layoutState = $state<LayoutState>(createLayoutState());
 
+export function resetLayout(): void {
+  killTerminalsInNode(layoutState.root);
+  layoutState.root = createDefaultLayout();
+  layoutState.activeNodeId = null;
+}
+
 export function setActiveNode(nodeId: string): void {
   layoutState.activeNodeId = nodeId;
 }
@@ -89,12 +95,38 @@ function findTabByPath(root: LayoutNode, path: string): { nodeId: string; tabId:
   return findTabByPath(root.first, path) ?? findTabByPath(root.second, path);
 }
 
-export function addTerminal(nodeId: string, title = "Terminal", cwd?: string): void {
+export function addTerminal(nodeId: string, title = "Terminal", cwd?: string, shell?: string): void {
   const tab: Tab = {
     id: crypto.randomUUID(),
     title,
     type: "terminal",
     cwd,
+    shell,
+  };
+  addTab(nodeId, tab);
+}
+
+function findPreviewTab(root: LayoutNode, url: string): { nodeId: string; tabId: string } | null {
+  if (root.kind === "tab-group") {
+    const tab = root.tabs.find((t) => t.type === "preview" && t.url === url);
+    if (tab) return { nodeId: root.id, tabId: tab.id };
+    return null;
+  }
+  return findPreviewTab(root.first, url) ?? findPreviewTab(root.second, url);
+}
+
+export function addPreview(nodeId: string, url: string): void {
+  const existing = findPreviewTab(layoutState.root, url);
+  if (existing) {
+    setActiveTab(existing.nodeId, existing.tabId);
+    setActiveNode(existing.nodeId);
+    return;
+  }
+  const tab: Tab = {
+    id: crypto.randomUUID(),
+    title: url,
+    type: "preview",
+    url,
   };
   addTab(nodeId, tab);
 }
@@ -232,6 +264,22 @@ export function markTabSaved(nodeId: string, tabId: string): void {
     if (node.kind === "tab-group" && node.id === nodeId) {
       const tabs = node.tabs.map((t) =>
         t.id === tabId ? { ...t, dirty: false } : t
+      );
+      return { ...node, tabs };
+    }
+    if (node.kind === "split") {
+      return { ...node, first: updateTree(node.first), second: updateTree(node.second) };
+    }
+    return node;
+  }
+  layoutState.root = updateTree(layoutState.root);
+}
+
+export function renameTab(nodeId: string, tabId: string, newTitle: string): void {
+  function updateTree(node: LayoutNode): LayoutNode {
+    if (node.kind === "tab-group" && node.id === nodeId) {
+      const tabs = node.tabs.map((t) =>
+        t.id === tabId ? { ...t, title: newTitle } : t
       );
       return { ...node, tabs };
     }

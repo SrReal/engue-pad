@@ -8,6 +8,7 @@ export type PersistedTab = {
   path?: string;
   preview?: boolean;
   cwd?: string;
+  shell?: string;
 };
 
 export type PersistedTabGroup = {
@@ -64,14 +65,17 @@ export function serializeNode(node: LayoutNode, rootPath: string): PersistedNode
       kind: "tab-group",
       id: node.id,
       activeTabId: node.activeTabId,
-      tabs: node.tabs.map((t) => ({
-        id: t.id,
-        title: t.title,
-        type: t.type,
-        path: t.path ? toRelative(t.path, rootPath) : undefined,
-        preview: t.preview,
-        cwd: t.cwd,
-      })),
+      tabs: node.tabs
+        .filter((t) => t.type !== "preview")
+        .map((t) => ({
+          id: t.id,
+          title: t.title,
+          type: t.type,
+          path: t.path ? toRelative(t.path, rootPath) : undefined,
+          preview: t.preview,
+          cwd: t.cwd,
+          shell: t.shell,
+        })),
     };
   }
   return {
@@ -99,6 +103,7 @@ export function deserializeNode(node: PersistedNode, rootPath: string): LayoutNo
         dirty: false,
         preview: t.preview,
         cwd: t.cwd,
+        shell: t.shell,
       })),
     };
   }

@@ -27,8 +27,7 @@ export function clearUrls(): void {
 }
 
 export function clearUrl(url: string, terminalId: string): void {
-  const key = `${terminalId}::${url}`;
-  seenUrls.delete(key);
+  // Do NOT remove from seenUrls — a URL should be reported only once per terminal.
   detectedUrls.update((list) =>
     list.filter((u) => !(u.url === url && u.terminalId === terminalId))
   );
