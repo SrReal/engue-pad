@@ -261,7 +261,6 @@
       </div>
     {/each}
     <button class="tab-add" onclick={() => addTerminal(node.id, "Terminal", workspaceInfo.rootPath ?? undefined)} title="New terminal" type="button"><span class="term-icon">&gt;_</span></button>
-    <button class="tab-maximize" onclick={() => layoutState.maximizedNodeId = node.id} title="Maximize panel" type="button">⛶</button>
   </div>
   {#if draggedTabId}
     {@const draggedTab = node.tabs.find((t) => t.id === draggedTabId)}
@@ -433,27 +432,6 @@
   }
 
   .tab-add:hover {
-    background: var(--bg-tab-hover, #3d3d3d);
-  }
-
-  .tab-maximize {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    margin: 2px 4px;
-    background: transparent;
-    border: none;
-    color: var(--text-color, #ccc);
-    cursor: pointer;
-    font-size: 16px;
-    border-radius: 3px;
-    user-select: none;
-    -webkit-user-select: none;
-  }
-
-  .tab-maximize:hover {
     background: var(--bg-tab-hover, #3d3d3d);
   }
 

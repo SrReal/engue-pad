@@ -5,11 +5,10 @@ import { createDefaultLayout, createTabGroup, createSplit } from "./types";
 export type LayoutState = {
   root: LayoutNode;
   activeNodeId: string | null;
-  maximizedNodeId: string | null;
 };
 
 function createLayoutState(): LayoutState {
-  return { root: createDefaultLayout(), activeNodeId: null, maximizedNodeId: null };
+  return { root: createDefaultLayout(), activeNodeId: null };
 }
 
 export const layoutState = $state<LayoutState>(createLayoutState());
@@ -22,22 +21,6 @@ export function resetLayout(): void {
 
 export function setActiveNode(nodeId: string): void {
   layoutState.activeNodeId = nodeId;
-}
-
-export function findNodeById(root: LayoutNode, nodeId: string): LayoutNode | null {
-  if (root.id === nodeId) return root;
-  if (root.kind === "split") {
-    return findNodeById(root.first, nodeId) ?? findNodeById(root.second, nodeId);
-  }
-  return null;
-}
-
-export function maximizeNode(nodeId: string): void {
-  layoutState.maximizedNodeId = nodeId;
-}
-
-export function restoreNode(): void {
-  layoutState.maximizedNodeId = null;
 }
 
 export function splitNode(nodeId: string, direction: "horizontal" | "vertical"): void {

@@ -2,21 +2,22 @@
   import { onMount } from "svelte";
   import { listen } from "@tauri-apps/api/event";
   import { invoke } from "@tauri-apps/api/core";
-  import { layoutState, splitNode, findAllDirtyTabs, resetLayout, findNodeById, restoreNode } from "$lib/layout/store.svelte";
+  import { layoutState, splitNode, findAllDirtyTabs, resetLayout } from "$lib/layout/store.svelte";
   import { workspaceInfo, loadWorkspace, scheduleSaveWorkspace } from "$lib/workspace/store.svelte";
   import { loadSettings, saveSettings } from "$lib/workspace/settings";
   import LayoutNode from "./LayoutNode.svelte";
-  import TabPanel from "./TabPanel.svelte";
   import FileTree from "./FileTree.svelte";
   import StatusBar from "./StatusBar.svelte";
   import ProcessFooter from "./ProcessFooter.svelte";
   import UrlToast from "./UrlToast.svelte";
   import { open, confirm } from "@tauri-apps/plugin-dialog";
-  import type { TabGroup } from "$lib/layout/types";
+
 
   let sidebarWidth = $state(240);
   let isResizingSidebar = $state(false);
+  let sidebarCollapsed = $state(false);
   let refreshSignal = $state(0);
+  let lastSidebarWidth = $state(240);
 
   onMount(async () => {
     const settings = await loadSettings();
@@ -65,6 +66,7 @@
   function onSidebarPointerMove(e: PointerEvent) {
     if (!isResizingSidebar) return;
     sidebarWidth = Math.max(160, Math.min(400, e.clientX));
+    if (sidebarWidth > 40) lastSidebarWidth = sidebarWidth;
   }
 
   function onSidebarPointerUp() {
@@ -79,6 +81,16 @@
   function addVerticalSplit() {
     const targetId = layoutState.activeNodeId ?? layoutState.root.id;
     splitNode(targetId, "vertical");
+  }
+
+  function toggleSidebar() {
+    sidebarCollapsed = !sidebarCollapsed;
+    if (sidebarCollapsed) {
+      lastSidebarWidth = sidebarWidth;
+      sidebarWidth = 0;
+    } else {
+      sidebarWidth = lastSidebarWidth || 240;
+    }
   }
 
   async function openFolder() {
@@ -103,8 +115,9 @@
 </script>
 
 <div class="app-layout">
-  <aside class="sidebar" style:width="{sidebarWidth}px">
+  <aside class="sidebar" class:collapsed={sidebarCollapsed} style:width="{sidebarCollapsed ? 0 : sidebarWidth}px">
     <div class="sidebar-header">
+      <button class="icon-btn" onclick={toggleSidebar} title="Toggle sidebar">☰</button>
       <span class="logo">EnguePad</span>
       <button class="icon-btn" onclick={openFolder} title="Open folder">📂</button>
       <button class="icon-btn" onclick={triggerRefresh} title="Refresh tree">🔄</button>
@@ -130,27 +143,11 @@
     aria-orientation="vertical"
   ></div>
   <main class="main-area">
-    {#if layoutState.maximizedNodeId}
-      {@const maximizedNode = findNodeById(layoutState.root, layoutState.maximizedNodeId)}
-      {#if maximizedNode && maximizedNode.kind === "tab-group"}
-        <div class="maximized-overlay">
-          <button class="restore-btn" onclick={restoreNode} title="Restore panel">⤢</button>
-          <TabPanel node={maximizedNode as TabGroup} />
-        </div>
-      {:else}
-        <div class="editor-area">
-          <LayoutNode node={layoutState.root} />
-        </div>
-      {/if}
-    {:else}
-      <div class="editor-area">
-        <LayoutNode node={layoutState.root} />
-      </div>
-    {/if}
-    {#if !layoutState.maximizedNodeId}
-      <ProcessFooter />
-      <StatusBar />
-    {/if}
+    <div class="editor-area">
+      <LayoutNode node={layoutState.root} />
+    </div>
+    <ProcessFooter />
+    <StatusBar />
   </main>
   <UrlToast />
 </div>
@@ -262,33 +259,14 @@
     flex-direction: column;
   }
 
-  .maximized-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 9998;
-    display: flex;
-    flex-direction: column;
-    background: var(--bg-app, #1a1a1a);
+  .sidebar.collapsed {
+    overflow: hidden;
+    padding: 0;
+    min-width: 0;
   }
 
-  .restore-btn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    z-index: 9999;
-    background: var(--bg-sidebar, #252526);
-    border: 1px solid var(--border-color, #333);
-    color: var(--text-color, #ccc);
-    padding: 4px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-  }
-
-  .restore-btn:hover {
-    background: var(--bg-tab-hover, #3d3d3d);
+  .sidebar.collapsed .sidebar-header,
+  .sidebar.collapsed .sidebar-content {
+    display: none;
   }
 </style>
