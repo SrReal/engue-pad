@@ -29,6 +29,12 @@ export type PersistedSplit = {
 
 export type PersistedNode = PersistedSplit | PersistedTabGroup;
 
+export type LinterConfig = {
+  enabled: boolean;
+  runOnSave: boolean;
+  runOnType: boolean;
+};
+
 export type WorkspaceData = {
   workspaceId: string;
   version: number;
@@ -36,6 +42,7 @@ export type WorkspaceData = {
     root: PersistedNode;
     activeNodeId: string | null;
   };
+  linter?: LinterConfig;
 };
 
 function toRelative(path: string, rootPath: string): string {

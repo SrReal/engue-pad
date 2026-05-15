@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
-import { linter as cmLinter, type Diagnostic } from "@codemirror/lint";
+import { linter as cmLinter, setDiagnostics, type Diagnostic } from "@codemirror/lint";
 import type { EditorView } from "@codemirror/view";
+import { setProblemsForPath } from "./problems";
 
 export type LinterSeverity = "error" | "warning" | "info";
 
@@ -177,6 +178,35 @@ export async function runLinters(
   return [];
 }
 
+function toCmDiagnostics(results: LinterResult[], docLength: number): Diagnostic[] {
+  return results.map((r) => ({
+    from: Math.min(r.from, docLength),
+    to: Math.min(r.to, docLength),
+    severity: r.severity,
+    message: r.message,
+  }));
+}
+
+export async function forceLint(view: EditorView, path: string, language: string) {
+  const content = view.state.doc.toString();
+  if (!content.trim()) {
+    view.dispatch(setDiagnostics(view.state, []));
+    setProblemsForPath(path, []);
+    return;
+  }
+  try {
+    const results = await runLinters(language, path, content);
+    view.dispatch(setDiagnostics(view.state, toCmDiagnostics(results, view.state.doc.length)));
+    setProblemsForPath(
+      path,
+      results.map((r) => ({ path, from: r.from, to: r.to, severity: r.severity, message: r.message }))
+    );
+  } catch {
+    view.dispatch(setDiagnostics(view.state, []));
+    setProblemsForPath(path, []);
+  }
+}
+
 export function linterFor(path: string, language: string) {
   let timeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -189,15 +219,13 @@ export function linterFor(path: string, language: string) {
       timeout = setTimeout(async () => {
         try {
           const results = await runLinters(language, path, content);
-          resolve(
-            results.map((r) => ({
-              from: Math.min(r.from, view.state.doc.length),
-              to: Math.min(r.to, view.state.doc.length),
-              severity: r.severity,
-              message: r.message,
-            }))
+          setProblemsForPath(
+            path,
+            results.map((r) => ({ path, from: r.from, to: r.to, severity: r.severity, message: r.message }))
           );
+          resolve(toCmDiagnostics(results, view.state.doc.length));
         } catch {
+          setProblemsForPath(path, []);
           resolve([]);
         }
       }, 800);

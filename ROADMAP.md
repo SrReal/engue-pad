@@ -132,13 +132,13 @@ Objetivo: linting ligero, indicadores git, panel de tareas y pulido de rendimien
 
 ### 3.1 Linting ligero
 
-- [ ] Sistema de adaptadores de linter: ejecutar comando externo, parsear salida.
-- [ ] Adaptador para TypeScript/JavaScript (eslint o biome).
-- [ ] Adaptador para Python (ruff).
-- [ ] Adaptador para PowerShell (PSScriptAnalyzer).
-- [ ] Ejecutar lint al guardar archivo (configurable).
+- [x] Sistema de adaptadores de linter: ejecutar comando externo, parsear salida.
+- [x] Adaptador para TypeScript/JavaScript (biome > eslint).
+- [x] Adaptador para Python (ruff).
+- [x] Adaptador para PowerShell (PSScriptAnalyzer).
+- [ ] Ejecutar lint al guardar archivo (configurable). Actualmente se ejecuta debounced al escribir.
 - [ ] Mostrar errores en panel de problemas.
-- [ ] Mostrar diagnósticos en editor (subrayado/warnings de CodeMirror).
+- [x] Mostrar diagnósticos en editor (subrayado/warnings de CodeMirror).
 - [ ] Configuración de linters en `workspace.json`.
 
 ### 3.2 Git básico en árbol de archivos

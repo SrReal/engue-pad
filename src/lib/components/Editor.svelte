@@ -16,7 +16,9 @@
   import { highlightSelectionMatches, searchKeymap, search } from "@codemirror/search";
   import { updateTabContent, markTabSaved, setTabLineEnding } from "$lib/layout/store.svelte";
   import { urlLinksFor } from "$lib/editor/urlLinks";
-  import { linterFor } from "$lib/editor/linter";
+  import { linterFor, forceLint } from "$lib/editor/linter";
+  import { clearProblemsForPath } from "$lib/editor/problems";
+  import { linterConfig } from "$lib/workspace/store.svelte";
 
   let { nodeId, tabId, path, language, initialContent = "", dirty = false }: {
     nodeId: string;
@@ -84,6 +86,9 @@
     try {
       await invoke("write_file", { path, contents: content });
       markTabSaved(nodeId, tabId);
+      if (linterConfig.enabled && linterConfig.runOnSave && language) {
+        forceLint(view, path, language);
+      }
     } catch (e) {
       console.error("Failed to save file:", e);
     }
@@ -144,7 +149,7 @@
     if (language) {
       extensions.push(getLanguageExtension(language));
     }
-    if (path && language) {
+    if (path && language && linterConfig.enabled && linterConfig.runOnType) {
       extensions.push(linterFor(path, language));
     }
 
@@ -165,6 +170,7 @@
 
   onDestroy(() => {
     view?.destroy();
+    if (path) clearProblemsForPath(path);
   });
 </script>
 

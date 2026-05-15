@@ -1,5 +1,5 @@
 import { layoutState, syncTerminalCwds } from "$lib/layout/store.svelte";
-import { serializeNode, deserializeNode, type WorkspaceData } from "./persist";
+import { serializeNode, deserializeNode, type WorkspaceData, type LinterConfig } from "./persist";
 
 export type WorkspaceInfo = {
   rootPath: string | null;
@@ -7,6 +7,8 @@ export type WorkspaceInfo = {
 };
 
 export const workspaceInfo = $state<WorkspaceInfo>({ rootPath: null, workspaceId: null });
+
+export const linterConfig = $state<LinterConfig>({ enabled: true, runOnSave: false, runOnType: true });
 
 let saveTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -25,6 +27,11 @@ export async function loadWorkspace(rootPath: string): Promise<void> {
     workspaceInfo.workspaceId = data.workspaceId;
     layoutState.root = deserializeNode(data.layout.root, rootPath);
     layoutState.activeNodeId = data.layout.activeNodeId;
+    if (data.linter) {
+      linterConfig.enabled = data.linter.enabled;
+      linterConfig.runOnSave = data.linter.runOnSave;
+      linterConfig.runOnType = data.linter.runOnType;
+    }
   } catch {
     const workspaceId = crypto.randomUUID();
     workspaceInfo.workspaceId = workspaceId;
@@ -69,6 +76,7 @@ async function saveWorkspace(rootPath: string): Promise<void> {
       root: serializeNode(updatedRoot, rootPath),
       activeNodeId: layoutState.activeNodeId,
     },
+    linter: { ...linterConfig },
   };
 
   try {

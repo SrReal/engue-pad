@@ -2,7 +2,10 @@
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { layoutState } from "$lib/layout/store.svelte";
+  import { problemsStore } from "$lib/editor/problems";
   import type { LayoutNode, Tab } from "$lib/layout/types";
+
+  let { toggleProblems, showProblems }: { toggleProblems: () => void; showProblems: boolean } = $props();
 
   function findActiveTab(root: LayoutNode, activeNodeId: string | null): Tab | null {
     if (!activeNodeId) return null;
@@ -54,6 +57,20 @@
 
 <div class="status-bar" onselectstart={(e) => e.preventDefault()}>
   <span class="info path" onclick={() => copyPath(activeTab?.path)} title="Copiar ruta">{activeTab?.path ?? ""}</span>
+  <button class="info problems-btn" class:active={showProblems} onclick={toggleProblems}>
+    {#if problemsStore.items.length > 0}
+      {#if problemsStore.items.some((p) => p.severity === "error")}
+        <span class="problem-dot error">●</span>
+      {:else if problemsStore.items.some((p) => p.severity === "warning")}
+        <span class="problem-dot warning">●</span>
+      {:else}
+        <span class="problem-dot info">●</span>
+      {/if}
+      {problemsStore.items.length}
+    {:else}
+      ✓
+    {/if}
+  </button>
   <span class="info">CPU {cpu.toFixed(1)}%</span>
   <span class="info">{memory} MB RAM</span>
   <span class="info">{activeTab?.lineEnding ?? "LF"}</span>
@@ -94,6 +111,41 @@
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
+  }
+
+  .problems-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted, #888);
+    cursor: pointer;
+    padding: 0 6px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
+  }
+
+  .problems-btn:hover,
+  .problems-btn.active {
+    background: var(--bg-tab-hover, #3d3d3d);
+    color: var(--text-color, #ccc);
+  }
+
+  .problem-dot {
+    font-size: 10px;
+  }
+
+  .problem-dot.error {
+    color: #f14c4c;
+  }
+
+  .problem-dot.warning {
+    color: #f0a732;
+  }
+
+  .problem-dot.info {
+    color: #4a9eff;
   }
 
   .toast {

@@ -9,6 +9,7 @@
   import FileTree from "./FileTree.svelte";
   import StatusBar from "./StatusBar.svelte";
   import ProcessFooter from "./ProcessFooter.svelte";
+  import ProblemsPanel from "./ProblemsPanel.svelte";
   import UrlToast from "./UrlToast.svelte";
   import { open, confirm } from "@tauri-apps/plugin-dialog";
 
@@ -17,6 +18,7 @@
   let sidebarCollapsed = $state(false);
   let refreshSignal = $state(0);
   let lastSidebarWidth = $state(240);
+  let showProblems = $state(false);
 
   onMount(async () => {
     const settings = await loadSettings();
@@ -148,8 +150,13 @@
       <div class="editor-area">
         <LayoutNode node={layoutState.root} />
       </div>
+      {#if showProblems}
+        <div class="problems-area">
+          <ProblemsPanel />
+        </div>
+      {/if}
       <ProcessFooter />
-      <StatusBar />
+      <StatusBar toggleProblems={() => showProblems = !showProblems} {showProblems} />
     </main>
   </div>
   <UrlToast />
@@ -267,6 +274,15 @@
   .editor-area {
     flex: 1;
     min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .problems-area {
+    height: 180px;
+    flex-shrink: 0;
+    border-top: 1px solid var(--border-color, #333);
     overflow: hidden;
     display: flex;
     flex-direction: column;
