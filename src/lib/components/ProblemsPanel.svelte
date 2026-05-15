@@ -34,7 +34,7 @@
     }
   }
 
-  const grouped = $derived(() => {
+  const grouped = $derived.by(() => {
     const map = new Map<string, typeof problemsStore.items>();
     for (const p of problemsStore.items) {
       const list = map.get(p.path) ?? [];
@@ -60,7 +60,7 @@
     </span>
   </div>
   <div class="problems-list">
-    {#each grouped().entries() as [path, list] (path)}
+    {#each grouped.entries() as [path, list] (path)}
       <div class="path-group">
         <button class="path-header" onclick={() => togglePath(path)}>
           <span class="arrow" class:expanded={expandedPaths.has(path)}>▶</span>
