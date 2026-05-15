@@ -2,15 +2,17 @@
   import { onMount } from "svelte";
   import { listen } from "@tauri-apps/api/event";
   import { invoke } from "@tauri-apps/api/core";
-  import { layoutState, splitNode, findAllDirtyTabs, resetLayout } from "$lib/layout/store.svelte";
+  import { layoutState, splitNode, findAllDirtyTabs, resetLayout, findNodeById, restoreNode } from "$lib/layout/store.svelte";
   import { workspaceInfo, loadWorkspace, scheduleSaveWorkspace } from "$lib/workspace/store.svelte";
   import { loadSettings, saveSettings } from "$lib/workspace/settings";
   import LayoutNode from "./LayoutNode.svelte";
+  import TabPanel from "./TabPanel.svelte";
   import FileTree from "./FileTree.svelte";
   import StatusBar from "./StatusBar.svelte";
   import ProcessFooter from "./ProcessFooter.svelte";
   import UrlToast from "./UrlToast.svelte";
   import { open, confirm } from "@tauri-apps/plugin-dialog";
+  import type { TabGroup } from "$lib/layout/types";
 
   let sidebarWidth = $state(240);
   let isResizingSidebar = $state(false);
@@ -128,11 +130,27 @@
     aria-orientation="vertical"
   ></div>
   <main class="main-area">
-    <div class="editor-area">
-      <LayoutNode node={layoutState.root} />
-    </div>
-    <ProcessFooter />
-    <StatusBar />
+    {#if layoutState.maximizedNodeId}
+      {@const maximizedNode = findNodeById(layoutState.root, layoutState.maximizedNodeId)}
+      {#if maximizedNode && maximizedNode.kind === "tab-group"}
+        <div class="maximized-overlay">
+          <button class="restore-btn" onclick={restoreNode} title="Restore panel">⤢</button>
+          <TabPanel node={maximizedNode as TabGroup} />
+        </div>
+      {:else}
+        <div class="editor-area">
+          <LayoutNode node={layoutState.root} />
+        </div>
+      {/if}
+    {:else}
+      <div class="editor-area">
+        <LayoutNode node={layoutState.root} />
+      </div>
+    {/if}
+    {#if !layoutState.maximizedNodeId}
+      <ProcessFooter />
+      <StatusBar />
+    {/if}
   </main>
   <UrlToast />
 </div>
@@ -242,5 +260,35 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+  }
+
+  .maximized-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9998;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-app, #1a1a1a);
+  }
+
+  .restore-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 9999;
+    background: var(--bg-sidebar, #252526);
+    border: 1px solid var(--border-color, #333);
+    color: var(--text-color, #ccc);
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  .restore-btn:hover {
+    background: var(--bg-tab-hover, #3d3d3d);
   }
 </style>
