@@ -12,7 +12,6 @@
   import UrlToast from "./UrlToast.svelte";
   import { open, confirm } from "@tauri-apps/plugin-dialog";
 
-
   let sidebarWidth = $state(240);
   let isResizingSidebar = $state(false);
   let sidebarCollapsed = $state(false);
@@ -115,46 +114,51 @@
 </script>
 
 <div class="app-layout">
-  <aside class="sidebar" class:collapsed={sidebarCollapsed} style:width="{sidebarCollapsed ? 0 : sidebarWidth}px">
-    <div class="sidebar-header">
-      <button class="icon-btn" onclick={toggleSidebar} title="Toggle sidebar">☰</button>
-      <span class="logo">EnguePad</span>
-      <button class="icon-btn" onclick={openFolder} title="Open folder">📂</button>
-      <button class="icon-btn" onclick={triggerRefresh} title="Refresh tree">🔄</button>
-      <button class="icon-btn" onclick={addHorizontalSplit} title="Split horizontal">⧈</button>
-      <button class="icon-btn" onclick={addVerticalSplit} title="Split vertical">⧉</button>
-    </div>
-    <div class="sidebar-content">
-      {#if workspaceInfo.rootPath}
-        <FileTree rootPath={workspaceInfo.rootPath} {refreshSignal} />
-      {:else}
-        <div class="placeholder">
-          <button class="open-btn" onclick={openFolder}>Open folder</button>
-        </div>
-      {/if}
-    </div>
-  </aside>
-  <div
-    class="sidebar-divider"
-    onpointerdown={onSidebarPointerDown}
-    onpointermove={onSidebarPointerMove}
-    onpointerup={onSidebarPointerUp}
-    role="separator"
-    aria-orientation="vertical"
-  ></div>
-  <main class="main-area">
-    <div class="editor-area">
-      <LayoutNode node={layoutState.root} />
-    </div>
-    <ProcessFooter />
-    <StatusBar />
-  </main>
+  <header class="top-bar">
+    <button class="icon-btn" onclick={toggleSidebar} title="Toggle sidebar">☰</button>
+    <span class="logo">EnguePad</span>
+    <button class="icon-btn" onclick={openFolder} title="Open folder">📂</button>
+    <button class="icon-btn" onclick={triggerRefresh} title="Refresh tree">🔄</button>
+    <button class="icon-btn" onclick={addHorizontalSplit} title="Split horizontal">⧈</button>
+    <button class="icon-btn" onclick={addVerticalSplit} title="Split vertical">⧉</button>
+  </header>
+  <div class="body">
+    <aside class="sidebar" class:collapsed={sidebarCollapsed} style:width="{sidebarCollapsed ? 0 : sidebarWidth}px">
+      <div class="sidebar-content">
+        {#if workspaceInfo.rootPath}
+          <FileTree rootPath={workspaceInfo.rootPath} {refreshSignal} />
+        {:else}
+          <div class="placeholder">
+            <button class="open-btn" onclick={openFolder}>Open folder</button>
+          </div>
+        {/if}
+      </div>
+    </aside>
+    {#if !sidebarCollapsed}
+      <div
+        class="sidebar-divider"
+        onpointerdown={onSidebarPointerDown}
+        onpointermove={onSidebarPointerMove}
+        onpointerup={onSidebarPointerUp}
+        role="separator"
+        aria-orientation="vertical"
+      ></div>
+    {/if}
+    <main class="main-area">
+      <div class="editor-area">
+        <LayoutNode node={layoutState.root} />
+      </div>
+      <ProcessFooter />
+      <StatusBar />
+    </main>
+  </div>
   <UrlToast />
 </div>
 
 <style>
   .app-layout {
     display: flex;
+    flex-direction: column;
     width: 100vw;
     height: 100vh;
     overflow: hidden;
@@ -162,30 +166,23 @@
     color: var(--text-color, #ccc);
   }
 
-  .sidebar {
-    display: flex;
-    flex-direction: column;
-    background: var(--bg-sidebar, #252526);
-    flex-shrink: 0;
-    min-width: 160px;
-    max-width: 400px;
-  }
-
-  .sidebar-header {
+  .top-bar {
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 8px 12px;
+    padding: 6px 12px;
     border-bottom: 1px solid var(--border-color, #333);
+    background: var(--bg-sidebar, #252526);
     font-size: 13px;
     font-weight: 600;
+    flex-shrink: 0;
   }
 
   .logo {
-    flex: 1;
     color: var(--accent-color, #4a9eff);
     user-select: none;
     -webkit-user-select: none;
+    margin-right: auto;
   }
 
   .icon-btn {
@@ -202,6 +199,22 @@
 
   .icon-btn:hover {
     background: var(--bg-tab-hover, #3d3d3d);
+  }
+
+  .body {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-sidebar, #252526);
+    flex-shrink: 0;
+    min-width: 160px;
+    max-width: 400px;
   }
 
   .sidebar-content {
@@ -265,7 +278,6 @@
     min-width: 0;
   }
 
-  .sidebar.collapsed .sidebar-header,
   .sidebar.collapsed .sidebar-content {
     display: none;
   }

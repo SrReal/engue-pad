@@ -28,6 +28,21 @@ pub struct FileEntry {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct RunCommandInput {
+    command: String,
+    args: Vec<String>,
+    cwd: Option<String>,
+    stdin: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct RunCommandOutput {
+    stdout: String,
+    stderr: String,
+    exit_code: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct DirListResult {
     entries: Vec<FileEntry>,
     path: String,
@@ -120,6 +135,37 @@ fn get_app_data_dir(app_handle: AppHandle) -> Result<String, String> {
         println!("[rust] get_app_data_dir: {}", path);
     }
     result
+}
+
+#[tauri::command]
+fn run_command(input: RunCommandInput) -> Result<RunCommandOutput, String> {
+    use std::process::{Command, Stdio};
+    use std::io::Write;
+
+    let mut cmd = Command::new(&input.command);
+    cmd.args(&input.args);
+    if let Some(cwd) = &input.cwd {
+        cmd.current_dir(cwd);
+    }
+    cmd.stdout(Stdio::piped());
+    cmd.stderr(Stdio::piped());
+    cmd.stdin(Stdio::piped());
+
+    let mut child = cmd.spawn().map_err(|e| format!("Failed to spawn command: {}", e))?;
+
+    if let Some(stdin) = input.stdin {
+        if let Some(mut child_stdin) = child.stdin.take() {
+            let _ = child_stdin.write_all(stdin.as_bytes());
+        }
+    }
+
+    let output = child.wait_with_output().map_err(|e| format!("Failed to read command output: {}", e))?;
+
+    Ok(RunCommandOutput {
+        stdout: String::from_utf8_lossy(&output.stdout).to_string(),
+        stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+        exit_code: output.status.code().unwrap_or(-1),
+    })
 }
 
 #[tauri::command]
@@ -239,7 +285,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .manage(Arc::clone(&terminal_manager))
-        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, read_file_bytes, write_file, ensure_dir, read_file_meta, get_app_data_dir, exit_app, rename_file, terminal::create_terminal, terminal::write_terminal, terminal::resize_terminal, terminal::get_terminal_cwd, terminal::kill_terminal, terminal::get_terminal_processes, get_app_stats])
+        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, read_file_bytes, write_file, ensure_dir, read_file_meta, get_app_data_dir, exit_app, rename_file, run_command, terminal::create_terminal, terminal::write_terminal, terminal::resize_terminal, terminal::get_terminal_cwd, terminal::kill_terminal, terminal::get_terminal_processes, get_app_stats])
         .setup(|app| {
             create_main_window(&app.handle().clone());
             Ok(())

@@ -16,6 +16,7 @@
   import { highlightSelectionMatches, searchKeymap, search } from "@codemirror/search";
   import { updateTabContent, markTabSaved, setTabLineEnding } from "$lib/layout/store.svelte";
   import { urlLinksFor } from "$lib/editor/urlLinks";
+  import { linterFor } from "$lib/editor/linter";
 
   let { nodeId, tabId, path, language, initialContent = "", dirty = false }: {
     nodeId: string;
@@ -143,6 +144,9 @@
     if (language) {
       extensions.push(getLanguageExtension(language));
     }
+    if (path && language) {
+      extensions.push(linterFor(path, language));
+    }
 
     const state = EditorState.create({
       doc: currentContent,
@@ -197,6 +201,61 @@
 
   .editor-container :global(.cm-url-link:hover) {
     color: var(--accent-color, #4a9eff);
+  }
+
+  .editor-container :global(.cm-diagnostic) {
+    background: var(--bg-panel, #1e1e1e);
+    color: var(--text-color, #ccc);
+    border-left: 3px solid var(--text-muted, #888);
+    padding: 4px 8px;
+    font-size: 13px;
+  }
+
+  .editor-container :global(.cm-diagnostic-error) {
+    border-left-color: #f14c4c;
+  }
+
+  .editor-container :global(.cm-diagnostic-warning) {
+    border-left-color: #f0a732;
+  }
+
+  .editor-container :global(.cm-diagnostic-info) {
+    border-left-color: #4a9eff;
+  }
+
+  .editor-container :global(.cm-tooltip-lint) {
+    background: var(--bg-panel, #1e1e1e);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    max-width: 400px;
+  }
+
+  .editor-container :global(.cm-lintRange-error) {
+    text-decoration: underline wavy #f14c4c;
+  }
+
+  .editor-container :global(.cm-lintRange-warning) {
+    text-decoration: underline wavy #f0a732;
+  }
+
+  .editor-container :global(.cm-lintRange-info) {
+    text-decoration: underline wavy #4a9eff;
+  }
+
+  .editor-container :global(.cm-panel.cm-panel-lint) {
+    background: var(--bg-panel, #1e1e1e);
+    border-top: 1px solid var(--border-color, #333);
+  }
+
+  .editor-container :global(.cm-panel.cm-panel-lint ul) {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    font-size: 12px;
+    color: var(--text-color, #ccc);
+  }
+
+  .editor-container :global(.cm-panel.cm-panel-lint li[aria-selected]) {
+    background: var(--bg-tab-hover, #3d3d3d);
   }
 
   .loading {
