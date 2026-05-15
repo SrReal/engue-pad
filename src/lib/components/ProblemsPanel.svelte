@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { problemsStore } from "$lib/editor/problems";
+  import { problemsStore } from "$lib/editor/problems.svelte";
   import { layoutState, addTab, setActiveTab, setActiveNode } from "$lib/layout/store.svelte";
 
   let expandedPaths = $state<Set<string>>(new Set());

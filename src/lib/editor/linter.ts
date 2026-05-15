@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { linter as cmLinter, setDiagnostics, type Diagnostic } from "@codemirror/lint";
 import type { EditorView } from "@codemirror/view";
-import { setProblemsForPath } from "./problems";
+import { setProblemsForPath } from "./problems.svelte";
 
 export type LinterSeverity = "error" | "warning" | "info";
 

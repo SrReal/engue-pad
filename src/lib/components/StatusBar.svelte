@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { layoutState } from "$lib/layout/store.svelte";
-  import { problemsStore } from "$lib/editor/problems";
+  import { problemsStore } from "$lib/editor/problems.svelte";
   import type { LayoutNode, Tab } from "$lib/layout/types";
 
   let { toggleProblems, showProblems }: { toggleProblems: () => void; showProblems: boolean } = $props();
