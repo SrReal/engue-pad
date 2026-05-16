@@ -19,10 +19,14 @@
   let sidebarWidth = $state(240);
   let isResizingSidebar = $state(false);
   let sidebarCollapsed = $state(false);
-  let sidebarView = $state<"files" | "tasks">("files");
   let refreshSignal = $state(0);
   let lastSidebarWidth = $state(240);
   let showProblems = $state(false);
+
+  let rightSidebarWidth = $state(260);
+  let isResizingRightSidebar = $state(false);
+  let rightSidebarCollapsed = $state(false);
+  let lastRightSidebarWidth = $state(260);
 
   onMount(async () => {
     const settings = await loadSettings();
@@ -88,6 +92,32 @@
     }
   }
 
+  function onRightSidebarPointerDown(e: PointerEvent) {
+    isResizingRightSidebar = true;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }
+
+  function onRightSidebarPointerMove(e: PointerEvent) {
+    if (!isResizingRightSidebar) return;
+    const w = window.innerWidth - e.clientX;
+    rightSidebarWidth = Math.max(200, Math.min(400, w));
+    if (rightSidebarWidth > 40) lastRightSidebarWidth = rightSidebarWidth;
+  }
+
+  function onRightSidebarPointerUp() {
+    isResizingRightSidebar = false;
+  }
+
+  function toggleRightSidebar() {
+    rightSidebarCollapsed = !rightSidebarCollapsed;
+    if (rightSidebarCollapsed) {
+      lastRightSidebarWidth = rightSidebarWidth;
+      rightSidebarWidth = 0;
+    } else {
+      rightSidebarWidth = lastRightSidebarWidth || 260;
+    }
+  }
+
   async function openFolder() {
     const selected = await open({ directory: true });
     if (selected && typeof selected === "string") {
@@ -145,24 +175,17 @@
     <span class="logo">EnguePad</span>
     <button class="icon-btn" onclick={openFolder} title="Open folder">📂</button>
     <button class="icon-btn" onclick={triggerRefresh} title="Refresh tree">🔄</button>
+    <button class="icon-btn" onclick={toggleRightSidebar} title="Toggle tasks sidebar">📝</button>
   </header>
   <div class="body">
     <aside class="sidebar" class:collapsed={sidebarCollapsed} style:width="{sidebarCollapsed ? 0 : sidebarWidth}px">
-      {#if workspaceInfo.rootPath}
-        <div class="sidebar-tabs">
-          <button class="sidebar-tab" class:active={sidebarView === "files"} onclick={() => sidebarView = "files"} title="Files">📁</button>
-          <button class="sidebar-tab" class:active={sidebarView === "tasks"} onclick={() => sidebarView = "tasks"} title="Tasks">📝</button>
-        </div>
-      {/if}
       <div class="sidebar-content">
         {#if !workspaceInfo.rootPath}
           <div class="placeholder">
             <button class="open-btn" onclick={openFolder}>Open folder</button>
           </div>
-        {:else if sidebarView === "files"}
-          <FileTree rootPath={workspaceInfo.rootPath} {refreshSignal} />
         {:else}
-          <TodoPanel />
+          <FileTree rootPath={workspaceInfo.rootPath} {refreshSignal} />
         {/if}
       </div>
       <SidebarFooter />
@@ -189,6 +212,21 @@
       <ProcessFooter />
       <StatusBar toggleProblems={() => showProblems = !showProblems} {showProblems} />
     </main>
+    {#if !rightSidebarCollapsed}
+      <div
+        class="sidebar-divider"
+        onpointerdown={onRightSidebarPointerDown}
+        onpointermove={onRightSidebarPointerMove}
+        onpointerup={onRightSidebarPointerUp}
+        role="separator"
+        aria-orientation="vertical"
+      ></div>
+    {/if}
+    <aside class="right-sidebar" class:collapsed={rightSidebarCollapsed} style:width="{rightSidebarCollapsed ? 0 : rightSidebarWidth}px">
+      <div class="right-sidebar-content">
+        <TodoPanel />
+      </div>
+    </aside>
   </div>
   <UrlToast />
 </div>
@@ -255,38 +293,31 @@
     max-width: 400px;
   }
 
-  .sidebar-tabs {
+  .right-sidebar {
     display: flex;
-    gap: 2px;
-    padding: 4px 8px 0;
-    border-bottom: 1px solid var(--border-color, #333);
+    flex-direction: column;
+    background: var(--bg-sidebar, #252526);
     flex-shrink: 0;
+    min-width: 200px;
+    max-width: 400px;
   }
 
-  .sidebar-tab {
+  .right-sidebar.collapsed {
+    overflow: hidden;
+    padding: 0;
+    min-width: 0;
+  }
+
+  .right-sidebar.collapsed .right-sidebar-content {
+    display: none;
+  }
+
+  .right-sidebar-content {
     flex: 1;
-    padding: 4px 8px;
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
-    color: var(--text-muted, #888);
-    cursor: pointer;
-    font-size: 13px;
-    border-radius: 3px 3px 0 0;
-    transition: all 0.1s;
-    user-select: none;
-    -webkit-user-select: none;
-  }
-
-  .sidebar-tab:hover {
-    background: var(--bg-tab-hover, #3d3d3d);
-    color: var(--text-color, #ccc);
-  }
-
-  .sidebar-tab.active {
-    color: var(--accent-color, #4a9eff);
-    border-bottom-color: var(--accent-color, #4a9eff);
-    background: var(--bg-panel, #1e1e1e);
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
   }
 
   .sidebar-content {

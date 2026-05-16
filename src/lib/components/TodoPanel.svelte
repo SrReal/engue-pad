@@ -170,10 +170,12 @@
                     checked={task.checked}
                     onchange={() => toggleTodoTask(task.lineIndex)}
                   />
-                  <span class="task-text">{task.text}</span>
+                  <span
+                    class="task-text editable"
+                    onclick={(e) => { e.preventDefault(); e.stopPropagation(); startEditTask(task); }}
+                  >{task.text}</span>
                 </label>
                 <div class="task-actions">
-                  <button class="action-btn" title="Edit" onclick={() => startEditTask(task)}>✎</button>
                   <button class="action-btn danger" title="Delete" onclick={() => deleteTodoTask(task.lineIndex)}>×</button>
                 </div>
               </div>
@@ -378,6 +380,17 @@
     line-height: 1.35;
     word-break: break-word;
     font-size: 13px;
+  }
+
+  .task-text.editable {
+    cursor: text;
+    border-radius: 3px;
+    padding: 1px 2px;
+    margin: -1px -2px;
+  }
+
+  .task-text.editable:hover {
+    background: var(--bg-tab-hover, #3d3d3d);
   }
 
   .task.checked .task-text {

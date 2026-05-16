@@ -75,6 +75,10 @@ fn list_directory(path: String) -> Result<DirListResult, String> {
                     if should_ignore(&name) {
                         continue;
                     }
+                    // Hide .enguepad/todo.md from file tree
+                    if name == "todo.md" && dir_path.file_name().map(|n| n == ".enguepad").unwrap_or(false) {
+                        continue;
+                    }
                     let path_str = entry.path().to_string_lossy().to_string();
                     let is_dir = entry.path().is_dir();
                     let is_file = entry.path().is_file();
