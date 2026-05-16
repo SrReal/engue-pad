@@ -25,6 +25,7 @@
   let isMouseDown = $state(false);
   let panelRef = $state<HTMLDivElement | null>(null);
   let isDragTarget = $state(false);
+  let dragOverPanel = $state(false);
   let renamingTabId = $state<string | null>(null);
   let renameValue = $state("");
   let renameInputRef = $state<HTMLInputElement | null>(null);
@@ -80,7 +81,9 @@
 
     if (panelRef && dragFromNodeId !== node.id) {
       const rect = panelRef.getBoundingClientRect();
-      isDragTarget = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
+      const inside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
+      isDragTarget = inside;
+      dragOverPanel = inside;
     }
   }
 
@@ -93,6 +96,7 @@
     dragOverIndex = null;
     dragFromNodeId = null;
     isDragTarget = false;
+    dragOverPanel = false;
     if (!fromNodeId) return;
 
     // Detect drop target panel via elementFromPoint
@@ -358,6 +362,15 @@
       </div>
     {/if}
   </div>
+
+  {#if dragOverPanel && dragFromNodeId !== node.id}
+    <div class="drop-overlay">
+      <div class="drop-indicator">
+        <span class="drop-arrow">⬍</span>
+        <span class="drop-label">Move here</span>
+      </div>
+    </div>
+  {/if}
 </div>
 
 {#if tabContextMenu}
@@ -384,6 +397,7 @@
     outline: 2px solid transparent;
     outline-offset: -2px;
     transition: outline-color 0.15s ease;
+    position: relative;
   }
 
   .tab-panel.active {
@@ -394,6 +408,60 @@
     outline: 2px dashed var(--accent-color, #4a9eff);
     outline-offset: -2px;
     background: rgba(74, 158, 255, 0.05);
+  }
+
+  .drop-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(74, 158, 255, 0.08);
+    z-index: 50;
+    animation: dropFadeIn 0.15s ease;
+    pointer-events: none;
+  }
+
+  .drop-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 20px 32px;
+    background: var(--bg-sidebar, #252526);
+    border: 2px dashed var(--accent-color, #4a9eff);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    animation: dropBounceIn 0.2s ease;
+  }
+
+  .drop-arrow {
+    font-size: 24px;
+    color: var(--accent-color, #4a9eff);
+    animation: dropPulse 1s ease-in-out infinite;
+  }
+
+  .drop-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-color, #4a9eff);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  @keyframes dropFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes dropBounceIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes dropPulse {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
   }
 
   .tab-bar {
