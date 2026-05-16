@@ -1,5 +1,16 @@
 import { invoke } from "@tauri-apps/api/core";
-import { parseTodoMarkdown, toggleTaskInMarkdown, DEFAULT_TODO_TEMPLATE, type TodoDocument } from "./parser";
+import {
+  parseTodoMarkdown,
+  toggleTaskInMarkdown,
+  addTaskInMarkdown,
+  editTaskInMarkdown,
+  deleteTaskInMarkdown,
+  addSectionInMarkdown,
+  editSectionTitleInMarkdown,
+  deleteSectionInMarkdown,
+  DEFAULT_TODO_TEMPLATE,
+  type TodoDocument,
+} from "./parser";
 
 export const todoStore = $state<{
   path: string | null;
@@ -13,6 +24,21 @@ export const todoStore = $state<{
   loading: false,
 });
 
+function updateStore(content: string) {
+  todoStore.content = content;
+  todoStore.parsed = parseTodoMarkdown(content);
+}
+
+async function persist(content: string): Promise<void> {
+  const path = todoStore.path;
+  if (!path) return;
+  try {
+    await invoke("write_file", { path, contents: content });
+  } catch (e) {
+    console.error("Failed to write todo.md", e);
+  }
+}
+
 export function setTodoPath(path: string | null) {
   todoStore.path = path;
   if (path) {
@@ -24,8 +50,7 @@ export async function loadTodoFile(path: string): Promise<void> {
   todoStore.loading = true;
   try {
     const content = await invoke<string>("read_file", { path });
-    todoStore.content = content;
-    todoStore.parsed = parseTodoMarkdown(content);
+    updateStore(content);
   } catch {
     todoStore.content = "";
     todoStore.parsed = { sections: [], total: 0, completed: 0 };
@@ -37,15 +62,12 @@ export async function loadTodoFile(path: string): Promise<void> {
 export async function ensureTodoFile(path: string): Promise<void> {
   try {
     const content = await invoke<string>("read_file", { path });
-    todoStore.content = content;
-    todoStore.parsed = parseTodoMarkdown(content);
+    updateStore(content);
     todoStore.path = path;
   } catch {
-    // File doesn't exist, create with template
     try {
       await invoke("write_file", { path, contents: DEFAULT_TODO_TEMPLATE });
-      todoStore.content = DEFAULT_TODO_TEMPLATE;
-      todoStore.parsed = parseTodoMarkdown(DEFAULT_TODO_TEMPLATE);
+      updateStore(DEFAULT_TODO_TEMPLATE);
       todoStore.path = path;
     } catch (e) {
       console.error("Failed to create todo.md", e);
@@ -54,14 +76,47 @@ export async function ensureTodoFile(path: string): Promise<void> {
 }
 
 export async function toggleTodoTask(lineIndex: number): Promise<void> {
-  const path = todoStore.path;
-  if (!path) return;
   const updated = toggleTaskInMarkdown(todoStore.content, lineIndex);
-  todoStore.content = updated;
-  todoStore.parsed = parseTodoMarkdown(updated);
-  try {
-    await invoke("write_file", { path, contents: updated });
-  } catch (e) {
-    console.error("Failed to write todo.md", e);
-  }
+  updateStore(updated);
+  await persist(updated);
+}
+
+export async function addTodoTask(sectionEndLine: number, text: string): Promise<void> {
+  if (!text.trim()) return;
+  const updated = addTaskInMarkdown(todoStore.content, sectionEndLine, text.trim());
+  updateStore(updated);
+  await persist(updated);
+}
+
+export async function editTodoTask(lineIndex: number, newText: string): Promise<void> {
+  if (!newText.trim()) return;
+  const updated = editTaskInMarkdown(todoStore.content, lineIndex, newText.trim());
+  updateStore(updated);
+  await persist(updated);
+}
+
+export async function deleteTodoTask(lineIndex: number): Promise<void> {
+  const updated = deleteTaskInMarkdown(todoStore.content, lineIndex);
+  updateStore(updated);
+  await persist(updated);
+}
+
+export async function addTodoSection(title: string): Promise<void> {
+  if (!title.trim()) return;
+  const updated = addSectionInMarkdown(todoStore.content, title.trim());
+  updateStore(updated);
+  await persist(updated);
+}
+
+export async function editTodoSectionTitle(startLine: number, newTitle: string): Promise<void> {
+  if (!newTitle.trim()) return;
+  const updated = editSectionTitleInMarkdown(todoStore.content, startLine, newTitle.trim());
+  updateStore(updated);
+  await persist(updated);
+}
+
+export async function deleteTodoSection(startLine: number, endLine: number): Promise<void> {
+  const updated = deleteSectionInMarkdown(todoStore.content, startLine, endLine);
+  updateStore(updated);
+  await persist(updated);
 }

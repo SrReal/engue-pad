@@ -2,12 +2,13 @@
   import { onMount } from "svelte";
   import { listen } from "@tauri-apps/api/event";
   import { invoke } from "@tauri-apps/api/core";
-  import { layoutState, findAllDirtyTabs, resetLayout, openTodo } from "$lib/layout/store.svelte";
+  import { layoutState, findAllDirtyTabs, resetLayout } from "$lib/layout/store.svelte";
   import { workspaceInfo, loadWorkspace, scheduleSaveWorkspace } from "$lib/workspace/store.svelte";
   import { setTodoPath, ensureTodoFile, loadTodoFile } from "$lib/todo/store.svelte";
   import { loadSettings, saveSettings } from "$lib/workspace/settings";
   import LayoutNode from "./LayoutNode.svelte";
   import FileTree from "./FileTree.svelte";
+  import TodoPanel from "./TodoPanel.svelte";
   import StatusBar from "./StatusBar.svelte";
   import SidebarFooter from "./SidebarFooter.svelte";
   import ProcessFooter from "./ProcessFooter.svelte";
@@ -18,6 +19,7 @@
   let sidebarWidth = $state(240);
   let isResizingSidebar = $state(false);
   let sidebarCollapsed = $state(false);
+  let sidebarView = $state<"files" | "tasks">("files");
   let refreshSignal = $state(0);
   let lastSidebarWidth = $state(240);
   let showProblems = $state(false);
@@ -105,16 +107,6 @@
     refreshSignal++;
   }
 
-  function handleOpenTodo() {
-    const root = workspaceInfo.rootPath;
-    if (!root) return;
-    const todoPath = `${root}/.enguepad/todo.md`;
-    ensureTodoFile(todoPath).then(() => {
-      const activeNodeId = layoutState.activeNodeId ?? layoutState.root.id;
-      openTodo(activeNodeId, todoPath);
-    });
-  }
-
   $effect(() => {
     const root = workspaceInfo.rootPath;
     if (!root) return;
@@ -153,17 +145,24 @@
     <span class="logo">EnguePad</span>
     <button class="icon-btn" onclick={openFolder} title="Open folder">📂</button>
     <button class="icon-btn" onclick={triggerRefresh} title="Refresh tree">🔄</button>
-    <button class="icon-btn" onclick={handleOpenTodo} title="Open tasks">📝</button>
   </header>
   <div class="body">
     <aside class="sidebar" class:collapsed={sidebarCollapsed} style:width="{sidebarCollapsed ? 0 : sidebarWidth}px">
+      {#if workspaceInfo.rootPath}
+        <div class="sidebar-tabs">
+          <button class="sidebar-tab" class:active={sidebarView === "files"} onclick={() => sidebarView = "files"} title="Files">📁</button>
+          <button class="sidebar-tab" class:active={sidebarView === "tasks"} onclick={() => sidebarView = "tasks"} title="Tasks">📝</button>
+        </div>
+      {/if}
       <div class="sidebar-content">
-        {#if workspaceInfo.rootPath}
-          <FileTree rootPath={workspaceInfo.rootPath} {refreshSignal} />
-        {:else}
+        {#if !workspaceInfo.rootPath}
           <div class="placeholder">
             <button class="open-btn" onclick={openFolder}>Open folder</button>
           </div>
+        {:else if sidebarView === "files"}
+          <FileTree rootPath={workspaceInfo.rootPath} {refreshSignal} />
+        {:else}
+          <TodoPanel />
         {/if}
       </div>
       <SidebarFooter />
@@ -254,6 +253,40 @@
     flex-shrink: 0;
     min-width: 160px;
     max-width: 400px;
+  }
+
+  .sidebar-tabs {
+    display: flex;
+    gap: 2px;
+    padding: 4px 8px 0;
+    border-bottom: 1px solid var(--border-color, #333);
+    flex-shrink: 0;
+  }
+
+  .sidebar-tab {
+    flex: 1;
+    padding: 4px 8px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted, #888);
+    cursor: pointer;
+    font-size: 13px;
+    border-radius: 3px 3px 0 0;
+    transition: all 0.1s;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .sidebar-tab:hover {
+    background: var(--bg-tab-hover, #3d3d3d);
+    color: var(--text-color, #ccc);
+  }
+
+  .sidebar-tab.active {
+    color: var(--accent-color, #4a9eff);
+    border-bottom-color: var(--accent-color, #4a9eff);
+    background: var(--bg-panel, #1e1e1e);
   }
 
   .sidebar-content {

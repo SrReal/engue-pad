@@ -9,7 +9,6 @@
   import WebPreview from "./WebPreview.svelte";
   import ImageViewer from "./ImageViewer.svelte";
   import AudioPlayer from "./AudioPlayer.svelte";
-  import TodoPanel from "./TodoPanel.svelte";
 
   let { node }: { node: TabGroup } = $props();
   let isActive = $derived(layoutState.activeNodeId === node.id);
@@ -288,10 +287,6 @@
         <div class="preview-tab-content" class:hidden={tab.id !== node.activeTabId}>
           <WebPreview url={tab.url ?? ""} />
         </div>
-      {:else if tab.type === "todo"}
-        <div class="todo-tab-content" class:hidden={tab.id !== node.activeTabId}>
-          <TodoPanel path={tab.path} />
-        </div>
       {:else if tab.id === node.activeTabId}
         {#if tab.path}
           {#if isImage(tab.path)}
@@ -534,17 +529,6 @@
   }
 
   .preview-tab-content.hidden {
-    display: none;
-  }
-
-  .todo-tab-content {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-    display: flex;
-  }
-
-  .todo-tab-content.hidden {
     display: none;
   }
 
