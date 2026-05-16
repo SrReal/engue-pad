@@ -3,6 +3,7 @@
   import { get } from "svelte/store";
   import TreeItem from "./TreeItem.svelte";
   import { fileDrag } from "$lib/tree/fileDragStore";
+  import { refreshGitStatus } from "$lib/git/store.svelte";
 
   type FileEntry = {
     name: string;
@@ -106,11 +107,16 @@
   }
 
   $effect(() => {
-    if (rootPath) {
-      loadDirectory(rootPath).then((nodes) => {
-        tree = nodes;
-      });
-    }
+    if (!rootPath) return;
+    loadDirectory(rootPath).then((nodes) => {
+      tree = nodes;
+    });
+    refreshGitStatus(rootPath);
+
+    const interval = setInterval(() => {
+      refreshGitStatus(rootPath);
+    }, 5000);
+    return () => clearInterval(interval);
   });
 
   $effect(() => {
@@ -169,7 +175,7 @@
   tabindex="-1"
 >
   {#if rootPath}
-    <TreeItem node={rootNode} onRefresh={reloadTree} />
+    <TreeItem node={rootNode} onRefresh={reloadTree} {rootPath} />
   {/if}
 </div>
 

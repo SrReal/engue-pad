@@ -2,6 +2,7 @@
   import { invoke } from "@tauri-apps/api/core";
   import { get } from "svelte/store";
   import { addTab, layoutState, pinTab } from "$lib/layout/store.svelte";
+  import { gitStore } from "$lib/git/store.svelte";
   import type { Tab } from "$lib/layout/types";
   import TreeItem from "./TreeItem.svelte";
   import { fileDrag } from "$lib/tree/fileDragStore";
@@ -20,7 +21,26 @@
     loading: boolean;
   };
 
-  let { node, onRefresh }: { node: TreeNode; onRefresh: () => void } = $props();
+  let { node, onRefresh, rootPath }: { node: TreeNode; onRefresh: () => void; rootPath: string } = $props();
+
+  function getRelativePath(fullPath: string): string {
+    const sep = fullPath.includes("/") ? "/" : "\\";
+    const root = rootPath.endsWith(sep) ? rootPath : rootPath + sep;
+    return fullPath.startsWith(root) ? fullPath.slice(root.length) : fullPath;
+  }
+
+  const gitStatus = $derived.by(() => {
+    if (!gitStore.isRepo || node.entry.is_dir) return null;
+    const rel = getRelativePath(node.entry.path);
+    const status = gitStore.files[rel];
+    if (!status) return null;
+    if (status.includes("M")) return "modified";
+    if (status.includes("A")) return "added";
+    if (status.includes("D")) return "deleted";
+    if (status.includes("?")) return "untracked";
+    if (status.includes("R")) return "renamed";
+    return null;
+  });
 
   async function loadDirectory(path: string): Promise<TreeNode[]> {
     const result = await invoke<{ entries: FileEntry[]; path: string }>("list_directory", { path });
@@ -255,7 +275,10 @@
         onblur={submitRename}
       />
     {:else}
-      <span class="name">{node.entry.name}</span>
+      <span class="name" class:git-modified={gitStatus === "modified"} class:git-added={gitStatus === "added"} class:git-deleted={gitStatus === "deleted"} class:git-untracked={gitStatus === "untracked"} class:git-renamed={gitStatus === "renamed"}>{node.entry.name}</span>
+    {/if}
+    {#if gitStatus}
+      <span class="git-dot" class:git-modified={gitStatus === "modified"} class:git-added={gitStatus === "added"} class:git-deleted={gitStatus === "deleted"} class:git-untracked={gitStatus === "untracked"} class:git-renamed={gitStatus === "renamed"}></span>
     {/if}
     {#if node.loading}
       <span class="loading">...</span>
@@ -269,7 +292,7 @@
   {#if node.expanded && node.children}
     <div class="children">
       {#each node.children as child (child.entry.path)}
-        <TreeItem node={child} {onRefresh} />
+        <TreeItem node={child} {onRefresh} {rootPath} />
       {/each}
     </div>
   {/if}
@@ -383,6 +406,55 @@
     pointer-events: none;
     color: var(--text-muted, #888);
     font-size: 11px;
+  }
+
+  .git-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .git-dot.git-modified {
+    background: #f0a732;
+  }
+
+  .git-dot.git-added {
+    background: #4caf50;
+  }
+
+  .git-dot.git-deleted {
+    background: #f14c4c;
+  }
+
+  .git-dot.git-untracked {
+    background: #888;
+  }
+
+  .git-dot.git-renamed {
+    background: #4a9eff;
+  }
+
+  .name.git-modified {
+    color: #f0a732;
+  }
+
+  .name.git-added {
+    color: #4caf50;
+  }
+
+  .name.git-deleted {
+    color: #f14c4c;
+    text-decoration: line-through;
+  }
+
+  .name.git-untracked {
+    color: #888;
+  }
+
+  .name.git-renamed {
+    color: #4a9eff;
   }
 
   .children {

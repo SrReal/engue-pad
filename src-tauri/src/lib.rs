@@ -3,7 +3,7 @@ mod terminal;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager, WebviewUrl};
 
@@ -46,6 +46,13 @@ pub struct RunCommandOutput {
 pub struct DirListResult {
     entries: Vec<FileEntry>,
     path: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct GitStatus {
+    is_repo: bool,
+    branch: String,
+    files: HashMap<String, String>,
 }
 
 fn should_ignore(name: &str) -> bool {
@@ -184,6 +191,59 @@ fn rename_file(from: String, to: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn git_status(cwd: String) -> Result<GitStatus, String> {
+    use std::process::Command;
+
+    let is_repo = Command::new("git")
+        .args(["rev-parse", "--is-inside-work-tree"])
+        .current_dir(&cwd)
+        .output()
+        .map(|o| o.status.success() && String::from_utf8_lossy(&o.stdout).trim() == "true")
+        .unwrap_or(false);
+
+    if !is_repo {
+        return Ok(GitStatus {
+            is_repo: false,
+            branch: String::new(),
+            files: HashMap::new(),
+        });
+    }
+
+    let branch = Command::new("git")
+        .args(["branch", "--show-current"])
+        .current_dir(&cwd)
+        .output()
+        .ok()
+        .and_then(|o| {
+            if o.status.success() {
+                Some(String::from_utf8_lossy(&o.stdout).trim().to_string())
+            } else {
+                None
+            }
+        })
+        .unwrap_or_default();
+
+    let mut files = HashMap::new();
+    if let Ok(output) = Command::new("git")
+        .args(["status", "--porcelain"])
+        .current_dir(&cwd)
+        .output()
+    {
+        if output.status.success() {
+            for line in String::from_utf8_lossy(&output.stdout).lines() {
+                if line.len() >= 3 {
+                    let status = &line[0..2];
+                    let path_str = line[3..].trim().to_string();
+                    files.insert(path_str, status.to_string());
+                }
+            }
+        }
+    }
+
+    Ok(GitStatus { is_repo: true, branch, files })
+}
+
+#[tauri::command]
 fn get_app_stats(
     state: tauri::State<Arc<terminal::TerminalManager>>,
 ) -> Result<AppStats, String> {
@@ -285,7 +345,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .manage(Arc::clone(&terminal_manager))
-        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, read_file_bytes, write_file, ensure_dir, read_file_meta, get_app_data_dir, exit_app, rename_file, run_command, terminal::create_terminal, terminal::write_terminal, terminal::resize_terminal, terminal::get_terminal_cwd, terminal::kill_terminal, terminal::get_terminal_processes, get_app_stats])
+        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, read_file_bytes, write_file, ensure_dir, read_file_meta, get_app_data_dir, exit_app, rename_file, run_command, git_status, terminal::create_terminal, terminal::write_terminal, terminal::resize_terminal, terminal::get_terminal_cwd, terminal::kill_terminal, terminal::get_terminal_processes, get_app_stats])
         .setup(|app| {
             create_main_window(&app.handle().clone());
             Ok(())
