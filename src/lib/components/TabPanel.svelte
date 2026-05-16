@@ -223,49 +223,51 @@
   role="tabpanel"
   tabindex="0"
 >
-  <div class="tab-bar" bind:this={tabBarRef} oncontextmenu={handlePanelContextMenu} role="toolbar" aria-label="Tabs" tabindex="0">
-    {#each node.tabs as tab, index (tab.id)}
-      <div
-        class="tab"
-        class:active={node.activeTabId === tab.id}
-        class:preview={tab.preview}
-        class:drop-before={dragOverIndex === index}
-        class:drop-after={dragOverIndex === index + 1}
-        class:is-dragging={draggedTabId === tab.id}
-        onmousedown={(e) => handleMouseDown(e, tab.id)}
-        onclick={() => handleActivate(tab.id)}
-        ondblclick={() => { if (tab.type === "terminal") startTabRename(tab.id); }}
-        oncontextmenu={(e) => handleTabContextMenu(e, tab.id)}
-        onkeydown={(e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleActivate(tab.id); } }}
-        role="tab"
-        tabindex="0"
-      >
-        {#if renamingTabId === tab.id}
-          <input
-            class="rename-input"
-            type="text"
-            bind:value={renameValue}
-            bind:this={renameInputRef}
-            onkeydown={(e: KeyboardEvent) => {
-              if (e.key === "Enter") { e.preventDefault(); submitRename(tab.id); }
-              if (e.key === "Escape") { e.preventDefault(); cancelRename(); }
-            }}
-            onblur={() => submitRename(tab.id)}
-          />
-        {:else}
-          <span class="tab-title">
-            {tab.title}{#if tab.dirty}●{/if}
-          </span>
-        {/if}
-        <button class="tab-close" onclick={(e) => handleClose(tab.id, e)} type="button" aria-label="Close tab">×</button>
-      </div>
-    {/each}
+  <div class="tab-bar" oncontextmenu={handlePanelContextMenu} role="toolbar" aria-label="Tabs" tabindex="0">
+    <button class="tab-add" onclick={() => addTerminal(node.id, "Terminal", workspaceInfo.rootPath ?? undefined)} title="New terminal" type="button"><span class="term-icon">&gt;_</span></button>
+    <div class="tabs-scroll" bind:this={tabBarRef}>
+      {#each node.tabs as tab, index (tab.id)}
+        <div
+          class="tab"
+          class:active={node.activeTabId === tab.id}
+          class:preview={tab.preview}
+          class:drop-before={dragOverIndex === index}
+          class:drop-after={dragOverIndex === index + 1}
+          class:is-dragging={draggedTabId === tab.id}
+          onmousedown={(e) => handleMouseDown(e, tab.id)}
+          onclick={() => handleActivate(tab.id)}
+          ondblclick={() => { if (tab.type === "terminal") startTabRename(tab.id); }}
+          oncontextmenu={(e) => handleTabContextMenu(e, tab.id)}
+          onkeydown={(e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleActivate(tab.id); } }}
+          role="tab"
+          tabindex="0"
+        >
+          {#if renamingTabId === tab.id}
+            <input
+              class="rename-input"
+              type="text"
+              bind:value={renameValue}
+              bind:this={renameInputRef}
+              onkeydown={(e: KeyboardEvent) => {
+                if (e.key === "Enter") { e.preventDefault(); submitRename(tab.id); }
+                if (e.key === "Escape") { e.preventDefault(); cancelRename(); }
+              }}
+              onblur={() => submitRename(tab.id)}
+            />
+          {:else}
+            <span class="tab-title">
+              {tab.title}{#if tab.dirty}●{/if}
+            </span>
+          {/if}
+          <button class="tab-close" onclick={(e) => handleClose(tab.id, e)} type="button" aria-label="Close tab">×</button>
+        </div>
+      {/each}
+    </div>
     <div class="panel-actions">
       <button class="panel-action-btn" onclick={() => splitNode(node.id, 'horizontal')} title="Split horizontal" type="button">⬌</button>
       <button class="panel-action-btn" onclick={() => splitNode(node.id, 'vertical')} title="Split vertical" type="button">⬍</button>
       <button class="panel-action-btn close" onclick={handleClosePanel} title="Close panel" type="button">×</button>
     </div>
-    <button class="tab-add" onclick={() => addTerminal(node.id, "Terminal", workspaceInfo.rootPath ?? undefined)} title="New terminal" type="button"><span class="term-icon">&gt;_</span></button>
   </div>
   {#if draggedTabId}
     {@const draggedTab = node.tabs.find((t) => t.id === draggedTabId)}
@@ -365,7 +367,14 @@
     display: flex;
     background: var(--bg-tab-bar, #2d2d2d);
     border-bottom: 1px solid var(--border-color, #333);
+    overflow: hidden;
+  }
+
+  .tabs-scroll {
+    display: flex;
+    flex: 1;
     overflow-x: auto;
+    min-width: 0;
   }
 
   .tab {
@@ -425,7 +434,7 @@
     justify-content: center;
     width: 28px;
     height: 28px;
-    margin: 2px 4px;
+    margin: 2px 2px;
     background: transparent;
     border: none;
     color: var(--text-color, #ccc);
@@ -434,6 +443,7 @@
     border-radius: 3px;
     user-select: none;
     -webkit-user-select: none;
+    flex-shrink: 0;
   }
 
   .tab-add:hover {
@@ -542,7 +552,6 @@
     display: flex;
     align-items: center;
     gap: 2px;
-    margin-left: auto;
     padding: 0 4px;
     border-left: 1px solid var(--border-color, #333);
     flex-shrink: 0;
