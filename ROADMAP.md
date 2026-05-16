@@ -107,9 +107,9 @@ Objetivo: terminales integradas con PTY y preview web dentro del layout.
 
 ### 2.5 Layout avanzado
 
-- [ ] Tabs de terminales y previews integrados en el sistema de splits.
-- [ ] Mover pestaña de terminal/preview entre splits.
-- [ ] Maximizar/restaurar panel.
+- [x] Tabs de terminales y previews integrados en el sistema de splits.
+- [x] Mover pestaña de terminal/preview entre splits.
+- [x] Maximizar/restaurar panel.
 
 ### Criterios de aceptación (test manual)
 
