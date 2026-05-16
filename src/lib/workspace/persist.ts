@@ -104,7 +104,7 @@ export function deserializeNode(node: PersistedNode, rootPath: string): LayoutNo
       tabs: node.tabs.map((t) => ({
         id: t.id,
         title: t.title,
-        type: t.type as "editor" | "terminal" | undefined,
+        type: t.type as "editor" | "terminal" | "todo" | undefined,
         path: t.path ? toAbsolute(t.path, rootPath) : undefined,
         language: t.type !== "terminal" && t.path ? detectLanguage(t.path) : undefined,
         dirty: false,

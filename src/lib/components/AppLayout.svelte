@@ -2,8 +2,9 @@
   import { onMount } from "svelte";
   import { listen } from "@tauri-apps/api/event";
   import { invoke } from "@tauri-apps/api/core";
-  import { layoutState, findAllDirtyTabs, resetLayout } from "$lib/layout/store.svelte";
+  import { layoutState, findAllDirtyTabs, resetLayout, openTodo } from "$lib/layout/store.svelte";
   import { workspaceInfo, loadWorkspace, scheduleSaveWorkspace } from "$lib/workspace/store.svelte";
+  import { setTodoPath, ensureTodoFile, loadTodoFile } from "$lib/todo/store.svelte";
   import { loadSettings, saveSettings } from "$lib/workspace/settings";
   import LayoutNode from "./LayoutNode.svelte";
   import FileTree from "./FileTree.svelte";
@@ -104,6 +105,46 @@
     refreshSignal++;
   }
 
+  function handleOpenTodo() {
+    const root = workspaceInfo.rootPath;
+    if (!root) return;
+    const todoPath = `${root}/.enguepad/todo.md`;
+    ensureTodoFile(todoPath).then(() => {
+      const activeNodeId = layoutState.activeNodeId ?? layoutState.root.id;
+      openTodo(activeNodeId, todoPath);
+    });
+  }
+
+  $effect(() => {
+    const root = workspaceInfo.rootPath;
+    if (!root) return;
+    const todoPath = `${root}/.enguepad/todo.md`;
+
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    let unwatch: (() => void) | null = null;
+
+    async function startWatch() {
+      await ensureTodoFile(todoPath);
+      try {
+        const { watch } = await import("@tauri-apps/plugin-fs");
+        unwatch = await watch(todoPath, () => {
+          if (timeout) clearTimeout(timeout);
+          timeout = setTimeout(() => {
+            loadTodoFile(todoPath);
+          }, 300);
+        });
+      } catch {
+        // watch not available
+      }
+    }
+    startWatch();
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+      unwatch?.();
+    };
+  });
+
 </script>
 
 <div class="app-layout">
@@ -112,6 +153,7 @@
     <span class="logo">EnguePad</span>
     <button class="icon-btn" onclick={openFolder} title="Open folder">📂</button>
     <button class="icon-btn" onclick={triggerRefresh} title="Refresh tree">🔄</button>
+    <button class="icon-btn" onclick={handleOpenTodo} title="Open tasks">📝</button>
   </header>
   <div class="body">
     <aside class="sidebar" class:collapsed={sidebarCollapsed} style:width="{sidebarCollapsed ? 0 : sidebarWidth}px">

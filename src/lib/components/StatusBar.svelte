@@ -4,6 +4,7 @@
   import { layoutState } from "$lib/layout/store.svelte";
   import { problemsStore } from "$lib/editor/problems.svelte";
   import { updateLinterAvailability, linterAvailability } from "$lib/editor/linterAvailability.svelte";
+  import { todoStore } from "$lib/todo/store.svelte";
   import type { LayoutNode, Tab } from "$lib/layout/types";
 
   let { toggleProblems, showProblems }: { toggleProblems: () => void; showProblems: boolean } = $props();
@@ -78,6 +79,9 @@
       ✓
     {/if}
   </button>
+  {#if todoStore.total > 0}
+    <span class="info todo-count">📝 {todoStore.completed}/{todoStore.total}</span>
+  {/if}
   <span class="info">CPU {cpu.toFixed(1)}%</span>
   <span class="info">{memory} MB RAM</span>
   <span class="info">{activeTab?.lineEnding ?? "LF"}</span>
@@ -153,6 +157,10 @@
 
   .problem-dot.info {
     color: #4a9eff;
+  }
+
+  .todo-count {
+    color: var(--accent-color, #4a9eff);
   }
 
   .toast {

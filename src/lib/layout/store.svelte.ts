@@ -115,6 +115,16 @@ function findPreviewTab(root: LayoutNode, url: string): { nodeId: string; tabId:
   return findPreviewTab(root.first, url) ?? findPreviewTab(root.second, url);
 }
 
+export function openTodo(nodeId: string, path: string): void {
+  const tab: Tab = {
+    id: crypto.randomUUID(),
+    title: "Tasks",
+    type: "todo",
+    path,
+  };
+  addTab(nodeId, tab);
+}
+
 export function addPreview(nodeId: string, url: string): void {
   const existing = findPreviewTab(layoutState.root, url);
   if (existing) {
