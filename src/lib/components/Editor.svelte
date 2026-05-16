@@ -17,7 +17,7 @@
   import { updateTabContent, markTabSaved, setTabLineEnding } from "$lib/layout/store.svelte";
   import { urlLinksFor } from "$lib/editor/urlLinks";
   import { linterFor, forceLint } from "$lib/editor/linter";
-  import { clearProblemsForPath } from "$lib/editor/problems";
+  import { clearProblemsForPath } from "$lib/editor/problems.svelte";
   import { linterConfig } from "$lib/workspace/store.svelte";
 
   let { nodeId, tabId, path, language, initialContent = "", dirty = false }: {
