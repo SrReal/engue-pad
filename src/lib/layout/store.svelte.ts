@@ -214,6 +214,37 @@ export function moveTab(nodeId: string, fromIndex: number, toIndex: number): voi
   layoutState.root = updateTree(layoutState.root);
 }
 
+export function moveTabToPanel(fromNodeId: string, tabId: string, toNodeId: string): void {
+  let movedTab: Tab | null = null;
+  function extractTab(node: LayoutNode): LayoutNode {
+    if (node.kind === "tab-group" && node.id === fromNodeId) {
+      const idx = node.tabs.findIndex((t) => t.id === tabId);
+      if (idx === -1) return node;
+      const tabs = [...node.tabs];
+      [movedTab] = tabs.splice(idx, 1);
+      const activeTabId = node.activeTabId === tabId ? (tabs[tabs.length - 1]?.id ?? null) : node.activeTabId;
+      return { ...node, tabs, activeTabId };
+    }
+    if (node.kind === "split") {
+      return { ...node, first: extractTab(node.first), second: extractTab(node.second) };
+    }
+    return node;
+  }
+  function insertTab(node: LayoutNode): LayoutNode {
+    if (node.kind === "tab-group" && node.id === toNodeId && movedTab) {
+      return { ...node, tabs: [...node.tabs, movedTab], activeTabId: movedTab.id };
+    }
+    if (node.kind === "split") {
+      return { ...node, first: insertTab(node.first), second: insertTab(node.second) };
+    }
+    return node;
+  }
+  layoutState.root = extractTab(layoutState.root);
+  if (movedTab) {
+    layoutState.root = insertTab(layoutState.root);
+  }
+}
+
 export function setActiveTab(nodeId: string, tabId: string): void {
   function updateTree(node: LayoutNode): LayoutNode {
     if (node.kind === "tab-group" && node.id === nodeId) {

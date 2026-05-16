@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { TabGroup, Tab } from "$lib/layout/types";
-  import { layoutState, closeTab, setActiveTab, setActiveNode, splitNode, pinTab, addTerminal, removeNode, moveTab, renameTab } from "$lib/layout/store.svelte";
+  import { layoutState, closeTab, setActiveTab, setActiveNode, splitNode, pinTab, addTerminal, removeNode, moveTab, moveTabToPanel, renameTab } from "$lib/layout/store.svelte";
   import { workspaceInfo } from "$lib/workspace/store.svelte";
   import { confirm } from "@tauri-apps/plugin-dialog";
   import Editor from "./Editor.svelte";
@@ -17,6 +17,7 @@
   let terminalRefs = $state<Record<string, Terminal>>({});
   let dragOverIndex = $state<number | null>(null);
   let draggedTabId = $state<string | null>(null);
+  let dragFromNodeId = $state<string | null>(null);
   let dragOffsetX = $state(0);
   let dragPosX = $state(0);
   let dragPosY = $state(0);
@@ -62,6 +63,7 @@
     if (target.closest(".tab-close")) return;
     isMouseDown = true;
     draggedTabId = tabId;
+    dragFromNodeId = node.id;
     const tabRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     dragOffsetX = e.clientX - tabRect.left;
     dragPosX = tabRect.left;
@@ -78,10 +80,24 @@
   function handleGlobalMouseUp(e: MouseEvent) {
     if (!draggedTabId || !isMouseDown) return;
     const tabId = draggedTabId;
-    const insertIndex = getInsertIndex(e.clientX);
+    const fromNodeId = dragFromNodeId;
     draggedTabId = null;
     isMouseDown = false;
     dragOverIndex = null;
+    dragFromNodeId = null;
+    if (!fromNodeId) return;
+
+    // Detect drop target panel via elementFromPoint
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const targetPanel = el?.closest('[data-node-id]') as HTMLElement | null;
+    const toNodeId = targetPanel?.dataset.nodeId ?? null;
+
+    if (toNodeId && toNodeId !== fromNodeId) {
+      moveTabToPanel(fromNodeId, tabId, toNodeId);
+      return;
+    }
+
+    const insertIndex = getInsertIndex(e.clientX);
     const fromIndex = getTabIndex(tabId);
     if (fromIndex === -1) return;
     if (fromIndex === insertIndex || fromIndex + 1 === insertIndex) return;
@@ -210,6 +226,7 @@
 
 <div
   class="tab-panel"
+  data-node-id={node.id}
   class:active={isActive}
   onclick={handlePanelClick}
   onkeydown={(e: KeyboardEvent) => {
