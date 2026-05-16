@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { listen } from "@tauri-apps/api/event";
   import { invoke } from "@tauri-apps/api/core";
-  import { layoutState, splitNode, findAllDirtyTabs, resetLayout } from "$lib/layout/store.svelte";
+  import { layoutState, findAllDirtyTabs, resetLayout } from "$lib/layout/store.svelte";
   import { workspaceInfo, loadWorkspace, scheduleSaveWorkspace } from "$lib/workspace/store.svelte";
   import { loadSettings, saveSettings } from "$lib/workspace/settings";
   import LayoutNode from "./LayoutNode.svelte";
@@ -74,16 +74,6 @@
     isResizingSidebar = false;
   }
 
-  function addHorizontalSplit() {
-    const targetId = layoutState.activeNodeId ?? layoutState.root.id;
-    splitNode(targetId, "horizontal");
-  }
-
-  function addVerticalSplit() {
-    const targetId = layoutState.activeNodeId ?? layoutState.root.id;
-    splitNode(targetId, "vertical");
-  }
-
   function toggleSidebar() {
     sidebarCollapsed = !sidebarCollapsed;
     if (sidebarCollapsed) {
@@ -121,8 +111,6 @@
     <span class="logo">EnguePad</span>
     <button class="icon-btn" onclick={openFolder} title="Open folder">📂</button>
     <button class="icon-btn" onclick={triggerRefresh} title="Refresh tree">🔄</button>
-    <button class="icon-btn" onclick={addHorizontalSplit} title="Split horizontal">⧈</button>
-    <button class="icon-btn" onclick={addVerticalSplit} title="Split vertical">⧉</button>
   </header>
   <div class="body">
     <aside class="sidebar" class:collapsed={sidebarCollapsed} style:width="{sidebarCollapsed ? 0 : sidebarWidth}px">

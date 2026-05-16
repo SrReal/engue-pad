@@ -260,12 +260,12 @@
         <button class="tab-close" onclick={(e) => handleClose(tab.id, e)} type="button" aria-label="Close tab">×</button>
       </div>
     {/each}
-    <button class="tab-add" onclick={() => addTerminal(node.id, "Terminal", workspaceInfo.rootPath ?? undefined)} title="New terminal" type="button"><span class="term-icon">&gt;_</span></button>
     <div class="panel-actions">
-      <button class="panel-action-btn" onclick={() => splitNode(node.id, 'horizontal')} title="Split horizontal" type="button">⧈</button>
-      <button class="panel-action-btn" onclick={() => splitNode(node.id, 'vertical')} title="Split vertical" type="button">⧉</button>
+      <button class="panel-action-btn" onclick={() => splitNode(node.id, 'horizontal')} title="Split horizontal" type="button">⬌</button>
+      <button class="panel-action-btn" onclick={() => splitNode(node.id, 'vertical')} title="Split vertical" type="button">⬍</button>
       <button class="panel-action-btn close" onclick={handleClosePanel} title="Close panel" type="button">×</button>
     </div>
+    <button class="tab-add" onclick={() => addTerminal(node.id, "Terminal", workspaceInfo.rootPath ?? undefined)} title="New terminal" type="button"><span class="term-icon">&gt;_</span></button>
   </div>
   {#if draggedTabId}
     {@const draggedTab = node.tabs.find((t) => t.id === draggedTabId)}
