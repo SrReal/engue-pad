@@ -375,6 +375,21 @@
     flex: 1;
     overflow-x: auto;
     min-width: 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color, #333) transparent;
+  }
+
+  .tabs-scroll::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .tabs-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .tabs-scroll::-webkit-scrollbar-thumb {
+    background: var(--border-color, #333);
+    border-radius: 2px;
   }
 
   .tab {
@@ -391,6 +406,7 @@
     font-size: 13px;
     user-select: none;
     -webkit-user-select: none;
+    flex-shrink: 0;
   }
 
   .tab:hover {
