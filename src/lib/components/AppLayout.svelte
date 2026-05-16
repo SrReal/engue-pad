@@ -8,6 +8,7 @@
   import LayoutNode from "./LayoutNode.svelte";
   import FileTree from "./FileTree.svelte";
   import StatusBar from "./StatusBar.svelte";
+  import SidebarFooter from "./SidebarFooter.svelte";
   import ProcessFooter from "./ProcessFooter.svelte";
   import ProblemsPanel from "./ProblemsPanel.svelte";
   import UrlToast from "./UrlToast.svelte";
@@ -123,6 +124,7 @@
           </div>
         {/if}
       </div>
+      <SidebarFooter />
     </aside>
     {#if !sidebarCollapsed}
       <div
