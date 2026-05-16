@@ -261,6 +261,11 @@
       </div>
     {/each}
     <button class="tab-add" onclick={() => addTerminal(node.id, "Terminal", workspaceInfo.rootPath ?? undefined)} title="New terminal" type="button"><span class="term-icon">&gt;_</span></button>
+    <div class="panel-actions">
+      <button class="panel-action-btn" onclick={() => splitNode(node.id, 'horizontal')} title="Split horizontal" type="button">⧈</button>
+      <button class="panel-action-btn" onclick={() => splitNode(node.id, 'vertical')} title="Split vertical" type="button">⧉</button>
+      <button class="panel-action-btn close" onclick={handleClosePanel} title="Close panel" type="button">×</button>
+    </div>
   </div>
   {#if draggedTabId}
     {@const draggedTab = node.tabs.find((t) => t.id === draggedTabId)}
@@ -531,6 +536,43 @@
   .hint {
     font-size: 12px;
     color: var(--text-muted, #666);
+  }
+
+  .panel-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: auto;
+    padding: 0 4px;
+    border-left: 1px solid var(--border-color, #333);
+    flex-shrink: 0;
+  }
+
+  .panel-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted, #888);
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 3px;
+    user-select: none;
+    -webkit-user-select: none;
+    padding: 0;
+  }
+
+  .panel-action-btn:hover {
+    background: var(--bg-tab-hover, #3d3d3d);
+    color: var(--text-color, #ccc);
+  }
+
+  .panel-action-btn.close:hover {
+    background: var(--bg-tab-close-hover, #c44);
+    color: white;
   }
 
   .context-menu {
