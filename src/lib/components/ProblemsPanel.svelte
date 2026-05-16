@@ -3,6 +3,8 @@
   import { linterAvailability } from "$lib/editor/linterAvailability.svelte";
   import { layoutState, addTab, setActiveTab, setActiveNode } from "$lib/layout/store.svelte";
 
+  let { onClose }: { onClose: () => void } = $props();
+
   let expandedPaths = $state<Set<string>>(new Set());
 
   function togglePath(path: string) {
@@ -59,6 +61,7 @@
       {#if infoCount > 0}<span class="count info">{infoCount} info</span>{/if}
       {#if problemsStore.items.length === 0}<span class="count">No problems</span>{/if}
     </span>
+    <button class="close-btn" onclick={onClose} title="Close">×</button>
   </div>
   <div class="problems-list">
     {#if problemsStore.items.length === 0 && linterAvailability.available === false}
@@ -127,6 +130,29 @@
     display: flex;
     gap: 8px;
     font-size: 12px;
+    margin-right: auto;
+    margin-left: 12px;
+  }
+
+  .close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background: none;
+    border: none;
+    color: var(--text-muted, #888);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    border-radius: 3px;
+    padding: 0;
+  }
+
+  .close-btn:hover {
+    background: var(--bg-tab-hover, #3d3d3d);
+    color: var(--text-color, #ccc);
   }
 
   .count {

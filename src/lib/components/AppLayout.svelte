@@ -152,7 +152,7 @@
       </div>
       {#if showProblems}
         <div class="problems-area">
-          <ProblemsPanel />
+          <ProblemsPanel onClose={() => showProblems = false} />
         </div>
       {/if}
       <ProcessFooter />

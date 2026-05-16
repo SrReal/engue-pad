@@ -42,8 +42,9 @@
   function getLanguageExtension(lang: string): Extension {
     switch (lang) {
       case "javascript":
+        return javascript({ jsx: true });
       case "typescript":
-        return javascript({ typescript: lang === "typescript" });
+        return javascript({ typescript: true, jsx: true });
       case "json":
         return json();
       case "html":
