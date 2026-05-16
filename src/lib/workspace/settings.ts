@@ -2,6 +2,8 @@ import { invoke } from "@tauri-apps/api/core";
 
 export type AppSettings = {
   lastProjectPath: string | null;
+  rightSidebarCollapsed?: boolean;
+  rightSidebarWidth?: number;
 };
 
 const SETTINGS_FILE = "settings.json";

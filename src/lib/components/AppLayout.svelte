@@ -33,6 +33,13 @@
     if (settings.lastProjectPath) {
       workspaceInfo.rootPath = settings.lastProjectPath;
     }
+    if (typeof settings.rightSidebarCollapsed === "boolean") {
+      rightSidebarCollapsed = settings.rightSidebarCollapsed;
+    }
+    if (typeof settings.rightSidebarWidth === "number" && settings.rightSidebarWidth >= 160) {
+      rightSidebarWidth = settings.rightSidebarWidth;
+      lastRightSidebarWidth = settings.rightSidebarWidth;
+    }
 
     const unlistenClose = await listen("request-app-close", async () => {
       const dirtyTabs = findAllDirtyTabs(layoutState.root);
@@ -116,7 +123,25 @@
     } else {
       rightSidebarWidth = lastRightSidebarWidth || 260;
     }
+    saveSidebarState();
   }
+
+  function saveSidebarState() {
+    saveSettings({
+      lastProjectPath: workspaceInfo.rootPath,
+      rightSidebarCollapsed,
+      rightSidebarWidth: rightSidebarCollapsed ? lastRightSidebarWidth : rightSidebarWidth,
+    });
+  }
+
+  $effect(() => {
+    if (isResizingRightSidebar) return;
+    const _w = rightSidebarWidth;
+    const _c = rightSidebarCollapsed;
+    if (workspaceInfo.rootPath) {
+      saveSidebarState();
+    }
+  });
 
   async function openFolder() {
     const selected = await open({ directory: true });

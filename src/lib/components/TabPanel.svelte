@@ -23,6 +23,8 @@
   let dragPosY = $state(0);
   let tabBarRef = $state<HTMLDivElement | null>(null);
   let isMouseDown = $state(false);
+  let panelRef = $state<HTMLDivElement | null>(null);
+  let isDragTarget = $state(false);
   let renamingTabId = $state<string | null>(null);
   let renameValue = $state("");
   let renameInputRef = $state<HTMLInputElement | null>(null);
@@ -75,6 +77,11 @@
     dragPosX = e.clientX - dragOffsetX;
     dragPosY = (tabBarRef?.getBoundingClientRect().top ?? 0);
     dragOverIndex = getInsertIndex(e.clientX);
+
+    if (panelRef && dragFromNodeId !== node.id) {
+      const rect = panelRef.getBoundingClientRect();
+      isDragTarget = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
+    }
   }
 
   function handleGlobalMouseUp(e: MouseEvent) {
@@ -85,6 +92,7 @@
     isMouseDown = false;
     dragOverIndex = null;
     dragFromNodeId = null;
+    isDragTarget = false;
     if (!fromNodeId) return;
 
     // Detect drop target panel via elementFromPoint
@@ -228,6 +236,8 @@
   class="tab-panel"
   data-node-id={node.id}
   class:active={isActive}
+  class:drag-target={isDragTarget}
+  bind:this={panelRef}
   onclick={handlePanelClick}
   onkeydown={(e: KeyboardEvent) => {
     // Only handle Enter/Space when focus is on the panel itself, not bubbled from xterm/editor.
@@ -378,6 +388,12 @@
 
   .tab-panel.active {
     outline-color: var(--accent-color, #4a9eff);
+  }
+
+  .tab-panel.drag-target {
+    outline: 2px dashed var(--accent-color, #4a9eff);
+    outline-offset: -2px;
+    background: rgba(74, 158, 255, 0.05);
   }
 
   .tab-bar {
