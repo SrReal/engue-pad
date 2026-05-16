@@ -261,6 +261,11 @@
     color: var(--text-color, #ccc);
   }
 
+  .editor-container :global(.cm-lineNumbers) {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
   .editor-container :global(.cm-panel.cm-panel-lint li[aria-selected]) {
     background: var(--bg-tab-hover, #3d3d3d);
   }
