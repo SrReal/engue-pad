@@ -143,26 +143,26 @@ Objetivo: linting ligero, indicadores git, panel de tareas y pulido de rendimien
 
 ### 3.2 Git básico en árbol de archivos
 
-- [ ] Detectar si el proyecto es un repositorio git.
-- [ ] Mostrar nombre de branch actual en status bar.
-- [ ] Mostrar indicadores de cambio en archivos del árbol (modificado, nuevo, sin seguimiento).
-- [ ] Refresco de estado git periódico o bajo demanda.
+- [x] Detectar si el proyecto es un repositorio git.
+- [x] Mostrar nombre de branch actual en sidebar footer.
+- [x] Mostrar indicadores de cambio en archivos del árbol (modificado, nuevo, sin seguimiento).
+- [x] Refresco de estado git periódico cada 5s.
 
 ### 3.3 Panel de tareas (TODO)
 
-- [ ] Crear `.enguepad/todo.md` con template por defecto si no existe.
-- [ ] Parser de markdown: extraer checkboxes y agrupaciones por headers (`##`).
-- [ ] Componente Svelte de panel de tareas: lista interactiva con checkboxes.
-- [ ] Sincronización bidireccional: click en checkbox actualiza fichero; editar fichero actualiza panel.
-- [ ] Panel se ubica como split horizontal o vertical dentro del layout.
-- [ ] No mostrar markdown crudo por defecto (renderizado interactivo).
-- [ ] Watcher de `todo.md` para refresco en tiempo real.
+- [x] Crear `.enguepad/todo.md` con template por defecto si no existe.
+- [x] Parser de markdown: extraer checkboxes y agrupaciones por headers (`##`).
+- [x] Componente Svelte de panel de tareas: lista interactiva con checkboxes.
+- [x] Sincronización bidireccional: click en checkbox actualiza fichero; editar fichero actualiza panel.
+- [x] Panel se ubica como pestaña dentro del layout.
+- [x] No mostrar markdown crudo por defecto (renderizado interactivo).
+- [x] Watcher de `todo.md` para refresco en tiempo real.
 
 ### 3.4 Status bar — contador de tareas
 
-- [ ] Parsear `todo.md` al abrir proyecto.
-- [ ] Mostrar contador `TODO: X/Y` en status bar.
-- [ ] Actualizar contador en tiempo real al modificar tareas.
+- [x] Parsear `todo.md` al abrir proyecto.
+- [x] Mostrar contador 📝 X/Y en status bar.
+- [x] Actualizar contador en tiempo real al modificar tareas.
 
 ### 3.5 Refinamiento y rendimiento
 
