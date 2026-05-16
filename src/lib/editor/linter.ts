@@ -160,6 +160,25 @@ const lintersByLanguage: Record<string, LinterFn[]> = {
   powershell: [psLint],
 };
 
+const linterCommandsByLanguage: Record<string, string[]> = {
+  javascript: ["biome", "npx"],
+  typescript: ["biome", "npx"],
+  json: ["biome"],
+  python: ["ruff"],
+  shell: ["ruff"],
+  powershell: ["pwsh"],
+};
+
+export async function checkLinterAvailability(language: string): Promise<boolean> {
+  const commands = linterCommandsByLanguage[language];
+  if (!commands || commands.length === 0) return false;
+  for (const cmd of commands) {
+    const result = await runCommand(cmd, ["--version"]);
+    if (result.exitCode === 0) return true;
+  }
+  return false;
+}
+
 export async function runLinters(
   language: string,
   path: string,

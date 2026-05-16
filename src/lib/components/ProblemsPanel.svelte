@@ -1,5 +1,6 @@
 <script lang="ts">
   import { problemsStore } from "$lib/editor/problems.svelte";
+  import { linterAvailability } from "$lib/editor/linterAvailability.svelte";
   import { layoutState, addTab, setActiveTab, setActiveNode } from "$lib/layout/store.svelte";
 
   let expandedPaths = $state<Set<string>>(new Set());
@@ -60,7 +61,19 @@
     </span>
   </div>
   <div class="problems-list">
-    {#each grouped.entries() as [path, list] (path)}
+    {#if problemsStore.items.length === 0 && linterAvailability.available === false}
+      <div class="empty-hint">
+        <span class="hint-title">No linter found</span>
+        <span class="hint-text">Install one of the following in your project to enable diagnostics:</span>
+        <ul>
+          <li><strong>JS / TS / JSON:</strong> npm install --save-dev @biomejs/biome</li>
+          <li><strong>Python:</strong> pip install ruff</li>
+          <li><strong>PowerShell:</strong> Install-Module PSScriptAnalyzer</li>
+        </ul>
+        <span class="hint-note">Config is saved in .enguepad/workspace.json</span>
+      </div>
+    {:else}
+      {#each grouped.entries() as [path, list] (path)}
       <div class="path-group">
         <button class="path-header" onclick={() => togglePath(path)}>
           <span class="arrow" class:expanded={expandedPaths.has(path)}>▶</span>
@@ -78,7 +91,8 @@
           </div>
         {/if}
       </div>
-    {/each}
+      {/each}
+    {/if}
   </div>
 </div>
 
@@ -218,5 +232,40 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .empty-hint {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 24px 16px;
+    color: var(--text-muted, #888);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .hint-title {
+    font-weight: 600;
+    color: var(--text-color, #ccc);
+  }
+
+  .hint-text {
+    font-size: 12px;
+  }
+
+  .empty-hint ul {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 12px;
+  }
+
+  .empty-hint li {
+    margin-bottom: 4px;
+  }
+
+  .hint-note {
+    font-size: 11px;
+    opacity: 0.7;
+    margin-top: 4px;
   }
 </style>

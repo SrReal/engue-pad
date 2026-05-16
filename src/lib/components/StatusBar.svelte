@@ -3,6 +3,7 @@
   import { invoke } from "@tauri-apps/api/core";
   import { layoutState } from "$lib/layout/store.svelte";
   import { problemsStore } from "$lib/editor/problems.svelte";
+  import { updateLinterAvailability, linterAvailability } from "$lib/editor/linterAvailability.svelte";
   import type { LayoutNode, Tab } from "$lib/layout/types";
 
   let { toggleProblems, showProblems }: { toggleProblems: () => void; showProblems: boolean } = $props();
@@ -19,6 +20,10 @@
   }
 
   const activeTab = $derived(findActiveTab(layoutState.root, layoutState.activeNodeId));
+
+  $effect(() => {
+    updateLinterAvailability(activeTab?.language ?? null);
+  });
 
   let cpu = $state(0);
   let memory = $state(0);
@@ -67,6 +72,8 @@
         <span class="problem-dot info">●</span>
       {/if}
       {problemsStore.items.length}
+    {:else if linterAvailability.available === false}
+      <span class="problem-dot warning">!</span>
     {:else}
       ✓
     {/if}
