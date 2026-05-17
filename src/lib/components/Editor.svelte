@@ -10,9 +10,9 @@
   import { css } from "@codemirror/lang-css";
   import { markdown } from "@codemirror/lang-markdown";
   import { python } from "@codemirror/lang-python";
-  import { lineNumbers, highlightActiveLineGutter } from "@codemirror/view";
+  import { lineNumbers, highlightActiveLineGutter, EditorView as CMEditorView } from "@codemirror/view";
   import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
-  import { bracketMatching, syntaxHighlighting, defaultHighlightStyle, foldGutter, foldKeymap } from "@codemirror/language";
+  import { bracketMatching, syntaxHighlighting, defaultHighlightStyle, foldGutter, foldKeymap, indentUnit } from "@codemirror/language";
   import { highlightSelectionMatches, searchKeymap, search } from "@codemirror/search";
   import { updateTabContent, markTabSaved, setTabLineEnding } from "$lib/layout/store.svelte";
   import { urlLinksFor } from "$lib/editor/urlLinks";
@@ -21,6 +21,7 @@
   import { linterConfig } from "$lib/workspace/store.svelte";
   import { editorNavigation } from "$lib/editor/navigation";
   import { get } from "svelte/store";
+  import { loadSettings, type EditorSettings } from "$lib/workspace/settings";
 
   let { nodeId, tabId, path, language, initialContent = "", dirty = false }: {
     nodeId: string;
@@ -97,8 +98,20 @@
     }
   }
 
-  onMount(() => {
+  onMount(async () => {
     if (!containerRef) return;
+
+    const appSettings = await loadSettings();
+    const editorSettings: EditorSettings = appSettings.editor ?? {
+      fontSize: 14,
+      lineHeight: 1.5,
+      wordWrap: true,
+      tabSize: 2,
+      insertSpaces: true,
+      showLineNumbers: true,
+      highlightActiveLine: true,
+      minimap: false,
+    };
 
     const saveKeymap = keymap.of([
       {
@@ -120,8 +133,6 @@
 
     const extensions: Extension[] = [
       oneDark,
-      lineNumbers(),
-      highlightActiveLineGutter(),
       history(),
       keymap.of([...defaultKeymap, ...historyKeymap, ...foldKeymap, ...searchKeymap]),
       search({ top: true }),
@@ -132,9 +143,12 @@
       saveKeymap,
       updateListener,
       ...urlLinksFor(nodeId),
+      EditorState.tabSize.of(editorSettings.tabSize),
+      indentUnit.of(editorSettings.insertSpaces ? " ".repeat(editorSettings.tabSize) : "\t"),
       EditorView.theme({
         "&": {
-          fontSize: "14px",
+          fontSize: `${editorSettings.fontSize}px`,
+          lineHeight: `${editorSettings.lineHeight}`,
           height: "100%",
         },
         ".cm-content": {
@@ -146,8 +160,21 @@
           borderRight: "1px solid var(--border-color, #333)",
           fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
         },
+        ".cm-lineNumbers .cm-gutterElement": {
+          fontSize: `${editorSettings.fontSize - 1}px`,
+        },
       }),
     ];
+
+    if (editorSettings.showLineNumbers) {
+      extensions.push(lineNumbers());
+    }
+    if (editorSettings.highlightActiveLine) {
+      extensions.push(highlightActiveLineGutter());
+    }
+    if (editorSettings.wordWrap) {
+      extensions.push(CMEditorView.lineWrapping);
+    }
 
     if (language) {
       extensions.push(getLanguageExtension(language));

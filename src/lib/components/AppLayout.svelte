@@ -61,10 +61,15 @@
     };
   });
 
+  let gitRefreshInterval = $state(5000);
+
   $effect(() => {
     const root = workspaceInfo.rootPath;
     if (root) {
       loadWorkspace(root);
+      loadSettings().then((s) => {
+        gitRefreshInterval = (s.git?.refreshInterval ?? 5) * 1000;
+      });
     }
   });
 

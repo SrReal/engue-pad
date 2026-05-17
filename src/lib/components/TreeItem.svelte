@@ -21,7 +21,7 @@
     loading: boolean;
   };
 
-  let { node, onRefresh, rootPath }: { node: TreeNode; onRefresh: () => void; rootPath: string } = $props();
+  let { node, onRefresh, rootPath, showGitIndicators = true }: { node: TreeNode; onRefresh: () => void; rootPath: string; showGitIndicators?: boolean } = $props();
 
   function getRelativePath(fullPath: string): string {
     const sep = fullPath.includes("/") ? "/" : "\\";
@@ -30,7 +30,7 @@
   }
 
   const gitStatus = $derived.by(() => {
-    if (!gitStore.isRepo || node.entry.is_dir) return null;
+    if (!showGitIndicators || !gitStore.isRepo || node.entry.is_dir) return null;
     const rel = getRelativePath(node.entry.path);
     const status = gitStore.files[rel];
     if (!status) return null;
@@ -293,7 +293,7 @@
   {#if node.expanded && node.children}
     <div class="children">
       {#each node.children as child (child.entry.path)}
-        <TreeItem node={child} {onRefresh} {rootPath} />
+        <TreeItem node={child} {onRefresh} {rootPath} {showGitIndicators} />
       {/each}
     </div>
   {/if}

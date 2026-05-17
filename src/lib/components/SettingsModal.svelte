@@ -1,5 +1,6 @@
 <script lang="ts">
   import { getDefaultSettings, saveSettings, type AppSettings } from "$lib/workspace/settings";
+  import { linterConfig } from "$lib/workspace/store.svelte";
 
   let { show = $bindable(false) }: { show?: boolean } = $props();
   let activeTab = $state<"general" | "editor" | "terminal" | "lint" | "git">("general");
@@ -28,6 +29,11 @@
     const updated = { ...parentObj, [key]: value };
     settings = { ...settings, [parent]: updated };
     saveSettings(settings);
+    if (parent === "lint") {
+      if (key === "enabled") linterConfig.enabled = !!value;
+      if (key === "runOnSave") linterConfig.runOnSave = !!value;
+      if (key === "runOnType") linterConfig.runOnType = !!value;
+    }
   }
 
   function close() {

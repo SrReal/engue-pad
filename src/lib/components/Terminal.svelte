@@ -8,6 +8,7 @@
   import "@xterm/xterm/css/xterm.css";
   import { reportUrl } from "$lib/terminal/urlDetector";
   import { addPreview } from "$lib/layout/store.svelte";
+  import { loadSettings } from "$lib/workspace/settings";
 
   let { nodeId, tabId, cwd, shell }: {
     nodeId: string;
@@ -26,10 +27,19 @@
   onMount(async () => {
     if (!containerRef) return;
 
+    const appSettings = await loadSettings();
+    const tSettings = appSettings.terminal ?? {
+      defaultShell: "",
+      fontSize: 14,
+      scrollback: 1000,
+      copyOnSelect: false,
+    };
+
     const term = new XTerm({
       cursorBlink: true,
       fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
-      fontSize: 14,
+      fontSize: tSettings.fontSize,
+      scrollback: tSettings.scrollback,
       theme: {
         background: "#1e1e1e",
         foreground: "#cccccc",
@@ -62,6 +72,14 @@
     term.open(containerRef);
     term.focus();
 
+    if (tSettings.copyOnSelect) {
+      term.onSelectionChange(() => {
+        if (term.hasSelection()) {
+          navigator.clipboard.writeText(term.getSelection()).catch(() => {});
+        }
+      });
+    }
+
     const rect = containerRef.getBoundingClientRect();
     if (rect.width > 0 && rect.height > 0) {
       fit.fit();
@@ -70,7 +88,7 @@
     const cols = term.cols;
     const rows = term.rows;
 
-    const effectiveShell = shell ?? (navigator.platform.startsWith("Win") ? "powershell.exe" : "zsh");
+    const effectiveShell = shell ?? tSettings.defaultShell ?? (navigator.platform.startsWith("Win") ? "powershell.exe" : "zsh");
 
     try {
       await invoke("create_terminal", {

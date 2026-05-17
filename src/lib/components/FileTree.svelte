@@ -4,6 +4,7 @@
   import TreeItem from "./TreeItem.svelte";
   import { fileDrag } from "$lib/tree/fileDragStore";
   import { refreshGitStatus } from "$lib/git/store.svelte";
+  import { loadSettings } from "$lib/workspace/settings";
 
   type FileEntry = {
     name: string;
@@ -23,6 +24,7 @@
   let tree = $state<TreeNode[]>([]);
   let stopWatch = $state<(() => void) | null>(null);
   let isReloading = $state(false);
+  let showGitIndicators = $state(true);
 
   let rootNode = $state<TreeNode>({
     entry: { name: "Root", path: "", is_dir: true, is_file: false },
@@ -119,9 +121,15 @@
     });
     refreshGitStatus(rootPath);
 
+    let intervalMs = 5000;
+    loadSettings().then((s) => {
+      intervalMs = (s.git?.refreshInterval ?? 5) * 1000;
+      showGitIndicators = s.git?.showIndicators ?? true;
+    });
+
     const interval = setInterval(() => {
       refreshGitStatus(rootPath);
-    }, 5000);
+    }, intervalMs);
     return () => clearInterval(interval);
   });
 
@@ -181,7 +189,7 @@
   tabindex="-1"
 >
   {#if rootPath}
-    <TreeItem node={rootNode} onRefresh={reloadTree} {rootPath} />
+    <TreeItem node={rootNode} onRefresh={reloadTree} {rootPath} {showGitIndicators} />
   {/if}
 </div>
 
