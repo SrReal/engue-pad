@@ -192,15 +192,15 @@ Objetivo: ventana modal con ajustes persistentes de la aplicación.
 
 ### 3.6.1 Estructura de configuración
 
-- [ ] Tipo `AppSettings` completo con todas las opciones.
-- [ ] Persistir en `settings.json` (app data dir).
-- [ ] Cargar al inicio, guardar al cambiar.
+- [x] Tipo `AppSettings` completo con todas las opciones.
+- [x] Persistir en `settings.json` (app data dir).
+- [x] Cargar al inicio, guardar al cambiar.
 
 ### 3.6.2 Ventana modal de configuración
 
-- [ ] Componente `SettingsModal.svelte`.
-- [ ] Abrir desde icono de engranaje en top bar.
-- [ ] Tabs/categorías: General, Editor, Terminal, Lint, Git.
+- [x] Componente `SettingsModal.svelte`.
+- [x] Abrir desde icono de engranaje en top bar.
+- [x] Tabs/categorías: General, Editor, Terminal, Lint, Git.
 
 ### 3.6.3 Opciones configurables
 
