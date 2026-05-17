@@ -6,7 +6,7 @@
   import { workspaceInfo, loadWorkspace, scheduleSaveWorkspace } from "$lib/workspace/store.svelte";
   import { setTodoPath, ensureTodoFile, loadTodoFile } from "$lib/todo/store.svelte";
   import { loadSettings, saveSettings } from "$lib/workspace/settings";
-  import { appSettings } from "$lib/workspace/settingsStore.svelte";
+  import { appSettings, updateAppSettings } from "$lib/workspace/settingsStore.svelte";
   import LayoutNode from "./LayoutNode.svelte";
   import FileTree from "./FileTree.svelte";
   import TodoPanel from "./TodoPanel.svelte";
@@ -33,7 +33,7 @@
 
   onMount(async () => {
     const settings = await loadSettings();
-    appSettings = { ...appSettings, ...settings };
+    updateAppSettings(settings);
     if (settings.lastProjectPath) {
       workspaceInfo.rootPath = settings.lastProjectPath;
     }

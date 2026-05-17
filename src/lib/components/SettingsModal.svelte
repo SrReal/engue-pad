@@ -1,6 +1,6 @@
 <script lang="ts">
   import { getDefaultSettings, saveSettings, type AppSettings } from "$lib/workspace/settings";
-  import { appSettings } from "$lib/workspace/settingsStore.svelte";
+  import { appSettings, updateAppSettings } from "$lib/workspace/settingsStore.svelte";
   import { linterConfig } from "$lib/workspace/store.svelte";
 
   let { show = $bindable(false) }: { show?: boolean } = $props();
@@ -27,7 +27,7 @@
   }
 
   function apply() {
-    appSettings = { ...appSettings, ...draft };
+    updateAppSettings(draft);
     saveSettings(draft);
     if (draft.lint) {
       linterConfig.enabled = draft.lint.enabled;
