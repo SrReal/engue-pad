@@ -164,8 +164,9 @@
       </div>
     </div>
   </div>
-  <svelte:window onkeydown={handleKeydown} />
 {/if}
+
+<svelte:window onkeydown={(e) => { if (show) handleKeydown(e); }} />
 
 <style>
   .modal-backdrop {
