@@ -183,9 +183,8 @@
     background: var(--bg-panel, #1e1e1e);
     border: 1px solid var(--border-color, #333);
     border-radius: 8px;
-    width: 520px;
-    max-width: 90vw;
-    max-height: 80vh;
+    width: 560px;
+    height: 480px;
     display: flex;
     flex-direction: column;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
