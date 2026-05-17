@@ -1,8 +1,10 @@
 <script lang="ts">
   import type { TabGroup, Tab } from "$lib/layout/types";
   import { layoutState, closeTab, setActiveTab, setActiveNode, splitNode, pinTab, addTerminal, removeNode, moveTab, moveTabToPanel, renameTab } from "$lib/layout/store.svelte";
+  import { tabDrag } from "$lib/layout/tabDragStore";
   import { workspaceInfo } from "$lib/workspace/store.svelte";
   import { confirm } from "@tauri-apps/plugin-dialog";
+  import { get } from "svelte/store";
   import Editor from "./Editor.svelte";
   import MarkdownViewer from "./MarkdownViewer.svelte";
   import Terminal from "./Terminal.svelte";
@@ -71,35 +73,41 @@
     dragOffsetX = e.clientX - tabRect.left;
     dragPosX = tabRect.left;
     dragPosY = tabRect.top;
+    document.body.classList.add("is-dragging-tab");
+    tabDrag.set({ tabId, fromNodeId: node.id, x: e.clientX, y: e.clientY });
   }
 
   function handleGlobalMouseMove(e: MouseEvent) {
-    if (!draggedTabId || !isMouseDown) return;
+    const state = get(tabDrag);
+    if (!state.tabId) return;
     dragPosX = e.clientX - dragOffsetX;
     dragPosY = (tabBarRef?.getBoundingClientRect().top ?? 0);
     dragOverIndex = getInsertIndex(e.clientX);
 
-    if (panelRef && dragFromNodeId !== node.id) {
+    if (panelRef && state.fromNodeId !== node.id) {
       const rect = panelRef.getBoundingClientRect();
       const inside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
       isDragTarget = inside;
       dragOverPanel = inside;
     }
+    tabDrag.set({ ...state, x: e.clientX, y: e.clientY });
   }
 
   function handleGlobalMouseUp(e: MouseEvent) {
-    if (!draggedTabId || !isMouseDown) return;
-    const tabId = draggedTabId;
-    const fromNodeId = dragFromNodeId;
+    const state = get(tabDrag);
+    if (!state.tabId) return;
+    const tabId = state.tabId;
+    const fromNodeId = state.fromNodeId;
     draggedTabId = null;
     isMouseDown = false;
     dragOverIndex = null;
     dragFromNodeId = null;
     isDragTarget = false;
     dragOverPanel = false;
+    document.body.classList.remove("is-dragging-tab");
+    tabDrag.set({ tabId: null, fromNodeId: null, x: 0, y: 0 });
     if (!fromNodeId) return;
 
-    // Detect drop target panel via elementFromPoint
     const el = document.elementFromPoint(e.clientX, e.clientY);
     const targetPanel = el?.closest('[data-node-id]') as HTMLElement | null;
     const toNodeId = targetPanel?.dataset.nodeId ?? null;
@@ -725,5 +733,15 @@
 
   .context-menu button:hover {
     background: var(--bg-tab-hover, #3d3d3d);
+  }
+
+  :global(body.is-dragging-tab) {
+    cursor: grabbing !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+  }
+
+  :global(body.is-dragging-tab *) {
+    cursor: grabbing !important;
   }
 </style>
