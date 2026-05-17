@@ -18,19 +18,27 @@
   let panelContextMenu = $state<{ x: number; y: number } | null>(null);
   let terminalRefs = $state<Record<string, Terminal>>({});
   let dragOverIndex = $state<number | null>(null);
-  let draggedTabId = $state<string | null>(null);
-  let dragFromNodeId = $state<string | null>(null);
   let dragOffsetX = $state(0);
   let dragPosX = $state(0);
   let dragPosY = $state(0);
   let tabBarRef = $state<HTMLDivElement | null>(null);
   let isMouseDown = $state(false);
   let panelRef = $state<HTMLDivElement | null>(null);
-  let isDragTarget = $state(false);
-  let dragOverPanel = $state(false);
+
+  const dragState = $derived(get(tabDrag));
+  const isDragging = $derived(dragState.tabId !== null);
+  const isDragOrigin = $derived(dragState.fromNodeId === node.id && dragState.tabId !== null);
+  const isDragTarget = $derived(isDragging && dragState.fromNodeId !== node.id && isMouseOverPanel(dragState.x, dragState.y));
+  const dragOverPanel = $derived(isDragTarget);
   let renamingTabId = $state<string | null>(null);
   let renameValue = $state("");
   let renameInputRef = $state<HTMLInputElement | null>(null);
+
+  function isMouseOverPanel(x: number, y: number): boolean {
+    if (!panelRef) return false;
+    const rect = panelRef.getBoundingClientRect();
+    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+  }
 
   function isImage(path: string): boolean {
     return /\.(png|jpe?g|gif|webp|svg|bmp|ico|tiff?)$/i.test(path);
@@ -67,8 +75,6 @@
     const target = e.target as HTMLElement;
     if (target.closest(".tab-close")) return;
     isMouseDown = true;
-    draggedTabId = tabId;
-    dragFromNodeId = node.id;
     const tabRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     dragOffsetX = e.clientX - tabRect.left;
     dragPosX = tabRect.left;
@@ -83,13 +89,6 @@
     dragPosX = e.clientX - dragOffsetX;
     dragPosY = (tabBarRef?.getBoundingClientRect().top ?? 0);
     dragOverIndex = getInsertIndex(e.clientX);
-
-    if (panelRef && state.fromNodeId !== node.id) {
-      const rect = panelRef.getBoundingClientRect();
-      const inside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
-      isDragTarget = inside;
-      dragOverPanel = inside;
-    }
     tabDrag.set({ ...state, x: e.clientX, y: e.clientY });
   }
 
@@ -98,12 +97,8 @@
     if (!state.tabId) return;
     const tabId = state.tabId;
     const fromNodeId = state.fromNodeId;
-    draggedTabId = null;
     isMouseDown = false;
     dragOverIndex = null;
-    dragFromNodeId = null;
-    isDragTarget = false;
-    dragOverPanel = false;
     document.body.classList.remove("is-dragging-tab");
     tabDrag.set({ tabId: null, fromNodeId: null, x: 0, y: 0 });
     if (!fromNodeId) return;
@@ -122,6 +117,16 @@
     if (fromIndex === -1) return;
     if (fromIndex === insertIndex || fromIndex + 1 === insertIndex) return;
     moveTab(node.id, fromIndex, insertIndex);
+  }
+
+  // Safety: clear drag state if mouse leaves window
+  function handleWindowMouseLeave() {
+    if (get(tabDrag).tabId) {
+      isMouseDown = false;
+      dragOverIndex = null;
+      document.body.classList.remove("is-dragging-tab");
+      tabDrag.set({ tabId: null, fromNodeId: null, x: 0, y: 0 });
+    }
   }
 
   $effect(() => {
@@ -242,6 +247,7 @@
   onclick={() => { closeTabContextMenu(); closePanelContextMenu(); }}
   onmousemove={handleGlobalMouseMove}
   onmouseup={handleGlobalMouseUp}
+  onmouseleave={handleWindowMouseLeave}
 />
 
 <div
@@ -272,7 +278,7 @@
           class:preview={tab.preview}
           class:drop-before={dragOverIndex === index}
           class:drop-after={dragOverIndex === index + 1}
-          class:is-dragging={draggedTabId === tab.id}
+          class:is-dragging={dragState.tabId === tab.id && dragState.fromNodeId === node.id}
           onmousedown={(e) => handleMouseDown(e, tab.id)}
           onclick={() => handleActivate(tab.id)}
           ondblclick={() => { if (tab.type === "terminal") startTabRename(tab.id); }}
@@ -308,8 +314,8 @@
       <button class="panel-action-btn close" onclick={handleClosePanel} title="Close panel" type="button">×</button>
     </div>
   </div>
-  {#if draggedTabId}
-    {@const draggedTab = node.tabs.find((t) => t.id === draggedTabId)}
+  {#if isDragOrigin && dragState.tabId}
+    {@const draggedTab = node.tabs.find((t) => t.id === dragState.tabId)}
     {#if draggedTab}
       <div class="drag-ghost" style:left="{dragPosX}px" style:top="{dragPosY}px">
         <span>{draggedTab.title}</span>
@@ -371,7 +377,7 @@
     {/if}
   </div>
 
-  {#if dragOverPanel && dragFromNodeId !== node.id}
+  {#if isDragTarget}
     <div class="drop-overlay">
       <div class="drop-indicator">
         <span class="drop-arrow">⬍</span>
