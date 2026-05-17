@@ -166,10 +166,10 @@ Objetivo: linting ligero, indicadores git, panel de tareas y pulido de rendimien
 
 ### 3.5 Refinamiento y rendimiento
 
-- [ ] Optimizar carga lazy del árbol de archivos en proyectos grandes.
-- [ ] Debounce en watcher de filesystem.
-- [ ] Revisar consumo de memoria con múltiples pestañas abiertas.
-- [ ] Ajustes de UX: atajos de teclado, focus management, scroll restoration.
+- [x] Optimizar carga lazy del árbol de archivos en proyectos grandes.
+- [x] Debounce en watcher de filesystem.
+- [x] Revisar consumo de memoria con múltiples pestañas abiertas.
+- [x] Ajustes de UX: atajos de teclado, focus management, scroll restoration.
 
 ### Criterios de aceptación (test manual)
 

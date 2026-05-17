@@ -56,6 +56,7 @@
     if (!node.entry.is_dir) return;
     if (node.expanded) {
       node.expanded = false;
+      node.children = null;
       return;
     }
     if (node.children === null) {

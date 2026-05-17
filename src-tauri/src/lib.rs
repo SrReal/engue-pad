@@ -46,6 +46,7 @@ pub struct RunCommandOutput {
 pub struct DirListResult {
     entries: Vec<FileEntry>,
     path: String,
+    truncated: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -59,6 +60,8 @@ fn should_ignore(name: &str) -> bool {
     matches!(name, ".git" | "node_modules" | ".svelte-kit" | ".DS_Store" | "target" | "dist" | "build")
 }
 
+const MAX_DIR_ENTRIES: usize = 1000;
+
 #[tauri::command]
 fn list_directory(path: String) -> Result<DirListResult, String> {
     let dir_path = Path::new(&path);
@@ -67,9 +70,14 @@ fn list_directory(path: String) -> Result<DirListResult, String> {
     }
 
     let mut entries = Vec::new();
+    let mut truncated = false;
     match fs::read_dir(dir_path) {
         Ok(read_dir) => {
             for entry in read_dir {
+                if entries.len() >= MAX_DIR_ENTRIES {
+                    truncated = true;
+                    break;
+                }
                 if let Ok(entry) = entry {
                     let name = entry.file_name().to_string_lossy().to_string();
                     if should_ignore(&name) {
@@ -101,7 +109,7 @@ fn list_directory(path: String) -> Result<DirListResult, String> {
         Err(e) => return Err(format!("Failed to read directory: {}", e)),
     }
 
-    Ok(DirListResult { entries, path })
+    Ok(DirListResult { entries, path, truncated })
 }
 
 #[tauri::command]

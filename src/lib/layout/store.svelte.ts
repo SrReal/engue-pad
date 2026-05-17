@@ -2,6 +2,8 @@ import { invoke } from "@tauri-apps/api/core";
 import type { LayoutNode, TabGroup, Split, Tab } from "./types";
 import { createDefaultLayout, createTabGroup, createSplit } from "./types";
 
+const MAX_TABS_PER_GROUP = 20;
+
 export type LayoutState = {
   root: LayoutNode;
   activeNodeId: string | null;
@@ -158,6 +160,19 @@ export function addTab(nodeId: string, tab: Tab): void {
         newTabs = node.tabs.map((t, i) => (i === previewIndex ? enrichedTab : t));
       } else {
         newTabs = [...node.tabs, enrichedTab];
+      }
+
+      // Enforce tab limit: drop oldest non-dirty, non-active tabs
+      while (newTabs.length > MAX_TABS_PER_GROUP) {
+        const dropIndex = newTabs.findIndex(
+          (t) => !t.dirty && t.id !== node.activeTabId && t.id !== enrichedTab.id
+        );
+        if (dropIndex === -1) break;
+        const dropped = newTabs[dropIndex];
+        if (dropped.type === "terminal") {
+          invoke("kill_terminal", { terminalId: dropped.id }).catch(() => {});
+        }
+        newTabs = newTabs.filter((_, i) => i !== dropIndex);
       }
 
       return {
@@ -367,6 +382,35 @@ export async function syncTerminalCwds(root: LayoutNode): Promise<LayoutNode> {
     syncTerminalCwds(root.second),
   ]);
   return { ...root, first, second };
+}
+
+export function findActiveTabGroup(root: LayoutNode): TabGroup | null {
+  if (root.kind === "tab-group") return root;
+  const first = findActiveTabGroup(root.first);
+  if (first) return first;
+  return findActiveTabGroup(root.second);
+}
+
+export function activateNextTab(): void {
+  const group = findActiveTabGroup(layoutState.root);
+  if (!group || group.tabs.length < 2) return;
+  const idx = group.tabs.findIndex((t) => t.id === group.activeTabId);
+  const next = group.tabs[(idx + 1) % group.tabs.length];
+  setActiveTab(group.id, next.id);
+}
+
+export function activatePrevTab(): void {
+  const group = findActiveTabGroup(layoutState.root);
+  if (!group || group.tabs.length < 2) return;
+  const idx = group.tabs.findIndex((t) => t.id === group.activeTabId);
+  const prev = group.tabs[(idx - 1 + group.tabs.length) % group.tabs.length];
+  setActiveTab(group.id, prev.id);
+}
+
+export function closeActiveTab(): void {
+  const group = findActiveTabGroup(layoutState.root);
+  if (!group || !group.activeTabId) return;
+  closeTab(group.id, group.activeTabId);
 }
 
 export function detectLanguage(path: string): string {

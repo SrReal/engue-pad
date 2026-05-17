@@ -67,32 +67,38 @@
   }
 
   async function reloadNodes(path: string, oldNodes: TreeNode[]): Promise<TreeNode[]> {
-    let entries: FileEntry[] = [];
+    let result: { entries: FileEntry[]; path: string; truncated: boolean } | null = null;
     try {
-      const result = await invoke<{ entries: FileEntry[]; path: string }>("list_directory", { path });
-      entries = result.entries;
+      result = await invoke<{ entries: FileEntry[]; path: string; truncated: boolean }>("list_directory", { path });
     } catch {
       return [];
     }
+    if (!result) return [];
     const oldMap = new Map(oldNodes.map((n) => [n.entry.path, n]));
-    const nodes: TreeNode[] = [];
-    for (const entry of entries) {
+    const nodes: TreeNode[] = result.entries.map((entry) => {
       const old = oldMap.get(entry.path);
-      const node: TreeNode = {
+      return {
         entry,
         expanded: old?.expanded ?? false,
-        children: null,
+        children: old?.expanded ? old.children : null,
         loading: false,
       };
-      if (old?.expanded && entry.is_dir) {
+    });
+
+    // Parallelize recursive reload for expanded directories
+    const expanded = nodes.filter((n) => n.expanded && n.entry.is_dir);
+    await Promise.all(
+      expanded.map(async (n) => {
+        const old = oldMap.get(n.entry.path);
         try {
-          node.children = await reloadNodes(entry.path, old.children ?? []);
+          n.children = await reloadNodes(n.entry.path, old?.children ?? []);
         } catch {
-          node.expanded = false;
+          n.expanded = false;
+          n.children = null;
         }
-      }
-      nodes.push(node);
-    }
+      })
+    );
+
     return nodes;
   }
 
@@ -135,8 +141,8 @@
       stopWatch = await watch(rootPath, () => {
         if (isReloading) return;
         if (timeout) clearTimeout(timeout);
-        timeout = setTimeout(() => shallowReload(), 300);
-      }, { recursive: true, delayMs: 300 });
+        timeout = setTimeout(() => shallowReload(), 500);
+      }, { recursive: true, delayMs: 500 });
     }
 
     startWatch();

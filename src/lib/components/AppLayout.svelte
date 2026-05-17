@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { listen } from "@tauri-apps/api/event";
   import { invoke } from "@tauri-apps/api/core";
-  import { layoutState, findAllDirtyTabs, resetLayout } from "$lib/layout/store.svelte";
+  import { layoutState, findAllDirtyTabs, resetLayout, activateNextTab, activatePrevTab, closeActiveTab } from "$lib/layout/store.svelte";
   import { workspaceInfo, loadWorkspace, scheduleSaveWorkspace } from "$lib/workspace/store.svelte";
   import { setTodoPath, ensureTodoFile, loadTodoFile } from "$lib/todo/store.svelte";
   import { loadSettings, saveSettings } from "$lib/workspace/settings";
@@ -158,6 +158,30 @@
     }
   }
 
+  function handleGlobalKeydown(e: KeyboardEvent) {
+    // Skip if typing in an input or editor
+    const target = e.target as HTMLElement;
+    if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.closest(".cm-editor")) {
+      // Still allow Ctrl+W and Ctrl+Tab even in editor
+      if (!e.ctrlKey && !e.metaKey) return;
+    }
+
+    const mod = e.ctrlKey || e.metaKey;
+    if (!mod) return;
+
+    if (e.key === "w") {
+      e.preventDefault();
+      closeActiveTab();
+      return;
+    }
+    if (e.key === "Tab") {
+      e.preventDefault();
+      if (e.shiftKey) activatePrevTab();
+      else activateNextTab();
+      return;
+    }
+  }
+
   function triggerRefresh() {
     refreshSignal++;
   }
@@ -193,6 +217,8 @@
   });
 
 </script>
+
+<svelte:window onkeydown={handleGlobalKeydown} />
 
 <div class="app-layout">
   <header class="top-bar">
