@@ -186,6 +186,65 @@ Objetivo: linting ligero, indicadores git, panel de tareas y pulido de rendimien
 
 ---
 
+## Fase 3.6 — Configuración
+
+Objetivo: ventana modal con ajustes persistentes de la aplicación.
+
+### 3.6.1 Estructura de configuración
+
+- [ ] Tipo `AppSettings` completo con todas las opciones.
+- [ ] Persistir en `settings.json` (app data dir).
+- [ ] Cargar al inicio, guardar al cambiar.
+
+### 3.6.2 Ventana modal de configuración
+
+- [ ] Componente `SettingsModal.svelte`.
+- [ ] Abrir desde icono de engranaje en top bar.
+- [ ] Tabs/categorías: General, Editor, Terminal, Lint, Git.
+
+### 3.6.3 Opciones configurables
+
+#### General
+- Tamaño de fuente de UI
+- Escala de interfaz (zoom)
+- Restaurar layout al reabrir (si/no)
+- Tema: dark/light/auto
+
+#### Editor
+- Tamaño de fuente del editor
+- Interlineado
+- Word wrap
+- Tab size / espacios vs tabs
+- Mostrar números de línea
+- Resaltar línea activa
+- Minimap (si/no)
+
+#### Terminal
+- Shell por defecto (bash/zsh/pwsh)
+- Fuente y tamaño de terminal
+- Líneas de scrollback
+- Copiar al seleccionar
+
+#### Lint
+- Activar/desactivar linting
+- Ejecutar al guardar vs al escribir
+- Linter preferido por lenguaje
+
+#### Git
+- Intervalo de refresco de estado git
+- Mostrar indicadores en árbol
+
+### Criterios de aceptación
+
+```text
+1. Clic en engranaje abre modal de settings.
+2. Cambiar una opción se refleja inmediatamente en UI.
+3. Cerrar y reabrir app conserva los settings.
+4. Las opciones de editor afectan a CodeMirror.
+```
+
+---
+
 ## Fase 4 — Mascota
 
 Objetivo: mascota visual configurable reactiva a eventos internos.
