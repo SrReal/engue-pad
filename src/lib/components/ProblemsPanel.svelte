@@ -2,6 +2,7 @@
   import { problemsStore } from "$lib/editor/problems.svelte";
   import { linterAvailability } from "$lib/editor/linterAvailability.svelte";
   import { layoutState, addTab, setActiveTab, setActiveNode } from "$lib/layout/store.svelte";
+  import { editorNavigation } from "$lib/editor/navigation";
 
   let { onClose }: { onClose: () => void } = $props();
 
@@ -16,7 +17,8 @@
     expandedPaths = new Set(expandedPaths);
   }
 
-  function openProblem(path: string) {
+  function openProblem(path: string, offset: number) {
+    editorNavigation.set({ path, offset });
     const nodeId = layoutState.activeNodeId ?? layoutState.root.id;
     const fileName = path.split(/[\\/]/).pop() ?? path;
     addTab(nodeId, {
@@ -86,7 +88,7 @@
         {#if expandedPaths.has(path)}
           <div class="path-issues">
             {#each list as p}
-              <button class="issue" onclick={() => openProblem(p.path)}>
+              <button class="issue" onclick={() => openProblem(p.path, p.from)}>
                 <span class="issue-icon">{severityIcon(p.severity)}</span>
                 <span class="issue-msg">{p.message}</span>
               </button>

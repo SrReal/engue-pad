@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { linter as cmLinter, setDiagnostics, type Diagnostic } from "@codemirror/lint";
 import type { EditorView } from "@codemirror/view";
 import { setProblemsForPath } from "./problems.svelte";
+import { linterConfig } from "$lib/workspace/store.svelte";
 
 export type LinterSeverity = "error" | "warning" | "info";
 
@@ -186,6 +187,26 @@ export async function runLinters(
 ): Promise<LinterResult[]> {
   const linters = lintersByLanguage[language];
   if (!linters || linters.length === 0) return [];
+
+  const preferred = linterConfig.languages?.[language];
+  if (preferred) {
+    const map: Record<string, LinterFn> = {
+      biome: biomeLint,
+      eslint: eslintLint,
+      ruff: ruffLint,
+      psscriptanalyzer: psLint,
+    };
+    const linter = map[preferred.toLowerCase()];
+    if (linter) {
+      try {
+        const results = await linter(path, content);
+        if (results.length > 0) return results;
+      } catch {
+        // fallback to default chain
+      }
+    }
+  }
+
   for (const linter of linters) {
     try {
       const results = await linter(path, content);

@@ -19,6 +19,8 @@
   import { linterFor, forceLint } from "$lib/editor/linter";
   import { clearProblemsForPath } from "$lib/editor/problems.svelte";
   import { linterConfig } from "$lib/workspace/store.svelte";
+  import { editorNavigation } from "$lib/editor/navigation";
+  import { get } from "svelte/store";
 
   let { nodeId, tabId, path, language, initialContent = "", dirty = false }: {
     nodeId: string;
@@ -164,6 +166,15 @@
       parent: containerRef,
     });
 
+    const nav = get(editorNavigation);
+    if (nav && nav.path === path && view) {
+      view.dispatch({
+        selection: { anchor: nav.offset, head: nav.offset },
+        scrollIntoView: true,
+      });
+      editorNavigation.set(null);
+    }
+
     if (path && !dirty) {
       loadFile();
     }
@@ -172,6 +183,19 @@
   onDestroy(() => {
     view?.destroy();
     if (path) clearProblemsForPath(path);
+  });
+
+  $effect(() => {
+    const unsub = editorNavigation.subscribe((nav) => {
+      if (nav && nav.path === path && view) {
+        view.dispatch({
+          selection: { anchor: nav.offset, head: nav.offset },
+          scrollIntoView: true,
+        });
+        editorNavigation.set(null);
+      }
+    });
+    return unsub;
   });
 </script>
 

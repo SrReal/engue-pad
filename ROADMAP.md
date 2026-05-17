@@ -88,22 +88,22 @@ Objetivo: terminales integradas con PTY y preview web dentro del layout.
 - [x] Conectar xterm.js con backend PTY vía Tauri events/commands.
 - [x] Soporte de múltiples terminales en pestañas.
 - [x] Soporte de splits verticales/horizontales con terminales.
-- [ ] Renombrar terminal.
-- [ ] Guardar y restaurar terminales en workspace (id, título, shell, cwd, restore).
+- [x] Renombrar terminal.
+- [x] Guardar y restaurar terminales en workspace (id, título, shell, cwd, restore).
 
 ### 2.3 Detección de URLs
 
-- [ ] Parsear salida de terminal buscando URLs locales (`http://localhost:`).
-- [ ] Mostrar toast/sugerencia para abrir preview.
-- [ ] Evento interno `terminal.output.url_detected`.
+- [x] Parsear salida de terminal buscando URLs locales (`http://localhost:`).
+- [x] Mostrar toast/sugerencia para abrir preview.
+- [x] Evento interno `terminal.output.url_detected`.
 
 ### 2.4 Preview web
 
-- [ ] Componente de preview embebido (iframe o webview).
-- [ ] Abrir URL manual o desde detección de terminal.
-- [ ] Refrescar preview.
-- [ ] Abrir en navegador externo.
-- [ ] Guardar previews configurados en workspace.
+- [x] Componente de preview embebido (iframe o webview).
+- [x] Abrir URL manual o desde detección de terminal.
+- [x] Refrescar preview.
+- [x] Abrir en navegador externo.
+- [x] Guardar previews configurados en workspace.
 
 ### 2.5 Layout avanzado
 
@@ -136,10 +136,10 @@ Objetivo: linting ligero, indicadores git, panel de tareas y pulido de rendimien
 - [x] Adaptador para TypeScript/JavaScript (biome > eslint).
 - [x] Adaptador para Python (ruff).
 - [x] Adaptador para PowerShell (PSScriptAnalyzer).
-- [ ] Ejecutar lint al guardar archivo (configurable). Actualmente se ejecuta debounced al escribir.
-- [ ] Mostrar errores en panel de problemas.
+- [x] Ejecutar lint al guardar archivo (configurable). Actualmente se ejecuta debounced al escribir.
+- [x] Mostrar errores en panel de problemas.
 - [x] Mostrar diagnósticos en editor (subrayado/warnings de CodeMirror).
-- [ ] Configuración de linters en `workspace.json`.
+- [x] Configuración de linters en `workspace.json`.
 
 ### 3.2 Git básico en árbol de archivos
 

@@ -31,6 +31,9 @@ export async function loadWorkspace(rootPath: string): Promise<void> {
       linterConfig.enabled = data.linter.enabled;
       linterConfig.runOnSave = data.linter.runOnSave;
       linterConfig.runOnType = data.linter.runOnType;
+      if (data.linter.languages) {
+        linterConfig.languages = data.linter.languages;
+      }
     }
   } catch {
     const workspaceId = crypto.randomUUID();

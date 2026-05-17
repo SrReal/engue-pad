@@ -25,7 +25,11 @@
   let isMouseDown = $state(false);
   let panelRef = $state<HTMLDivElement | null>(null);
 
-  const dragState = $derived(get(tabDrag));
+  let dragState = $state(get(tabDrag));
+  $effect(() => {
+    const unsub = tabDrag.subscribe((v) => { dragState = v; });
+    return unsub;
+  });
   const isDragging = $derived(dragState.tabId !== null);
   const isDragOrigin = $derived(dragState.fromNodeId === node.id && dragState.tabId !== null);
   const isDragTarget = $derived(isDragging && dragState.fromNodeId !== node.id && isMouseOverPanel(dragState.x, dragState.y));
@@ -74,6 +78,7 @@
   function handleMouseDown(e: MouseEvent, tabId: string) {
     const target = e.target as HTMLElement;
     if (target.closest(".tab-close")) return;
+    e.preventDefault();
     isMouseDown = true;
     const tabRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     dragOffsetX = e.clientX - tabRect.left;

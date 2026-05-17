@@ -33,6 +33,7 @@ export type LinterConfig = {
   enabled: boolean;
   runOnSave: boolean;
   runOnType: boolean;
+  languages?: Record<string, string>;
 };
 
 export type WorkspaceData = {
