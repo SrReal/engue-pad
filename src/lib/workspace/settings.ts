@@ -1,30 +1,110 @@
 import { invoke } from "@tauri-apps/api/core";
 
+export type LinterSettings = {
+  enabled: boolean;
+  runOnSave: boolean;
+  runOnType: boolean;
+  languages?: Record<string, string>;
+};
+
+export type EditorSettings = {
+  fontSize: number;
+  lineHeight: number;
+  wordWrap: boolean;
+  tabSize: number;
+  insertSpaces: boolean;
+  showLineNumbers: boolean;
+  highlightActiveLine: boolean;
+  minimap: boolean;
+};
+
+export type TerminalSettings = {
+  defaultShell: string;
+  fontSize: number;
+  scrollback: number;
+  copyOnSelect: boolean;
+};
+
+export type GitSettings = {
+  refreshInterval: number;
+  showIndicators: boolean;
+};
+
 export type AppSettings = {
   lastProjectPath: string | null;
   rightSidebarCollapsed?: boolean;
   rightSidebarWidth?: number;
+  uiFontSize?: number;
+  zoom?: number;
+  restoreLayout?: boolean;
+  theme?: "dark" | "light" | "auto";
+  editor?: EditorSettings;
+  terminal?: TerminalSettings;
+  lint?: LinterSettings;
+  git?: GitSettings;
 };
 
 const SETTINGS_FILE = "settings.json";
 
+const DEFAULT_EDITOR: EditorSettings = {
+  fontSize: 14,
+  lineHeight: 1.5,
+  wordWrap: true,
+  tabSize: 2,
+  insertSpaces: true,
+  showLineNumbers: true,
+  highlightActiveLine: true,
+  minimap: false,
+};
+
+const DEFAULT_TERMINAL: TerminalSettings = {
+  defaultShell: "",
+  fontSize: 14,
+  scrollback: 1000,
+  copyOnSelect: false,
+};
+
+const DEFAULT_LINT: LinterSettings = {
+  enabled: true,
+  runOnSave: false,
+  runOnType: true,
+};
+
+const DEFAULT_GIT: GitSettings = {
+  refreshInterval: 5,
+  showIndicators: true,
+};
+
+export function getDefaultSettings(): Required<Omit<AppSettings, "lastProjectPath">> & { lastProjectPath: string | null } {
+  return {
+    lastProjectPath: null,
+    rightSidebarCollapsed: false,
+    rightSidebarWidth: 260,
+    uiFontSize: 13,
+    zoom: 1,
+    restoreLayout: true,
+    theme: "dark",
+    editor: { ...DEFAULT_EDITOR },
+    terminal: { ...DEFAULT_TERMINAL },
+    lint: { ...DEFAULT_LINT },
+    git: { ...DEFAULT_GIT },
+  };
+}
+
 async function getSettingsPath(): Promise<string> {
   const dir = await invoke<string>("get_app_data_dir");
   const path = dir.endsWith("/") || dir.endsWith("\\") ? `${dir}${SETTINGS_FILE}` : `${dir}/${SETTINGS_FILE}`;
-  console.log("[settings] getSettingsPath:", path);
   return path;
 }
 
 export async function loadSettings(): Promise<AppSettings> {
   const path = await getSettingsPath();
-  console.log("[settings] loadSettings path:", path);
   try {
     const raw = await invoke<string>("read_file", { path });
-    console.log("[settings] loaded raw:", raw);
-    return JSON.parse(raw);
-  } catch (e) {
-    console.log("[settings] loadSettings failed, returning defaults:", e);
-    return { lastProjectPath: null };
+    const parsed = JSON.parse(raw) as AppSettings;
+    return { ...getDefaultSettings(), ...parsed };
+  } catch {
+    return getDefaultSettings();
   }
 }
 

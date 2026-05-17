@@ -14,6 +14,7 @@
   import ProcessFooter from "./ProcessFooter.svelte";
   import ProblemsPanel from "./ProblemsPanel.svelte";
   import UrlToast from "./UrlToast.svelte";
+  import SettingsModal from "./SettingsModal.svelte";
   import { open, confirm } from "@tauri-apps/plugin-dialog";
 
   let sidebarWidth = $state(240);
@@ -22,6 +23,7 @@
   let refreshSignal = $state(0);
   let lastSidebarWidth = $state(240);
   let showProblems = $state(false);
+  let showSettings = $state(false);
 
   let rightSidebarWidth = $state(260);
   let isResizingRightSidebar = $state(false);
@@ -227,6 +229,7 @@
     <button class="icon-btn" onclick={openFolder} title="Open folder">📂</button>
     <button class="icon-btn" onclick={triggerRefresh} title="Refresh tree">🔄</button>
     <button class="icon-btn" onclick={toggleRightSidebar} title="Toggle tasks sidebar">📝</button>
+    <button class="icon-btn" onclick={() => showSettings = true} title="Settings">⚙️</button>
   </header>
   <div class="body">
     <aside class="sidebar" class:collapsed={sidebarCollapsed} style:width="{sidebarCollapsed ? 0 : sidebarWidth}px">
@@ -280,6 +283,7 @@
     </aside>
   </div>
   <UrlToast />
+  <SettingsModal bind:show={showSettings} />
 </div>
 
 <style>
