@@ -205,34 +205,34 @@ Objetivo: ventana modal con ajustes persistentes de la aplicación.
 ### 3.6.3 Opciones configurables
 
 #### General
-- Tamaño de fuente de UI
-- Escala de interfaz (zoom)
-- Restaurar layout al reabrir (si/no)
-- Tema: dark/light/auto
+- [x] Tamaño de fuente de UI
+- [x] Escala de interfaz (zoom)
+- [x] Restaurar layout al reabrir (si/no)
+- [x] Tema: dark/light/auto
 
 #### Editor
-- Tamaño de fuente del editor
-- Interlineado
-- Word wrap
-- Tab size / espacios vs tabs
-- Mostrar números de línea
-- Resaltar línea activa
-- Minimap (si/no)
+- [x] Tamaño de fuente del editor
+- [x] Interlineado
+- [x] Word wrap
+- [x] Tab size / espacios vs tabs
+- [x] Mostrar números de línea
+- [x] Resaltar línea activa
+- [x] Minimap (si/no)
 
 #### Terminal
-- Shell por defecto (bash/zsh/pwsh)
-- Fuente y tamaño de terminal
-- Líneas de scrollback
-- Copiar al seleccionar
+- [x] Shell por defecto (bash/zsh/pwsh)
+- [x] Fuente y tamaño de terminal
+- [x] Líneas de scrollback
+- [x] Copiar al seleccionar
 
 #### Lint
-- Activar/desactivar linting
-- Ejecutar al guardar vs al escribir
-- Linter preferido por lenguaje
+- [x] Activar/desactivar linting
+- [x] Ejecutar al guardar vs al escribir
+- [x] Linter preferido por lenguaje
 
 #### Git
-- Intervalo de refresco de estado git
-- Mostrar indicadores en árbol
+- [x] Intervalo de refresco de estado git
+- [x] Mostrar indicadores en árbol
 
 ### Criterios de aceptación
 
