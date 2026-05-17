@@ -21,7 +21,8 @@
   import { linterConfig } from "$lib/workspace/store.svelte";
   import { editorNavigation } from "$lib/editor/navigation";
   import { get } from "svelte/store";
-  import { loadSettings, type EditorSettings } from "$lib/workspace/settings";
+  import { type EditorSettings } from "$lib/workspace/settings";
+  import { appSettings } from "$lib/workspace/settingsStore.svelte";
 
   let { nodeId, tabId, path, language, initialContent = "", dirty = false }: {
     nodeId: string;
@@ -98,10 +99,9 @@
     }
   }
 
-  onMount(async () => {
+  function buildEditor() {
     if (!containerRef) return;
 
-    const appSettings = await loadSettings();
     const editorSettings: EditorSettings = appSettings.editor ?? {
       fontSize: 14,
       lineHeight: 1.5,
@@ -183,11 +183,14 @@
       extensions.push(linterFor(path, language));
     }
 
+    const doc = view?.state.doc.toString() ?? currentContent;
+
     const state = EditorState.create({
-      doc: currentContent,
+      doc,
       extensions,
     });
 
+    view?.destroy();
     view = new EditorView({
       state,
       parent: containerRef,
@@ -201,7 +204,10 @@
       });
       editorNavigation.set(null);
     }
+  }
 
+  onMount(() => {
+    buildEditor();
     if (path && !dirty) {
       loadFile();
     }
@@ -210,6 +216,13 @@
   onDestroy(() => {
     view?.destroy();
     if (path) clearProblemsForPath(path);
+  });
+
+  $effect(() => {
+    const _ = appSettings.editor;
+    if (view) {
+      buildEditor();
+    }
   });
 
   $effect(() => {

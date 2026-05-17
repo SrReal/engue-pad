@@ -4,7 +4,7 @@
   import TreeItem from "./TreeItem.svelte";
   import { fileDrag } from "$lib/tree/fileDragStore";
   import { refreshGitStatus } from "$lib/git/store.svelte";
-  import { loadSettings } from "$lib/workspace/settings";
+  import { appSettings } from "$lib/workspace/settingsStore.svelte";
 
   type FileEntry = {
     name: string;
@@ -116,16 +116,14 @@
 
   $effect(() => {
     if (!rootPath) return;
+    const _git = appSettings.git;
     loadDirectory(rootPath).then((nodes) => {
       tree = nodes;
     });
     refreshGitStatus(rootPath);
 
-    let intervalMs = 5000;
-    loadSettings().then((s) => {
-      intervalMs = (s.git?.refreshInterval ?? 5) * 1000;
-      showGitIndicators = s.git?.showIndicators ?? true;
-    });
+    const intervalMs = (_git?.refreshInterval ?? 5) * 1000;
+    showGitIndicators = _git?.showIndicators ?? true;
 
     const interval = setInterval(() => {
       refreshGitStatus(rootPath);

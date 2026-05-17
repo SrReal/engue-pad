@@ -8,7 +8,7 @@
   import "@xterm/xterm/css/xterm.css";
   import { reportUrl } from "$lib/terminal/urlDetector";
   import { addPreview } from "$lib/layout/store.svelte";
-  import { loadSettings } from "$lib/workspace/settings";
+  import { appSettings } from "$lib/workspace/settingsStore.svelte";
 
   let { nodeId, tabId, cwd, shell }: {
     nodeId: string;
@@ -27,7 +27,6 @@
   onMount(async () => {
     if (!containerRef) return;
 
-    const appSettings = await loadSettings();
     const tSettings = appSettings.terminal ?? {
       defaultShell: "",
       fontSize: 14,

@@ -1,56 +1,60 @@
 <script lang="ts">
   import { getDefaultSettings, saveSettings, type AppSettings } from "$lib/workspace/settings";
+  import { appSettings } from "$lib/workspace/settingsStore.svelte";
   import { linterConfig } from "$lib/workspace/store.svelte";
 
   let { show = $bindable(false) }: { show?: boolean } = $props();
   let activeTab = $state<"general" | "editor" | "terminal" | "lint" | "git">("general");
-  let settings = $state<AppSettings>(getDefaultSettings());
+  let draft = $state<AppSettings>(getDefaultSettings());
 
   $effect(() => {
     if (show) {
-      import("$lib/workspace/settings").then(({ loadSettings }) => {
-        loadSettings().then((s) => {
-          settings = { ...getDefaultSettings(), ...s };
-        });
-      });
+      draft = { ...getDefaultSettings(), ...appSettings };
     }
   });
 
   function update<K extends keyof AppSettings>(key: K, value: AppSettings[K]) {
-    settings = { ...settings, [key]: value };
-    saveSettings(settings);
+    draft = { ...draft, [key]: value };
   }
 
   function updateNested<
     K extends keyof AppSettings,
     N extends NonNullable<AppSettings[K]> extends object ? K : never
   >(parent: N, key: keyof NonNullable<AppSettings[N]>, value: unknown) {
-    const parentObj = (settings[parent] ?? {}) as Record<string, unknown>;
+    const parentObj = (draft[parent] ?? {}) as Record<string, unknown>;
     const updated = { ...parentObj, [key]: value };
-    settings = { ...settings, [parent]: updated };
-    saveSettings(settings);
-    if (parent === "lint") {
-      if (key === "enabled") linterConfig.enabled = !!value;
-      if (key === "runOnSave") linterConfig.runOnSave = !!value;
-      if (key === "runOnType") linterConfig.runOnType = !!value;
-    }
+    draft = { ...draft, [parent]: updated };
   }
 
-  function close() {
+  function apply() {
+    appSettings = { ...appSettings, ...draft };
+    saveSettings(draft);
+    if (draft.lint) {
+      linterConfig.enabled = draft.lint.enabled;
+      linterConfig.runOnSave = draft.lint.runOnSave;
+      linterConfig.runOnType = draft.lint.runOnType;
+      if (draft.lint.languages) {
+        linterConfig.languages = draft.lint.languages;
+      }
+    }
+    show = false;
+  }
+
+  function cancel() {
     show = false;
   }
 
   function handleKeydown(e: KeyboardEvent) {
-    if (e.key === "Escape") close();
+    if (e.key === "Escape") cancel();
   }
 </script>
 
 {#if show}
-  <div class="modal-backdrop" onclick={close} role="dialog" aria-modal="true" tabindex="-1">
+  <div class="modal-backdrop" onclick={cancel} role="dialog" aria-modal="true" tabindex="-1">
     <div class="modal" onclick={(e) => e.stopPropagation()}>
       <div class="modal-header">
         <span class="modal-title">Settings</span>
-        <button class="close-btn" onclick={close} aria-label="Close">×</button>
+        <button class="close-btn" onclick={cancel} aria-label="Close">×</button>
       </div>
       <div class="modal-body">
         <div class="tabs">
@@ -65,20 +69,20 @@
             <div class="section">
               <label class="field">
                 <span>UI Font Size</span>
-                <input type="number" min="10" max="20" value={settings.uiFontSize ?? 13} onchange={(e) => update("uiFontSize", +e.currentTarget.value)} />
+                <input type="number" min="10" max="20" value={draft.uiFontSize ?? 13} onchange={(e) => update("uiFontSize", +e.currentTarget.value)} />
               </label>
               <label class="field">
                 <span>Zoom</span>
-                <input type="range" min="0.8" max="1.5" step="0.05" value={settings.zoom ?? 1} onchange={(e) => update("zoom", +e.currentTarget.value)} />
-                <span class="value">{settings.zoom ?? 1}x</span>
+                <input type="range" min="0.8" max="1.5" step="0.05" value={draft.zoom ?? 1} onchange={(e) => update("zoom", +e.currentTarget.value)} />
+                <span class="value">{draft.zoom ?? 1}x</span>
               </label>
               <label class="field checkbox">
-                <input type="checkbox" checked={settings.restoreLayout ?? true} onchange={(e) => update("restoreLayout", e.currentTarget.checked)} />
+                <input type="checkbox" checked={draft.restoreLayout ?? true} onchange={(e) => update("restoreLayout", e.currentTarget.checked)} />
                 <span>Restore layout on reopen</span>
               </label>
               <label class="field">
                 <span>Theme</span>
-                <select value={settings.theme ?? "dark"} onchange={(e) => update("theme", e.currentTarget.value as "dark" | "light" | "auto")}>
+                <select value={draft.theme ?? "dark"} onchange={(e) => update("theme", e.currentTarget.value as "dark" | "light" | "auto")}>
                   <option value="dark">Dark</option>
                   <option value="light">Light</option>
                   <option value="auto">Auto</option>
@@ -89,34 +93,34 @@
             <div class="section">
               <label class="field">
                 <span>Font Size</span>
-                <input type="number" min="10" max="24" value={settings.editor?.fontSize ?? 14} onchange={(e) => updateNested("editor", "fontSize", +e.currentTarget.value)} />
+                <input type="number" min="10" max="24" value={draft.editor?.fontSize ?? 14} onchange={(e) => updateNested("editor", "fontSize", +e.currentTarget.value)} />
               </label>
               <label class="field">
                 <span>Line Height</span>
-                <input type="number" min="1" max="2" step="0.1" value={settings.editor?.lineHeight ?? 1.5} onchange={(e) => updateNested("editor", "lineHeight", +e.currentTarget.value)} />
+                <input type="number" min="1" max="2" step="0.1" value={draft.editor?.lineHeight ?? 1.5} onchange={(e) => updateNested("editor", "lineHeight", +e.currentTarget.value)} />
               </label>
               <label class="field checkbox">
-                <input type="checkbox" checked={settings.editor?.wordWrap ?? true} onchange={(e) => updateNested("editor", "wordWrap", e.currentTarget.checked)} />
+                <input type="checkbox" checked={draft.editor?.wordWrap ?? true} onchange={(e) => updateNested("editor", "wordWrap", e.currentTarget.checked)} />
                 <span>Word Wrap</span>
               </label>
               <label class="field">
                 <span>Tab Size</span>
-                <input type="number" min="2" max="8" value={settings.editor?.tabSize ?? 2} onchange={(e) => updateNested("editor", "tabSize", +e.currentTarget.value)} />
+                <input type="number" min="2" max="8" value={draft.editor?.tabSize ?? 2} onchange={(e) => updateNested("editor", "tabSize", +e.currentTarget.value)} />
               </label>
               <label class="field checkbox">
-                <input type="checkbox" checked={settings.editor?.insertSpaces ?? true} onchange={(e) => updateNested("editor", "insertSpaces", e.currentTarget.checked)} />
+                <input type="checkbox" checked={draft.editor?.insertSpaces ?? true} onchange={(e) => updateNested("editor", "insertSpaces", e.currentTarget.checked)} />
                 <span>Insert Spaces</span>
               </label>
               <label class="field checkbox">
-                <input type="checkbox" checked={settings.editor?.showLineNumbers ?? true} onchange={(e) => updateNested("editor", "showLineNumbers", e.currentTarget.checked)} />
+                <input type="checkbox" checked={draft.editor?.showLineNumbers ?? true} onchange={(e) => updateNested("editor", "showLineNumbers", e.currentTarget.checked)} />
                 <span>Show Line Numbers</span>
               </label>
               <label class="field checkbox">
-                <input type="checkbox" checked={settings.editor?.highlightActiveLine ?? true} onchange={(e) => updateNested("editor", "highlightActiveLine", e.currentTarget.checked)} />
+                <input type="checkbox" checked={draft.editor?.highlightActiveLine ?? true} onchange={(e) => updateNested("editor", "highlightActiveLine", e.currentTarget.checked)} />
                 <span>Highlight Active Line</span>
               </label>
               <label class="field checkbox">
-                <input type="checkbox" checked={settings.editor?.minimap ?? false} onchange={(e) => updateNested("editor", "minimap", e.currentTarget.checked)} />
+                <input type="checkbox" checked={draft.editor?.minimap ?? false} onchange={(e) => updateNested("editor", "minimap", e.currentTarget.checked)} />
                 <span>Minimap</span>
               </label>
             </div>
@@ -124,33 +128,33 @@
             <div class="section">
               <label class="field">
                 <span>Default Shell</span>
-                <input type="text" value={settings.terminal?.defaultShell ?? ""} onchange={(e) => updateNested("terminal", "defaultShell", e.currentTarget.value)} placeholder="bash, zsh, pwsh..." />
+                <input type="text" value={draft.terminal?.defaultShell ?? ""} onchange={(e) => updateNested("terminal", "defaultShell", e.currentTarget.value)} placeholder="bash, zsh, pwsh..." />
               </label>
               <label class="field">
                 <span>Font Size</span>
-                <input type="number" min="10" max="24" value={settings.terminal?.fontSize ?? 14} onchange={(e) => updateNested("terminal", "fontSize", +e.currentTarget.value)} />
+                <input type="number" min="10" max="24" value={draft.terminal?.fontSize ?? 14} onchange={(e) => updateNested("terminal", "fontSize", +e.currentTarget.value)} />
               </label>
               <label class="field">
                 <span>Scrollback Lines</span>
-                <input type="number" min="100" max="10000" value={settings.terminal?.scrollback ?? 1000} onchange={(e) => updateNested("terminal", "scrollback", +e.currentTarget.value)} />
+                <input type="number" min="100" max="10000" value={draft.terminal?.scrollback ?? 1000} onchange={(e) => updateNested("terminal", "scrollback", +e.currentTarget.value)} />
               </label>
               <label class="field checkbox">
-                <input type="checkbox" checked={settings.terminal?.copyOnSelect ?? false} onchange={(e) => updateNested("terminal", "copyOnSelect", e.currentTarget.checked)} />
+                <input type="checkbox" checked={draft.terminal?.copyOnSelect ?? false} onchange={(e) => updateNested("terminal", "copyOnSelect", e.currentTarget.checked)} />
                 <span>Copy on Select</span>
               </label>
             </div>
           {:else if activeTab === "lint"}
             <div class="section">
               <label class="field checkbox">
-                <input type="checkbox" checked={settings.lint?.enabled ?? true} onchange={(e) => updateNested("lint", "enabled", e.currentTarget.checked)} />
+                <input type="checkbox" checked={draft.lint?.enabled ?? true} onchange={(e) => updateNested("lint", "enabled", e.currentTarget.checked)} />
                 <span>Enable Linting</span>
               </label>
               <label class="field checkbox">
-                <input type="checkbox" checked={settings.lint?.runOnSave ?? false} onchange={(e) => updateNested("lint", "runOnSave", e.currentTarget.checked)} />
+                <input type="checkbox" checked={draft.lint?.runOnSave ?? false} onchange={(e) => updateNested("lint", "runOnSave", e.currentTarget.checked)} />
                 <span>Run on Save</span>
               </label>
               <label class="field checkbox">
-                <input type="checkbox" checked={settings.lint?.runOnType ?? true} onchange={(e) => updateNested("lint", "runOnType", e.currentTarget.checked)} />
+                <input type="checkbox" checked={draft.lint?.runOnType ?? true} onchange={(e) => updateNested("lint", "runOnType", e.currentTarget.checked)} />
                 <span>Run on Type</span>
               </label>
             </div>
@@ -158,15 +162,19 @@
             <div class="section">
               <label class="field">
                 <span>Refresh Interval (seconds)</span>
-                <input type="number" min="1" max="60" value={settings.git?.refreshInterval ?? 5} onchange={(e) => updateNested("git", "refreshInterval", +e.currentTarget.value)} />
+                <input type="number" min="1" max="60" value={draft.git?.refreshInterval ?? 5} onchange={(e) => updateNested("git", "refreshInterval", +e.currentTarget.value)} />
               </label>
               <label class="field checkbox">
-                <input type="checkbox" checked={settings.git?.showIndicators ?? true} onchange={(e) => updateNested("git", "showIndicators", e.currentTarget.checked)} />
+                <input type="checkbox" checked={draft.git?.showIndicators ?? true} onchange={(e) => updateNested("git", "showIndicators", e.currentTarget.checked)} />
                 <span>Show Indicators in Tree</span>
               </label>
             </div>
           {/if}
         </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn secondary" onclick={cancel}>Cancel</button>
+        <button class="btn primary" onclick={apply}>Apply</button>
       </div>
     </div>
   </div>
@@ -317,5 +325,41 @@
 
   .field.checkbox input {
     margin: 0;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border-color, #333);
+    flex-shrink: 0;
+  }
+
+  .btn {
+    padding: 6px 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+  }
+
+  .btn.secondary {
+    background: transparent;
+    color: var(--text-color, #ccc);
+    border: 1px solid var(--border-color, #333);
+  }
+
+  .btn.secondary:hover {
+    background: var(--bg-tab-hover, #3d3d3d);
+  }
+
+  .btn.primary {
+    background: var(--accent-color, #4a9eff);
+    color: white;
+  }
+
+  .btn.primary:hover {
+    opacity: 0.9;
   }
 </style>
