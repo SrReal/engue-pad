@@ -38,7 +38,7 @@
     }
   }
 
-  function getFrameStyle() {
+  function getBgStyle(): string {
     const pet = mascotData.pet;
     const img = mascotData.image;
     if (!pet || !img) return "";
@@ -49,7 +49,7 @@
     const size = SIZE_MAP[mascotSettings.size];
     const scaleX = size / pet.frameWidth;
     const scaleY = size / pet.frameHeight;
-    return `margin-left: ${-sx * scaleX}px; margin-top: ${-sy * scaleY}px; width: ${img.naturalWidth * scaleX}px; height: ${img.naturalHeight * scaleY}px;`;
+    return `background-image: url('${img.src}'); background-size: ${img.naturalWidth * scaleX}px ${img.naturalHeight * scaleY}px; background-position: -${sx * scaleX}px -${sy * scaleY}px;`;
   }
 
   function onPointerDown(e: PointerEvent) {
@@ -75,8 +75,8 @@
       const size = SIZE_MAP[mascotSettings.size] || 160;
       updateMascotSettings({
         position: {
-          x: Math.max(20, window.innerWidth - size - 24),
-          y: Math.max(20, window.innerHeight - size - 80),
+          x: Math.round((window.innerWidth - size) / 2),
+          y: Math.round((window.innerHeight - size) / 2),
         },
       });
     }
@@ -96,20 +96,13 @@
     style:top="{mascotSettings.position?.y ?? 20}px"
     style:width="{SIZE_MAP[mascotSettings.size]}px"
     style:height="{SIZE_MAP[mascotSettings.size]}px"
+    style={getBgStyle()}
     onpointerdown={onPointerDown}
     onpointermove={onPointerMove}
     onpointerup={onPointerUp}
     role="img"
     aria-label="Mascota {mascotData.pet.name}"
   >
-    <div class="mascot-clip">
-      <img
-        src={mascotData.image.src}
-        alt={mascotData.pet.name}
-        style={getFrameStyle()}
-        draggable={false}
-      />
-    </div>
     {#if mascotSettings.mode === "animated"}
       <div class="state-badge">{mascotState.currentState}</div>
     {/if}
@@ -125,23 +118,12 @@
     -webkit-user-select: none;
     pointer-events: auto;
     filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+    background-repeat: no-repeat;
+    border-radius: 8px;
   }
 
   .mascot-panel.dragging {
     cursor: grabbing;
-  }
-
-  .mascot-clip {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    border-radius: 8px;
-  }
-
-  .mascot-clip img {
-    display: block;
-    image-rendering: auto;
-    transition: none;
   }
 
   .state-badge {

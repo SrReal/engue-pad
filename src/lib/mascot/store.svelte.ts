@@ -93,7 +93,7 @@ export async function loadMascot(slug: string): Promise<PetInfo | null> {
 
 async function spritesheetExtension(dirPath: string): Promise<"webp" | "png"> {
   try {
-    await invoke<string>("read_file", { path: `${dirPath}/spritesheet.webp` });
+    await invoke<number[]>("read_file_bytes", { path: `${dirPath}/spritesheet.webp` });
     return "webp";
   } catch {
     return "png";

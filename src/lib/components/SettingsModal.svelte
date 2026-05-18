@@ -515,7 +515,8 @@
   .mascot-thumb {
     width: 36px;
     height: 36px;
-    object-fit: contain;
+    object-fit: none;
+    object-position: top left;
     border-radius: 4px;
     display: block;
   }
