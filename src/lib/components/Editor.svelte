@@ -23,6 +23,7 @@
   import { get } from "svelte/store";
   import { type EditorSettings } from "$lib/workspace/settings";
   import { appSettings } from "$lib/workspace/settingsStore.svelte";
+  import { showMinimap } from "@replit/codemirror-minimap";
 
   let { nodeId, tabId, path, language, initialContent = "", dirty = false }: {
     nodeId: string;
@@ -34,7 +35,7 @@
   } = $props();
 
   let containerRef = $state<HTMLDivElement | null>(null);
-  let view = $state<EditorView | null>(null);
+  let view: EditorView | null = null;
   let isLoading = $state(false);
   let currentContent = $state("");
   let isSettingContent = $state(false);
@@ -175,6 +176,15 @@
     if (editorSettings.wordWrap) {
       extensions.push(CMEditorView.lineWrapping);
     }
+    if (editorSettings.minimap) {
+      extensions.push(
+        showMinimap.compute(["doc"], () => ({
+          create: () => ({ dom: document.createElement("div") }),
+          displayText: "characters",
+          showOverlay: "always",
+        }))
+      );
+    }
 
     if (language) {
       extensions.push(getLanguageExtension(language));
@@ -218,9 +228,14 @@
     if (path) clearProblemsForPath(path);
   });
 
+  let lastEditorJson = "";
+
   $effect(() => {
-    const _ = appSettings.editor;
-    if (view) {
+    const settings = appSettings.editor;
+    const json = JSON.stringify(settings);
+    if (json === lastEditorJson) return;
+    lastEditorJson = json;
+    if (view && containerRef) {
       buildEditor();
     }
   });

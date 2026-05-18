@@ -34,7 +34,7 @@
   onMount(async () => {
     const settings = await loadSettings();
     updateAppSettings(settings);
-    if (settings.lastProjectPath) {
+    if (settings.restoreLayout !== false && settings.lastProjectPath) {
       workspaceInfo.rootPath = settings.lastProjectPath;
     }
     if (typeof settings.rightSidebarCollapsed === "boolean") {
@@ -149,6 +149,21 @@
     const _c = rightSidebarCollapsed;
     if (workspaceInfo.rootPath) {
       saveSidebarState();
+    }
+  });
+
+  $effect(() => {
+    const zoom = appSettings.zoom ?? 1;
+    const uiFontSize = appSettings.uiFontSize ?? 13;
+    const theme = appSettings.theme ?? "dark";
+    document.documentElement.style.setProperty("--app-zoom", String(zoom));
+    document.documentElement.style.setProperty("--app-ui-font-size", `${uiFontSize}px`);
+    document.body.classList.remove("theme-dark", "theme-light");
+    if (theme === "auto") {
+      const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+      document.body.classList.add(prefersLight ? "theme-light" : "theme-dark");
+    } else {
+      document.body.classList.add(`theme-${theme}`);
     }
   });
 
@@ -302,6 +317,8 @@
     overflow: hidden;
     background: var(--bg-app, #1a1a1a);
     color: var(--text-color, #ccc);
+    zoom: var(--app-zoom, 1);
+    font-size: var(--app-ui-font-size, 13px);
   }
 
   .top-bar {
@@ -311,7 +328,6 @@
     padding: 6px 12px;
     border-bottom: 1px solid var(--border-color, #333);
     background: var(--bg-sidebar, #252526);
-    font-size: 13px;
     font-weight: 600;
     flex-shrink: 0;
   }
@@ -402,7 +418,6 @@
     padding: 8px 16px;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 13px;
   }
 
   .open-btn:hover {
