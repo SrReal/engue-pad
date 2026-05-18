@@ -18,7 +18,7 @@
   import SettingsModal from "./SettingsModal.svelte";
   import MascotPanel from "./MascotPanel.svelte";
   import { open, confirm } from "@tauri-apps/plugin-dialog";
-  import { setMascotState } from "$lib/mascot/store.svelte";
+  import { setMascotState, updateMascotSettings } from "$lib/mascot/store.svelte";
 
   let sidebarWidth = $state(240);
   let isResizingSidebar = $state(false);
@@ -36,6 +36,15 @@
   onMount(async () => {
     const settings = await loadSettings();
     updateAppSettings(settings);
+    if (settings.mascot?.enabled && (!settings.mascot.position || (settings.mascot.position.x <= 50 && settings.mascot.position.y <= 50))) {
+      const size = settings.mascot.size === "small" ? 96 : 160;
+      updateMascotSettings({
+        position: {
+          x: Math.round((window.innerWidth - size) / 2),
+          y: Math.round((window.innerHeight - size) / 2),
+        },
+      });
+    }
     if (settings.restoreLayout !== false && settings.lastProjectPath) {
       workspaceInfo.rootPath = settings.lastProjectPath;
     }

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
+  import { onDestroy } from "svelte";
   import { mascotSettings, mascotState, mascotData, updateMascotSettings } from "$lib/mascot/store.svelte";
   import { playStateSound, speakForState } from "$lib/mascot/sounds";
 
@@ -55,32 +55,23 @@
   function onPointerDown(e: PointerEvent) {
     if (!panelRef) return;
     isDragging = true;
-    dragOffset = { x: e.clientX - (mascotSettings.position?.x ?? 20), y: e.clientY - (mascotSettings.position?.y ?? 20) };
-    panelRef.setPointerCapture(e.pointerId);
+    dragOffset = { x: e.clientX - (mascotSettings.position?.x ?? 0), y: e.clientY - (mascotSettings.position?.y ?? 0) };
+    window.addEventListener("pointermove", onWindowPointerMove);
+    window.addEventListener("pointerup", onWindowPointerUp);
   }
 
-  function onPointerMove(e: PointerEvent) {
+  function onWindowPointerMove(e: PointerEvent) {
     if (!isDragging) return;
     const x = e.clientX - dragOffset.x;
     const y = e.clientY - dragOffset.y;
     updateMascotSettings({ position: { x, y } });
   }
 
-  function onPointerUp() {
+  function onWindowPointerUp() {
     isDragging = false;
+    window.removeEventListener("pointermove", onWindowPointerMove);
+    window.removeEventListener("pointerup", onWindowPointerUp);
   }
-
-  onMount(() => {
-    if (!mascotSettings.position) {
-      const size = SIZE_MAP[mascotSettings.size] || 160;
-      updateMascotSettings({
-        position: {
-          x: Math.round((window.innerWidth - size) / 2),
-          y: Math.round((window.innerHeight - size) / 2),
-        },
-      });
-    }
-  });
 
   onDestroy(() => {
     stopAnimation();
@@ -98,8 +89,6 @@
     style:height="{SIZE_MAP[mascotSettings.size]}px"
     style={getBgStyle()}
     onpointerdown={onPointerDown}
-    onpointermove={onPointerMove}
-    onpointerup={onPointerUp}
     role="img"
     aria-label="Mascota {mascotData.pet.name}"
   >

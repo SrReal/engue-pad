@@ -224,14 +224,24 @@
                         <tr class:active={draft.mascot?.currentMascot === m.slug} onclick={() => updateNested("mascot", "currentMascot", m.slug)}>
                           <td class="thumb-cell">
                             {#if m.spritesheetUrl}
-                              <img src={m.spritesheetUrl} alt={m.name} class="mascot-thumb" />
+                              <div class="mascot-thumb-wrapper">
+                                <img src={m.spritesheetUrl} alt={m.name} class="mascot-thumb" draggable={false} />
+                              </div>
                             {:else}
                               <div class="mascot-thumb-placeholder">?</div>
                             {/if}
                           </td>
                           <td class="name-cell">{m.name}</td>
                           <td class="action-cell">
-                            <button class="btn danger" onclick={(e) => { e.stopPropagation(); deleteMascot(m.slug).then(() => listInstalledMascots().then((r) => installedMascots = r)); }}>×</button>
+                            <button class="btn danger" onclick={(e) => {
+                              e.stopPropagation();
+                              deleteMascot(m.slug).then(() => {
+                                if (draft.mascot?.currentMascot === m.slug) {
+                                  updateNested("mascot", "currentMascot", null);
+                                }
+                                listInstalledMascots().then((r) => installedMascots = r);
+                              });
+                            }}>×</button>
                           </td>
                         </tr>
                       {:else}
@@ -508,22 +518,29 @@
   }
 
   .thumb-cell {
-    width: 44px;
+    width: 64px;
     padding: 4px;
   }
 
-  .mascot-thumb {
-    width: 36px;
-    height: 36px;
-    object-fit: none;
-    object-position: top left;
+  .mascot-thumb-wrapper {
+    width: 64px;
+    height: 64px;
+    overflow: hidden;
     border-radius: 4px;
+    background: var(--bg-panel, #1e1e1e);
+  }
+
+  .mascot-thumb {
+    width: auto;
+    height: auto;
+    max-width: none;
+    max-height: none;
     display: block;
   }
 
   .mascot-thumb-placeholder {
-    width: 36px;
-    height: 36px;
+    width: 64px;
+    height: 64px;
     display: flex;
     align-items: center;
     justify-content: center;
