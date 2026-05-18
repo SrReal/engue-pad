@@ -2,14 +2,19 @@
   import { getDefaultSettings, saveSettings, type AppSettings } from "$lib/workspace/settings";
   import { appSettings, updateAppSettings } from "$lib/workspace/settingsStore.svelte";
   import { linterConfig } from "$lib/workspace/store.svelte";
+  import { mascotSettings, updateMascotSettings, importMascotFromFolder, listInstalledMascots, loadMascot } from "$lib/mascot/store.svelte";
+  import type { MascotMode, MascotSize } from "$lib/mascot/types";
 
   let { show = $bindable(false) }: { show?: boolean } = $props();
-  let activeTab = $state<"general" | "editor" | "terminal" | "lint" | "git">("general");
+  let activeTab = $state<"general" | "editor" | "terminal" | "lint" | "git" | "mascot">("general");
+  let installedMascots = $state<{ slug: string; name: string }[]>([]);
+  let importPath = $state("");
   let draft = $state<AppSettings>(getDefaultSettings());
 
   $effect(() => {
     if (show) {
       draft = { ...getDefaultSettings(), ...appSettings };
+      listInstalledMascots().then((m) => (installedMascots = m));
     }
   });
 
@@ -35,6 +40,12 @@
       linterConfig.runOnType = draft.lint.runOnType;
       if (draft.lint.languages) {
         linterConfig.languages = draft.lint.languages;
+      }
+    }
+    if (draft.mascot) {
+      updateMascotSettings(draft.mascot);
+      if (draft.mascot.currentMascot) {
+        loadMascot(draft.mascot.currentMascot);
       }
     }
     show = false;
@@ -63,6 +74,7 @@
           <button class="tab-btn" class:active={activeTab === "terminal"} onclick={() => activeTab = "terminal"}>Terminal</button>
           <button class="tab-btn" class:active={activeTab === "lint"} onclick={() => activeTab = "lint"}>Lint</button>
           <button class="tab-btn" class:active={activeTab === "git"} onclick={() => activeTab = "git"}>Git</button>
+          <button class="tab-btn" class:active={activeTab === "mascot"} onclick={() => activeTab = "mascot"}>Mascot</button>
         </div>
         <div class="tab-content">
           {#if activeTab === "general"}
@@ -168,6 +180,64 @@
                 <input type="checkbox" checked={draft.git?.showIndicators ?? true} onchange={(e) => updateNested("git", "showIndicators", e.currentTarget.checked)} />
                 <span>Show Indicators in Tree</span>
               </label>
+            </div>
+          {:else if activeTab === "mascot"}
+            <div class="section">
+              <label class="field">
+                <span>Mode</span>
+                <select value={draft.mascot?.mode ?? "disabled"} onchange={(e) => updateNested("mascot", "mode", e.currentTarget.value as MascotMode)}>
+                  <option value="disabled">Disabled</option>
+                  <option value="compact">Compact</option>
+                  <option value="animated">Animated</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Size</span>
+                <select value={draft.mascot?.size ?? "normal"} onchange={(e) => updateNested("mascot", "size", e.currentTarget.value as MascotSize)}>
+                  <option value="small">Small</option>
+                  <option value="normal">Normal</option>
+                </select>
+              </label>
+              <label class="field checkbox">
+                <input type="checkbox" checked={draft.mascot?.enabled ?? false} onchange={(e) => updateNested("mascot", "enabled", e.currentTarget.checked)} />
+                <span>Enable Mascot</span>
+              </label>
+              <label class="field checkbox">
+                <input type="checkbox" checked={draft.mascot?.soundEnabled ?? true} onchange={(e) => updateNested("mascot", "soundEnabled", e.currentTarget.checked)} />
+                <span>Sound Effects</span>
+              </label>
+              <label class="field">
+                <span>Volume</span>
+                <input type="range" min="0" max="1" step="0.1" value={draft.mascot?.volume ?? 0.5} onchange={(e) => updateNested("mascot", "volume", +e.currentTarget.value)} />
+                <span class="value">{Math.round((draft.mascot?.volume ?? 0.5) * 100)}%</span>
+              </label>
+              <label class="field checkbox">
+                <input type="checkbox" checked={draft.mascot?.voiceEnabled ?? false} onchange={(e) => updateNested("mascot", "voiceEnabled", e.currentTarget.checked)} />
+                <span>Voice (Speech)</span>
+              </label>
+              <label class="field">
+                <span>Installed Mascots</span>
+                <select value={draft.mascot?.currentMascot ?? ""} onchange={(e) => updateNested("mascot", "currentMascot", e.currentTarget.value || null)}>
+                  <option value="">None</option>
+                  {#each installedMascots as m}
+                    <option value={m.slug}>{m.name}</option>
+                  {/each}
+                </select>
+              </label>
+              <div class="field">
+                <span>Import from Folder</span>
+                <div class="import-row">
+                  <input type="text" placeholder="/path/to/petdex-mascot" bind:value={importPath} />
+                  <button class="btn primary" onclick={async () => {
+                    if (!importPath) return;
+                    const slug = await importMascotFromFolder(importPath);
+                    if (slug) {
+                      installedMascots = await listInstalledMascots();
+                      importPath = "";
+                    }
+                  }}>Import</button>
+                </div>
+              </div>
             </div>
           {/if}
         </div>
@@ -325,6 +395,16 @@
 
   .field.checkbox input {
     margin: 0;
+  }
+
+  .import-row {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+  }
+
+  .import-row input {
+    flex: 1;
   }
 
   .modal-footer {

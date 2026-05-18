@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import type { MascotSettings } from "$lib/mascot/types";
 
 export type LinterSettings = {
   enabled: boolean;
@@ -42,6 +43,7 @@ export type AppSettings = {
   terminal?: TerminalSettings;
   lint?: LinterSettings;
   git?: GitSettings;
+  mascot?: MascotSettings;
 };
 
 const SETTINGS_FILE = "settings.json";
@@ -75,6 +77,18 @@ const DEFAULT_GIT: GitSettings = {
   showIndicators: true,
 };
 
+const DEFAULT_MASCOT: MascotSettings = {
+  mode: "disabled",
+  size: "normal",
+  enabled: false,
+  soundEnabled: true,
+  volume: 0.5,
+  voiceEnabled: false,
+  voiceLang: "es-ES",
+  currentMascot: null,
+  position: null,
+};
+
 export function getDefaultSettings(): Required<Omit<AppSettings, "lastProjectPath">> & { lastProjectPath: string | null } {
   return {
     lastProjectPath: null,
@@ -88,6 +102,7 @@ export function getDefaultSettings(): Required<Omit<AppSettings, "lastProjectPat
     terminal: { ...DEFAULT_TERMINAL },
     lint: { ...DEFAULT_LINT },
     git: { ...DEFAULT_GIT },
+    mascot: { ...DEFAULT_MASCOT },
   };
 }
 

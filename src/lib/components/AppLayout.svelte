@@ -16,7 +16,9 @@
   import ProblemsPanel from "./ProblemsPanel.svelte";
   import UrlToast from "./UrlToast.svelte";
   import SettingsModal from "./SettingsModal.svelte";
+  import MascotPanel from "./MascotPanel.svelte";
   import { open, confirm } from "@tauri-apps/plugin-dialog";
+  import { setMascotState } from "$lib/mascot/store.svelte";
 
   let sidebarWidth = $state(240);
   let isResizingSidebar = $state(false);
@@ -71,6 +73,9 @@
       loadWorkspace(root);
       loadSettings().then((s) => {
         gitRefreshInterval = (s.git?.refreshInterval ?? 5) * 1000;
+        if (s.mascot?.enabled && s.mascot?.currentMascot) {
+          setMascotState("wave");
+        }
       });
     }
   });
@@ -306,6 +311,7 @@
   </div>
   <UrlToast />
   <SettingsModal bind:show={showSettings} />
+  <MascotPanel />
 </div>
 
 <style>

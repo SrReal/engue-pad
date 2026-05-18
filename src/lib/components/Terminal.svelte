@@ -9,6 +9,7 @@
   import { reportUrl } from "$lib/terminal/urlDetector";
   import { addPreview } from "$lib/layout/store.svelte";
   import { appSettings } from "$lib/workspace/settingsStore.svelte";
+  import { setMascotState } from "$lib/mascot/store.svelte";
 
   let { nodeId, tabId, cwd, shell }: {
     nodeId: string;
@@ -169,6 +170,9 @@
 
     term.onData((data) => {
       invoke("write_terminal", { terminalId: tabId, data: Array.from(new TextEncoder().encode(data)) });
+      if (data.trim().length > 0 && data.includes("\r")) {
+        setMascotState("run");
+      }
     });
 
     terminal = term;

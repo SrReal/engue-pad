@@ -247,53 +247,55 @@ Objetivo: ventana modal con ajustes persistentes de la aplicación.
 
 ## Fase 4 — Mascota
 
-Objetivo: mascota visual configurable reactiva a eventos internos.
+Objetivo: mascota visual configurable reactiva a eventos internos. Compatible con formato [Petdex](https://github.com/crafter-station/petdex): spritesheet 8×9 + pet.json.
 
 ### 4.1 Estructura de mascota
 
-- [ ] Definir formato `mascot.json` (estados, animaciones, voces, eventos).
-- [ ] Carpeta de mascotas global: `%APPDATA%/EnguePad/mascots/` (Windows), `~/Library/Application Support/EnguePad/mascots/` (macOS), `~/.config/enguepad/mascots/` (Linux).
-- [ ] Carpeta de mascota por proyecto: `.enguepad/mascot/`.
-- [ ] Cargar perfil de mascota según prioridad: proyecto > global > default.
+- [x] Carpeta de mascotas global: `%APPDATA%/EnguePad/mascots/` (Windows), `~/Library/Application Support/EnguePad/mascots/` (macOS), `~/.config/enguepad/mascots/` (Linux).
+- [x] Importar mascota desde carpeta (copiar a directorio de mascotas).
+- [x] Leer `pet.json` + `spritesheet.{webp,png}` al estilo Petdex.
+- [x] Generar `mascot.json` interno con metadatos adaptados.
 
 ### 4.2 Motor de mascota
 
-- [ ] Sistema de estados: idle, working, thinking, success, warning, error, waiting, etc.
-- [ ] Transiciones de estado basadas en eventos del Event Bus.
-- [ ] Renderizado de avatar en panel dedicado (compact / animated / disabled).
+- [x] Sistema de estados Petdex (8 filas): idle, wave, run, failed, review, jump, extra1, extra2.
+- [x] Canvas 2D para renderizar spritesheet recortando frames.
+- [x] Timing configurable (ms por frame, frames por estado).
+- [x] Transiciones automáticas idle→estado→idle tras timeout.
 
-### 4.3 Animaciones
+### 4.3 Panel flotante
 
-- [ ] Cargar definiciones de animación desde `animations/*.json`.
-- [ ] Modo compacto: avatar estático o animación mínima.
-- [ ] Modo animated: animaciones completas.
-- [ ] No cargar animaciones si modo es disabled.
+- [x] Panel flotante draggable sobre toda la UI (z-index alto).
+- [x] Posición persistente en `settings.json`.
+- [x] Modo: disabled / compact (sprite estático) / animated (animación activa).
+- [x] Tamaño configurable: small / normal.
 
-### 4.4 Voces pregrabadas
+### 4.4 Sonido y voz
 
-- [ ] Soporte de audio mp3/ogg/wav.
-- [ ] Reproducir voz asociada a estado/evento.
-- [ ] Controles: activar/desactivar, volumen, idioma.
-- [ ] No reproducir en bucle ni interrumpir constantemente.
+- [x] Sonidos de feedback via Web Audio API procedural (beep/boop).
+- [x] Voz sintética via Web Speech API (`speechSynthesis`) para frases.
+- [x] Si mascota importada trae audio propio → usa ese; si no → defaults.
+- [x] Controles: activar/desactivar sonido, volumen.
 
 ### 4.5 Eventos internos mapeados
 
-- [ ] Mapear eventos del Event Bus a reacciones de mascota:
-  - `terminal.command.started` → working
-  - `terminal.command.failed` → error
-  - `file.saved` → success
-  - `lint.errors.found` → warning
-- [ ] Configuración de mapeo editable en `mascot.json`.
+- [x] Mapeo de eventos a estados Petdex:
+  - `terminal.command.started` → run
+  - `terminal.command.failed` → failed
+  - `file.saved` → jump
+  - `lint.errors.found` → review
+  - `app.opened` → wave
+  - (idle por defecto)
 
 ### Criterios de aceptación (test manual)
 
 ```text
 1. Abrir proyecto carga mascota configurada.
-2. Ejecutar comando en terminal cambia estado de mascota a working.
-3. Error en terminal cambia estado a error con animación correspondiente.
-4. Guardar archivo cambia estado a success.
-5. El panel de mascota se puede ocultar/mostrar.
-6. Modo disabled no carga recursos de animación ni audio.
+2. Importar desde Settings crea mascot.json y copia spritesheet.
+3. Panel flotante se puede arrastrar; posición persiste.
+4. Ejecutar comando en terminal cambia estado de mascota a run.
+5. Guardar archivo cambia estado a jump.
+6. Modo disabled no carga recursos ni muestra panel.
 ```
 
 > **¿Querés incluir tests automatizados en esta fase?**
