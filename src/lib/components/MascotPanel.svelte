@@ -1,50 +1,56 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
-  import { mascotSettings, mascotState, mascotPet, mascotImage, updateMascotSettings, setMascotState } from "$lib/mascot/store.svelte";
-  import { createAnimationEngine } from "$lib/mascot/animation";
+  import { mascotSettings, mascotState, mascotData, updateMascotSettings } from "$lib/mascot/store.svelte";
   import { playStateSound, speakForState } from "$lib/mascot/sounds";
-  import type { PetState } from "$lib/mascot/types";
 
   let panelRef = $state<HTMLDivElement | null>(null);
-  let canvasRef = $state<HTMLCanvasElement | null>(null);
   let isDragging = $state(false);
   let dragOffset = $state({ x: 0, y: 0 });
-  let engine = createAnimationEngine();
+  let frameIndex = $state(0);
+  let animTimer = $state<ReturnType<typeof setInterval> | null>(null);
 
   const SIZE_MAP = { small: 96, normal: 160 };
 
   $effect(() => {
-    const pet = mascotPet;
-    const img = mascotImage;
-    const mode = mascotSettings.mode;
-    const canvas = canvasRef;
-    if (!pet || !img || !canvas || mode === "disabled") {
-      engine.stop();
-      return;
-    }
-    if (mode === "animated" && img.complete) {
-      canvas.width = SIZE_MAP[mascotSettings.size];
-      canvas.height = SIZE_MAP[mascotSettings.size];
-      engine.start(canvas, pet, img);
-    } else if (mode === "compact" && img.complete) {
-      canvas.width = SIZE_MAP[mascotSettings.size];
-      canvas.height = SIZE_MAP[mascotSettings.size];
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, pet.frameHeight, pet.frameWidth, pet.frameHeight, 0, 0, canvas.width, canvas.height);
-      }
-    }
-    return () => engine.stop();
-  });
-
-  $effect(() => {
     const state = mascotState.currentState;
     if (mascotSettings.mode === "disabled") return;
-    engine.setState(state);
     playStateSound(state);
     speakForState(state);
+    if (mascotSettings.mode === "animated" && mascotData.pet) {
+      startAnimation();
+    }
+    return () => stopAnimation();
   });
+
+  function startAnimation() {
+    stopAnimation();
+    if (!mascotData.pet) return;
+    const ms = mascotData.pet.loopMs / mascotData.pet.framesPerState;
+    animTimer = setInterval(() => {
+      frameIndex = (frameIndex + 1) % mascotData.pet.framesPerState;
+    }, ms);
+  }
+
+  function stopAnimation() {
+    if (animTimer) {
+      clearInterval(animTimer);
+      animTimer = null;
+    }
+  }
+
+  function getFrameStyle() {
+    const pet = mascotData.pet;
+    const img = mascotData.image;
+    if (!pet || !img) return "";
+    const row = pet.states.indexOf(mascotState.currentState);
+    const fi = mascotSettings.mode === "animated" ? frameIndex : 0;
+    const sx = fi * pet.frameWidth;
+    const sy = Math.max(0, row) * pet.frameHeight;
+    const size = SIZE_MAP[mascotSettings.size];
+    const scaleX = size / pet.frameWidth;
+    const scaleY = size / pet.frameHeight;
+    return `margin-left: ${-sx * scaleX}px; margin-top: ${-sy * scaleY}px; width: ${img.naturalWidth * scaleX}px; height: ${img.naturalHeight * scaleY}px;`;
+  }
 
   function onPointerDown(e: PointerEvent) {
     if (!panelRef) return;
@@ -66,29 +72,44 @@
 
   onMount(() => {
     if (!mascotSettings.position) {
-      updateMascotSettings({ position: { x: window.innerWidth - 200, y: window.innerHeight - 220 } });
+      const size = SIZE_MAP[mascotSettings.size] || 160;
+      updateMascotSettings({
+        position: {
+          x: Math.max(20, window.innerWidth - size - 24),
+          y: Math.max(20, window.innerHeight - size - 80),
+        },
+      });
     }
   });
 
   onDestroy(() => {
-    engine.stop();
+    stopAnimation();
   });
 </script>
 
-{#if mascotSettings.enabled && mascotSettings.mode !== "disabled" && mascotPet}
+{#if mascotSettings.enabled && mascotSettings.mode !== "disabled" && mascotData.pet && mascotData.image}
   <div
     class="mascot-panel"
     class:dragging={isDragging}
     bind:this={panelRef}
     style:left="{mascotSettings.position?.x ?? 20}px"
     style:top="{mascotSettings.position?.y ?? 20}px"
+    style:width="{SIZE_MAP[mascotSettings.size]}px"
+    style:height="{SIZE_MAP[mascotSettings.size]}px"
     onpointerdown={onPointerDown}
     onpointermove={onPointerMove}
     onpointerup={onPointerUp}
     role="img"
-    aria-label="Mascota {mascotPet.name}"
+    aria-label="Mascota {mascotData.pet.name}"
   >
-    <canvas bind:this={canvasRef}></canvas>
+    <div class="mascot-clip">
+      <img
+        src={mascotData.image.src}
+        alt={mascotData.pet.name}
+        style={getFrameStyle()}
+        draggable={false}
+      />
+    </div>
     {#if mascotSettings.mode === "animated"}
       <div class="state-badge">{mascotState.currentState}</div>
     {/if}
@@ -110,9 +131,17 @@
     cursor: grabbing;
   }
 
-  .mascot-panel canvas {
-    display: block;
+  .mascot-clip {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
     border-radius: 8px;
+  }
+
+  .mascot-clip img {
+    display: block;
+    image-rendering: auto;
+    transition: none;
   }
 
   .state-badge {

@@ -2,13 +2,13 @@
   import { getDefaultSettings, saveSettings, type AppSettings } from "$lib/workspace/settings";
   import { appSettings, updateAppSettings } from "$lib/workspace/settingsStore.svelte";
   import { linterConfig } from "$lib/workspace/store.svelte";
-  import { mascotSettings, updateMascotSettings, importMascotFromFolder, listInstalledMascots, loadMascot } from "$lib/mascot/store.svelte";
+  import { mascotSettings, updateMascotSettings, importMascotFromFolder, listInstalledMascots, loadMascot, deleteMascot, type MascotItem } from "$lib/mascot/store.svelte";
   import type { MascotMode, MascotSize } from "$lib/mascot/types";
+  import { open } from "@tauri-apps/plugin-dialog";
 
   let { show = $bindable(false) }: { show?: boolean } = $props();
   let activeTab = $state<"general" | "editor" | "terminal" | "lint" | "git" | "mascot">("general");
-  let installedMascots = $state<{ slug: string; name: string }[]>([]);
-  let importPath = $state("");
+  let installedMascots = $state<MascotItem[]>([]);
   let draft = $state<AppSettings>(getDefaultSettings());
 
   $effect(() => {
@@ -215,28 +215,46 @@
                 <input type="checkbox" checked={draft.mascot?.voiceEnabled ?? false} onchange={(e) => updateNested("mascot", "voiceEnabled", e.currentTarget.checked)} />
                 <span>Voice (Speech)</span>
               </label>
-              <label class="field">
+              <div class="field" style="align-items: flex-start;">
                 <span>Installed Mascots</span>
-                <select value={draft.mascot?.currentMascot ?? ""} onchange={(e) => updateNested("mascot", "currentMascot", e.currentTarget.value || null)}>
-                  <option value="">None</option>
-                  {#each installedMascots as m}
-                    <option value={m.slug}>{m.name}</option>
-                  {/each}
-                </select>
-              </label>
+                <div class="mascot-table-wrapper">
+                  <table class="mascot-table">
+                    <tbody>
+                      {#each installedMascots as m}
+                        <tr class:active={draft.mascot?.currentMascot === m.slug} onclick={() => updateNested("mascot", "currentMascot", m.slug)}>
+                          <td class="thumb-cell">
+                            {#if m.spritesheetUrl}
+                              <img src={m.spritesheetUrl} alt={m.name} class="mascot-thumb" />
+                            {:else}
+                              <div class="mascot-thumb-placeholder">?</div>
+                            {/if}
+                          </td>
+                          <td class="name-cell">{m.name}</td>
+                          <td class="action-cell">
+                            <button class="btn danger" onclick={(e) => { e.stopPropagation(); deleteMascot(m.slug).then(() => listInstalledMascots().then((r) => installedMascots = r)); }}>×</button>
+                          </td>
+                        </tr>
+                      {:else}
+                        <tr><td colspan="3" class="empty">No mascots installed</td></tr>
+                      {/each}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
               <div class="field">
                 <span>Import from Folder</span>
-                <div class="import-row">
-                  <input type="text" placeholder="/path/to/petdex-mascot" bind:value={importPath} />
-                  <button class="btn primary" onclick={async () => {
-                    if (!importPath) return;
-                    const slug = await importMascotFromFolder(importPath);
+                <button class="btn primary" onclick={async () => {
+                  const selected = await open({ directory: true });
+                  if (selected && typeof selected === "string") {
+                    const slug = await importMascotFromFolder(selected);
                     if (slug) {
                       installedMascots = await listInstalledMascots();
-                      importPath = "";
+                      updateNested("mascot", "currentMascot", slug);
+                      updateNested("mascot", "enabled", true);
+                      updateNested("mascot", "mode", "animated");
                     }
-                  }}>Import</button>
-                </div>
+                  }
+                }}>Select Folder & Import</button>
               </div>
             </div>
           {/if}
@@ -441,5 +459,91 @@
 
   .btn.primary:hover {
     opacity: 0.9;
+  }
+
+  .btn.danger {
+    background: #c75450;
+    color: white;
+    padding: 2px 8px;
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  .btn.danger:hover {
+    opacity: 0.9;
+  }
+
+  .mascot-table-wrapper {
+    flex: 1;
+    max-height: 180px;
+    overflow: auto;
+    border: 1px solid var(--border-color, #333);
+    border-radius: 4px;
+  }
+
+  .mascot-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .mascot-table tr {
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color, #333);
+  }
+
+  .mascot-table tr:hover {
+    background: var(--bg-tab-hover, #3d3d3d);
+  }
+
+  .mascot-table tr.active {
+    background: rgba(74, 158, 255, 0.12);
+    outline: 1px solid var(--accent-color, #4a9eff);
+    outline-offset: -1px;
+  }
+
+  .mascot-table td {
+    padding: 6px 8px;
+    vertical-align: middle;
+  }
+
+  .thumb-cell {
+    width: 44px;
+    padding: 4px;
+  }
+
+  .mascot-thumb {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    border-radius: 4px;
+    display: block;
+  }
+
+  .mascot-thumb-placeholder {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-panel, #1e1e1e);
+    border-radius: 4px;
+    color: var(--text-muted, #888);
+    font-size: 16px;
+  }
+
+  .name-cell {
+    flex: 1;
+  }
+
+  .action-cell {
+    width: 40px;
+    text-align: right;
+  }
+
+  .empty {
+    color: var(--text-muted, #888);
+    text-align: center;
+    padding: 12px;
   }
 </style>

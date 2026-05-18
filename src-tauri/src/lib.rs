@@ -144,6 +144,11 @@ fn write_file(path: String, contents: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn write_file_bytes(path: String, contents: Vec<u8>) -> Result<(), String> {
+    fs::write(&path, contents).map_err(|e| format!("Failed to write file bytes: {}", e))
+}
+
+#[tauri::command]
 fn get_app_data_dir(app_handle: AppHandle) -> Result<String, String> {
     let result = app_handle
         .path()
@@ -200,6 +205,11 @@ fn exit_app(app_handle: AppHandle) {
 #[tauri::command]
 fn rename_file(from: String, to: String) -> Result<(), String> {
     fs::rename(&from, &to).map_err(|e| format!("Failed to rename: {}", e))
+}
+
+#[tauri::command]
+fn remove_dir_all(path: String) -> Result<(), String> {
+    fs::remove_dir_all(&path).map_err(|e| format!("Failed to remove dir: {}", e))
 }
 
 #[tauri::command]
@@ -357,7 +367,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .manage(Arc::clone(&terminal_manager))
-        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, read_file_bytes, write_file, ensure_dir, read_file_meta, get_app_data_dir, exit_app, rename_file, run_command, git_status, terminal::create_terminal, terminal::write_terminal, terminal::resize_terminal, terminal::get_terminal_cwd, terminal::kill_terminal, terminal::get_terminal_processes, get_app_stats])
+        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, read_file_bytes, write_file, write_file_bytes, ensure_dir, read_file_meta, get_app_data_dir, exit_app, rename_file, remove_dir_all, run_command, git_status, terminal::create_terminal, terminal::write_terminal, terminal::resize_terminal, terminal::get_terminal_cwd, terminal::kill_terminal, terminal::get_terminal_processes, get_app_stats])
         .setup(|app| {
             create_main_window(&app.handle().clone());
             Ok(())

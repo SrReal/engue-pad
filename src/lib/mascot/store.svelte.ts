@@ -19,8 +19,10 @@ export const mascotState = $state<MascotState>({
   idleTimeout: null,
 });
 
-export let mascotPet = $state<PetInfo | null>(null);
-export let mascotImage = $state<HTMLImageElement | null>(null);
+export const mascotData = $state<{ pet: PetInfo | null; image: HTMLImageElement | null }>({
+  pet: null,
+  image: null,
+});
 
 const IDLE_RETURN_MS = 3000;
 
@@ -66,14 +68,25 @@ export async function loadMascot(slug: string): Promise<PetInfo | null> {
       loopMs: parsed.loopMs ?? 1100,
       spritesheet: `${dir}/${slug}/${spritesheetName}`,
     };
-    mascotPet = pet;
+    mascotData.pet = pet;
+
+    // Load spritesheet via Blob URL to avoid CORS issues with canvas drawImage
+    const bytes = await invoke<number[]>("read_file_bytes", { path: pet.spritesheet });
+    const blob = new Blob([new Uint8Array(bytes)]);
+    const url = URL.createObjectURL(blob);
+
     const img = new Image();
-    img.src = (await invoke<string>("convert_file_src", { path: pet.spritesheet })) || pet.spritesheet;
-    mascotImage = img;
+    img.src = url;
+    await new Promise<void>((resolve) => {
+      img.onload = () => resolve();
+      img.onerror = () => resolve();
+    });
+
+    mascotData.image = img;
     return pet;
   } catch {
-    mascotPet = null;
-    mascotImage = null;
+    mascotData.pet = null;
+    mascotData.image = null;
     return null;
   }
 }
@@ -89,42 +102,95 @@ async function spritesheetExtension(dirPath: string): Promise<"webp" | "png"> {
 
 export async function importMascotFromFolder(sourcePath: string): Promise<string | null> {
   try {
-    const raw = await invoke<string>("read_file", { path: `${sourcePath}/pet.json` });
-    const parsed = JSON.parse(raw);
-    const slug: string = parsed.slug ?? parsed.name?.toLowerCase().replace(/\s+/g, "-") ?? "custom";
+    const folderName = sourcePath.replace(/[\\/]+$/, "").split(/[\\/]/).pop() ?? "custom";
+    let parsed: Record<string, unknown> = {};
+    try {
+      const raw = await invoke<string>("read_file", { path: `${sourcePath}/pet.json` });
+      parsed = JSON.parse(raw);
+    } catch {
+      // no pet.json — generate default
+      parsed = {
+        name: folderName,
+        slug: folderName.toLowerCase().replace(/\s+/g, "-"),
+        frameWidth: 192,
+        frameHeight: 208,
+        framesPerState: 9,
+        loopMs: 1100,
+        states: ["idle", "wave", "run", "failed", "review", "jump", "extra1", "extra2"],
+      };
+    }
+
+    const slug: string =
+      (parsed.slug as string) ||
+      (parsed.name as string)?.toLowerCase().replace(/\s+/g, "-") ||
+      folderName.toLowerCase().replace(/\s+/g, "-");
     const destDir = `${await getMascotDir()}/${slug}`;
     await invoke("ensure_dir", { path: destDir });
+
+    // Copy all files from source
     const entries = await invoke<{ entries: { name: string; path: string; is_file: boolean; is_dir: boolean }[] }>("list_directory", { path: sourcePath });
     const files = entries.entries.filter((e) => e.is_file).map((e) => e.name);
     for (const file of files) {
       const content = await invoke<number[]>("read_file_bytes", { path: `${sourcePath}/${file}` });
-      const bytes = new Uint8Array(content);
-      const blob = new Blob([bytes]);
-      const text = await blob.text();
-      await invoke("write_file", { path: `${destDir}/${file}`, contents: text });
+      await invoke("write_file_bytes", { path: `${destDir}/${file}`, contents: content });
     }
+
+    // Write generated pet.json if it didn't exist
+    if (!files.includes("pet.json")) {
+      await invoke("write_file", { path: `${destDir}/pet.json`, contents: JSON.stringify(parsed, null, 2) });
+    }
+
     return slug;
   } catch {
     return null;
   }
 }
 
-export async function listInstalledMascots(): Promise<{ slug: string; name: string }[]> {
+export type MascotItem = {
+  slug: string;
+  name: string;
+  spritesheetPath: string;
+  spritesheetUrl: string | null;
+};
+
+export async function listInstalledMascots(): Promise<MascotItem[]> {
   try {
     const dir = await getMascotDir();
     const entries = await invoke<{ entries: { name: string; path: string; is_file: boolean; is_dir: boolean }[] }>("list_directory", { path: dir });
-    const mascots: { slug: string; name: string }[] = [];
+    const mascots: MascotItem[] = [];
     for (const entry of entries.entries.filter((e) => e.is_dir)) {
       try {
         const raw = await invoke<string>("read_file", { path: `${entry.path}/pet.json` });
         const parsed = JSON.parse(raw);
-        mascots.push({ slug: parsed.slug ?? entry.name, name: parsed.name ?? entry.name });
+        const slug = parsed.slug ?? entry.name;
+        const name = parsed.name ?? entry.name;
+        const ext = await spritesheetExtension(entry.path);
+        const spritesheetPath = `${entry.path}/spritesheet.${ext}`;
+        let spritesheetUrl: string | null = null;
+        try {
+          const bytes = await invoke<number[]>("read_file_bytes", { path: spritesheetPath });
+          const blob = new Blob([new Uint8Array(bytes)]);
+          spritesheetUrl = URL.createObjectURL(blob);
+        } catch {
+          spritesheetUrl = null;
+        }
+        mascots.push({ slug, name, spritesheetPath, spritesheetUrl });
       } catch {
-        mascots.push({ slug: entry.name, name: entry.name });
+        mascots.push({ slug: entry.name, name: entry.name, spritesheetPath: "", spritesheetUrl: null });
       }
     }
     return mascots;
   } catch {
     return [];
+  }
+}
+
+export async function deleteMascot(slug: string): Promise<boolean> {
+  try {
+    const dir = await getMascotDir();
+    await invoke("remove_dir_all", { path: `${dir}/${slug}` });
+    return true;
+  } catch {
+    return false;
   }
 }
