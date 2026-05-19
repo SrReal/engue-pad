@@ -1,4 +1,5 @@
 .enguepad/
+!.enguepad/skills/
 resources/
 .DS_Store
 node_modules
