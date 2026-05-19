@@ -338,10 +338,10 @@ Objetivo: registrar instancias, CLI local y IPC para agentes externos.
 
 ### 5.5 Skills para agentes
 
-- [ ] Documentar skill para Codex.
-- [ ] Documentar skill para Claude Code.
-- [ ] Documentar skill para OpenCode.
-- [ ] Ejemplos de comandos `enguepad notify` en cada skill.
+- [x] Documentar skill para Codex.
+- [x] Documentar skill para Claude Code.
+- [x] Documentar skill para OpenCode.
+- [x] Ejemplos de comandos `enguepad notify` en cada skill.
 
 ### Criterios de aceptación (test manual)
 
