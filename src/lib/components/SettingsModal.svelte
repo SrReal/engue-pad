@@ -78,6 +78,13 @@
                 <input type="checkbox" checked={draft.restoreLayout ?? true} onchange={(e) => update("restoreLayout", e.currentTarget.checked)} />
                 <span>Restore layout on reopen</span>
               </label>
+              <label class="field">
+                <span>Mascota</span>
+                <select value={draft.mascotScope ?? "global"} onchange={(e) => update("mascotScope", e.currentTarget.value as "global" | "project")}>
+                  <option value="global">Global (misma en todos los proyectos)</option>
+                  <option value="project">Por proyecto</option>
+                </select>
+              </label>
             </div>
           {:else if activeTab === "editor"}
             <div class="section">

@@ -19,7 +19,9 @@
   import MascotPanel from "./MascotPanel.svelte";
   import MascotSidebar from "./MascotSidebar.svelte";
   import { open, confirm } from "@tauri-apps/plugin-dialog";
-  import { triggerMascotEvent, updateMascotSettings } from "$lib/mascot/store.svelte";
+  import { triggerMascotEvent, updateMascotSettings, applyMascotConfig, loadMascot } from "$lib/mascot/store.svelte";
+import { loadProjectMascotConfig } from "$lib/mascot/projectStore.svelte";
+import type { SemanticEvent } from "$lib/mascot/types";
   import { List, FolderOpen, ArrowClockwise, NotePencil, PawPrint, Gear } from "phosphor-svelte";
 
   let sidebarWidth = $state(240);
@@ -94,7 +96,7 @@
       console.log("[external-event]", data.event, data.payload);
       if (data.event === "mascot") {
         const p = data.payload as { state?: string } | undefined;
-        if (p?.state) triggerMascotEvent(p.state);
+        if (p?.state) triggerMascotEvent(p.state as SemanticEvent);
       } else if (data.event === "open_preview") {
         const p = data.payload as { url?: string } | undefined;
         if (p?.url) {
@@ -126,9 +128,23 @@
           }).catch(() => {});
         }
       });
-      loadSettings().then((s) => {
+      loadSettings().then(async (s) => {
         gitRefreshInterval = (s.git?.refreshInterval ?? 5) * 1000;
-        if (s.mascot?.enabled && s.mascot?.currentMascot) {
+        const scope = s.mascotScope ?? "global";
+        if (scope === "project") {
+          const projectConfig = await loadProjectMascotConfig(root);
+          if (projectConfig) {
+            applyMascotConfig(projectConfig);
+            if (projectConfig.currentMascot) {
+              loadMascot(projectConfig.currentMascot);
+            }
+          } else if (s.mascot) {
+            applyMascotConfig(s.mascot);
+            if (s.mascot.currentMascot) {
+              loadMascot(s.mascot.currentMascot);
+            }
+          }
+        } else if (s.mascot?.enabled && s.mascot?.currentMascot) {
           triggerMascotEvent("iniciando_tarea");
         }
       });

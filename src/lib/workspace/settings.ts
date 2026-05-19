@@ -46,6 +46,7 @@ export type AppSettings = {
   lint?: LinterSettings;
   git?: GitSettings;
   mascot?: MascotSettings;
+  mascotScope?: "global" | "project";
 };
 
 const SETTINGS_FILE = "settings.json";
@@ -110,6 +111,7 @@ export function getDefaultSettings(): Required<Omit<AppSettings, "lastProjectPat
     lint: { ...DEFAULT_LINT },
     git: { ...DEFAULT_GIT },
     mascot: { ...DEFAULT_MASCOT },
+    mascotScope: "global",
   };
 }
 

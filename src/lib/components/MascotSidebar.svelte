@@ -18,6 +18,8 @@
   import { DEFAULT_EVENT_PHRASES } from "$lib/mascot/types";
   import { saveSettings } from "$lib/workspace/settings";
   import { appSettings } from "$lib/workspace/settingsStore.svelte";
+  import { workspaceInfo } from "$lib/workspace/store.svelte";
+  import { saveProjectMascotConfig } from "$lib/mascot/projectStore.svelte";
   import { CaretRight, X } from "phosphor-svelte";
 
   const STATES: PetState[] = ["idle", "wave", "run", "failed", "review", "jump", "extra1", "extra2"];
@@ -165,14 +167,34 @@
   }
 
   function saveMascotSettings() {
+    const scope = appSettings.mascotScope ?? "global";
+    if (scope === "project" && workspaceInfo.rootPath) {
+      saveProjectMascotConfig(workspaceInfo.rootPath, { ...mascotSettings });
+      return;
+    }
     if (appSettings.mascot) {
       Object.assign(appSettings.mascot, { ...mascotSettings });
       saveSettings(appSettings);
     }
   }
+
+  async function setScope(scope: "global" | "project") {
+    appSettings.mascotScope = scope;
+    await saveSettings(appSettings);
+    if (scope === "project" && workspaceInfo.rootPath) {
+      await saveProjectMascotConfig(workspaceInfo.rootPath, { ...mascotSettings });
+    }
+  }
 </script>
 
 <div class="mascot-sidebar">
+  <!-- Scope selector -->
+  <div class="scope-bar">
+    <span class="scope-label">Configuración:</span>
+    <button class="scope-btn" class:active={appSettings.mascotScope !== "project"} onclick={() => setScope("global")} type="button">Global</button>
+    <button class="scope-btn" class:active={appSettings.mascotScope === "project"} onclick={() => setScope("project")} type="button">Este proyecto</button>
+  </div>
+
   <!-- Installed Mascots -->
   <div class="section">
     <button class="section-header" onclick={() => toggleSection("mascotas")}>
@@ -639,5 +661,36 @@
     text-align: center;
     padding: 8px;
     font-size: 12px;
+  }
+
+  .scope-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px;
+    border-bottom: 1px solid var(--border-color, #333);
+    background: var(--bg-sidebar, #252526);
+  }
+
+  .scope-label {
+    font-size: 11px;
+    color: var(--text-muted, #888);
+    margin-right: auto;
+  }
+
+  .scope-btn {
+    background: transparent;
+    border: 1px solid var(--border-color, #333);
+    color: var(--text-color, #ccc);
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+
+  .scope-btn.active {
+    background: var(--accent-color, #4a9eff);
+    color: white;
+    border-color: var(--accent-color, #4a9eff);
   }
 </style>

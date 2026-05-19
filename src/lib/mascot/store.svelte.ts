@@ -36,6 +36,10 @@ export function updateMascotSettings(patch: Partial<MascotSettings>) {
   Object.assign(mascotSettings, patch);
 }
 
+export function applyMascotConfig(config: MascotSettings) {
+  Object.assign(mascotSettings, config);
+}
+
 export function setMascotState(state: PetState) {
   if (!mascotSettings.enabled || mascotSettings.mode === "disabled") return;
   if (mascotState.idleTimeout) clearTimeout(mascotState.idleTimeout);

@@ -5,6 +5,9 @@ export const appSettings = $state<AppSettings>(getDefaultSettings());
 
 export function updateAppSettings(patch: Partial<AppSettings>) {
   Object.assign(appSettings, patch);
+  if (patch.mascotScope) {
+    // scope change handled by caller (AppLayout / MascotSidebar)
+  }
   if (patch.mascot) {
     updateMascotSettings(patch.mascot);
     if (patch.mascot.currentMascot) {
