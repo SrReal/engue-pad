@@ -20,6 +20,7 @@
   import MascotSidebar from "./MascotSidebar.svelte";
   import { open, confirm } from "@tauri-apps/plugin-dialog";
   import { triggerMascotEvent, updateMascotSettings } from "$lib/mascot/store.svelte";
+  import { List, FolderOpen, ArrowClockwise, NotePencil, PawPrint, Gear } from "phosphor-svelte";
 
   let sidebarWidth = $state(240);
   let isResizingSidebar = $state(false);
@@ -222,16 +223,10 @@
   $effect(() => {
     const zoom = appSettings.zoom ?? 1;
     const uiFontSize = appSettings.uiFontSize ?? 13;
-    const theme = appSettings.theme ?? "dark";
     document.documentElement.style.setProperty("--app-zoom", String(zoom));
     document.documentElement.style.setProperty("--app-ui-font-size", `${uiFontSize}px`);
     document.body.classList.remove("theme-dark", "theme-light");
-    if (theme === "auto") {
-      const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
-      document.body.classList.add(prefersLight ? "theme-light" : "theme-dark");
-    } else {
-      document.body.classList.add(`theme-${theme}`);
-    }
+    document.body.classList.add("theme-dark");
   });
 
   async function openFolder() {
@@ -313,13 +308,13 @@
 
 <div class="app-layout">
   <header class="top-bar">
-    <button class="icon-btn" onclick={toggleSidebar} title="Toggle sidebar">☰</button>
+    <button class="icon-btn" onclick={toggleSidebar} title="Toggle sidebar"><List size={18} /></button>
     <span class="logo">EnguePad</span>
-    <button class="icon-btn" onclick={openFolder} title="Open folder">📂</button>
-    <button class="icon-btn" onclick={triggerRefresh} title="Refresh tree">🔄</button>
-    <button class="icon-btn" onclick={toggleRightSidebar} title="Toggle tasks sidebar">📝</button>
-    <button class="icon-btn" onclick={toggleMascotSidebar} title="Mascot">🐾</button>
-    <button class="icon-btn" onclick={() => showSettings = true} title="Settings">⚙️</button>
+    <button class="icon-btn" onclick={openFolder} title="Open folder"><FolderOpen size={18} /></button>
+    <button class="icon-btn" onclick={triggerRefresh} title="Refresh tree"><ArrowClockwise size={18} /></button>
+    <button class="icon-btn" onclick={toggleRightSidebar} title="Toggle tasks sidebar"><NotePencil size={18} /></button>
+    <button class="icon-btn" onclick={toggleMascotSidebar} title="Mascot"><PawPrint size={18} /></button>
+    <button class="icon-btn" onclick={() => showSettings = true} title="Settings"><Gear size={18} /></button>
   </header>
   <div class="body">
     <aside class="sidebar" class:collapsed={sidebarCollapsed} style:width="{sidebarCollapsed ? 0 : sidebarWidth}px">

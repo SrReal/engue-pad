@@ -4,6 +4,7 @@
   import { layoutState, addTab, setActiveTab, setActiveNode } from "$lib/layout/store.svelte";
   import { editorNavigation } from "$lib/editor/navigation";
   import { triggerMascotEvent } from "$lib/mascot/store.svelte";
+  import { X, Warning, Info, Circle, CaretRight } from "phosphor-svelte";
 
   let { onClose }: { onClose: () => void } = $props();
 
@@ -32,15 +33,6 @@
     triggerMascotEvent("llamar_atencion");
   }
 
-  function severityIcon(severity: string): string {
-    switch (severity) {
-      case "error": return "❌";
-      case "warning": return "⚠️";
-      case "info": return "ℹ️";
-      default: return "●";
-    }
-  }
-
   const grouped = $derived.by(() => {
     const map = new Map<string, typeof problemsStore.items>();
     for (const p of problemsStore.items) {
@@ -65,7 +57,7 @@
       {#if infoCount > 0}<span class="count info">{infoCount} info</span>{/if}
       {#if problemsStore.items.length === 0}<span class="count">No problems</span>{/if}
     </span>
-    <button class="close-btn" onclick={onClose} title="Close">×</button>
+    <button class="close-btn" onclick={onClose} title="Close"><X size={14} /></button>
   </div>
   <div class="problems-list">
     {#if problemsStore.items.length === 0 && linterAvailability.available === false}
@@ -83,7 +75,7 @@
       {#each grouped.entries() as [path, list] (path)}
       <div class="path-group">
         <button class="path-header" onclick={() => togglePath(path)}>
-          <span class="arrow" class:expanded={expandedPaths.has(path)}>▶</span>
+          <span class="arrow" class:expanded={expandedPaths.has(path)}><CaretRight size={12} /></span>
           <span class="path-name">{path.split(/[\\/]/).pop() ?? path}</span>
           <span class="path-count">{list.length}</span>
         </button>
@@ -91,7 +83,9 @@
           <div class="path-issues">
             {#each list as p}
               <button class="issue" onclick={() => openProblem(p.path, p.from)}>
-                <span class="issue-icon">{severityIcon(p.severity)}</span>
+                <span class="issue-icon">
+                  {#if p.severity === "error"}<X size={12} />{:else if p.severity === "warning"}<Warning size={12} />{:else if p.severity === "info"}<Info size={12} />{:else}<Circle size={12} />{/if}
+                </span>
                 <span class="issue-msg">{p.message}</span>
               </button>
             {/each}

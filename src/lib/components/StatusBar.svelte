@@ -6,6 +6,7 @@
   import { updateLinterAvailability, linterAvailability } from "$lib/editor/linterAvailability.svelte";
   import { todoStore } from "$lib/todo/store.svelte";
   import type { LayoutNode, Tab } from "$lib/layout/types";
+  import { Check, NotePencil } from "phosphor-svelte";
 
   let { toggleProblems, showProblems }: { toggleProblems: () => void; showProblems: boolean } = $props();
 
@@ -76,11 +77,11 @@
     {:else if linterAvailability.available === false}
       <span class="problem-dot warning">!</span>
     {:else}
-      ✓
+      <Check size={12} />
     {/if}
   </button>
   {#if todoStore.parsed.total > 0}
-    <span class="info todo-count">📝 {todoStore.parsed.completed}/{todoStore.parsed.total}</span>
+    <span class="info todo-count"><NotePencil size={12} /> {todoStore.parsed.completed}/{todoStore.parsed.total}</span>
   {/if}
   <span class="info">CPU {cpu.toFixed(1)}%</span>
   <span class="info">{memory} MB RAM</span>

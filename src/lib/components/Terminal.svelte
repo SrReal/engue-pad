@@ -92,20 +92,7 @@
     const cols = term.cols;
     const rows = term.rows;
 
-    const effectiveShell = shell ?? tSettings.defaultShell ?? (navigator.platform.startsWith("Win") ? "powershell.exe" : "zsh");
-
-    try {
-      await invoke("create_terminal", {
-        terminalId: tabId,
-        shell: effectiveShell,
-        cwd,
-        cols,
-        rows,
-      });
-    } catch (e) {
-      term.writeln(`Failed to start terminal: ${e}`);
-      return;
-    }
+    const effectiveShell = shell || tSettings.defaultShell || (navigator.platform.startsWith("Win") ? "powershell.exe" : "zsh");
 
     const urlRegex = /https?:\/\/[^\s'"\)\]>]+/g;
 
@@ -146,6 +133,22 @@
       }
     });
     unlistenClosed = closedListener;
+
+    // Kill any stale PTY before creating a new one (handles app refresh)
+    await invoke("kill_terminal", { terminalId: tabId }).catch(() => {});
+
+    try {
+      await invoke("create_terminal", {
+        terminalId: tabId,
+        shell: effectiveShell,
+        cwd,
+        cols,
+        rows,
+      });
+    } catch (e) {
+      term.writeln(`Failed to start terminal: ${e}`);
+      return;
+    }
 
     term.attachCustomKeyEventHandler((e) => {
       if (e.type !== "keydown") return true;
@@ -199,8 +202,12 @@
     terminal = term;
     fitAddon = fit;
 
-    // Ensure focus after xterm textarea is fully initialised.
+    // Ensure proper sizing and focus after mount.
     setTimeout(() => {
+      fit.fit();
+      if (terminal) {
+        invoke("resize_terminal", { terminalId: tabId, cols: terminal.cols, rows: terminal.rows }).catch(() => {});
+      }
       term.focus();
     }, 100);
   });

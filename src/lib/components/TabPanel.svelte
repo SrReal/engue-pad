@@ -6,6 +6,8 @@
   import { confirm } from "@tauri-apps/plugin-dialog";
   import { get } from "svelte/store";
   import { triggerMascotEvent } from "$lib/mascot/store.svelte";
+  import { X, ArrowsOutLineVertical, ArrowsOutLineHorizontal, TerminalWindow, Globe } from "phosphor-svelte";
+  import FileIcon from "./FileIcon.svelte";
   import Editor from "./Editor.svelte";
   import MarkdownViewer from "./MarkdownViewer.svelte";
   import Terminal from "./Terminal.svelte";
@@ -278,7 +280,7 @@
   tabindex="0"
 >
   <div class="tab-bar" oncontextmenu={handlePanelContextMenu} role="toolbar" aria-label="Tabs" tabindex="0">
-    <button class="tab-add" onclick={() => { addTerminal(node.id, "Terminal", workspaceInfo.rootPath ?? undefined); triggerMascotEvent("terminal_creado"); }} title="New terminal" type="button"><span class="term-icon">&gt;_</span></button>
+    <button class="tab-add" onclick={() => { addTerminal(node.id, "Terminal", workspaceInfo.rootPath ?? undefined); triggerMascotEvent("terminal_creado"); }} title="New terminal" type="button"><TerminalWindow size={16} /></button>
     <div class="tabs-scroll" bind:this={tabBarRef}>
       {#each node.tabs as tab, index (tab.id)}
         <div
@@ -310,17 +312,26 @@
             />
           {:else}
             <span class="tab-title">
-              {tab.title}{#if tab.dirty}●{/if}
+              {#if tab.type === "terminal"}
+                <TerminalWindow size={12} />
+              {:else if tab.type === "preview"}
+                <Globe size={12} />
+              {:else if tab.path}
+                <FileIcon path={tab.path} size={12} />
+              {:else}
+                <FileIcon type="file" size={12} />
+              {/if}
+              <span class="tab-label">{tab.title}{#if tab.dirty}●{/if}</span>
             </span>
           {/if}
-          <button class="tab-close" onclick={(e) => handleClose(tab.id, e)} type="button" aria-label="Close tab">×</button>
+          <button class="tab-close" onclick={(e) => handleClose(tab.id, e)} type="button" aria-label="Close tab"><X size={12} /></button>
         </div>
       {/each}
     </div>
     <div class="panel-actions">
-      <button class="panel-action-btn" onclick={() => { splitNode(node.id, 'horizontal'); triggerMascotEvent("panel_dividido"); }} title="Split horizontal" type="button">⬌</button>
-      <button class="panel-action-btn" onclick={() => { splitNode(node.id, 'vertical'); triggerMascotEvent("panel_dividido"); }} title="Split vertical" type="button">⬍</button>
-      <button class="panel-action-btn close" onclick={handleClosePanel} title="Close panel" type="button">×</button>
+      <button class="panel-action-btn" onclick={() => { splitNode(node.id, 'horizontal'); triggerMascotEvent("panel_dividido"); }} title="Split horizontal" type="button"><ArrowsOutLineHorizontal size={14} /></button>
+      <button class="panel-action-btn" onclick={() => { splitNode(node.id, 'vertical'); triggerMascotEvent("panel_dividido"); }} title="Split vertical" type="button"><ArrowsOutLineVertical size={14} /></button>
+      <button class="panel-action-btn close" onclick={handleClosePanel} title="Close panel" type="button"><X size={14} /></button>
     </div>
   </div>
   {#if isDragOrigin && dragState.tabId}
@@ -389,7 +400,7 @@
   {#if isDragTarget}
     <div class="drop-overlay">
       <div class="drop-indicator">
-        <span class="drop-arrow">⬍</span>
+        <span class="drop-arrow"><ArrowsOutLineVertical size={28} weight="bold" /></span>
         <span class="drop-label">Move here</span>
       </div>
     </div>
@@ -548,9 +559,18 @@
   }
 
   .tab-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     max-width: 150px;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .tab-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .tab-close {
@@ -588,12 +608,6 @@
 
   .tab-add:hover {
     background: var(--bg-tab-hover, #3d3d3d);
-  }
-
-  .term-icon {
-    font-family: monospace;
-    font-weight: 600;
-    font-size: 14px;
   }
 
   .drop-before {

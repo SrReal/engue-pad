@@ -10,6 +10,7 @@
     deleteTodoSection,
   } from "$lib/todo/store.svelte";
   import type { TodoDocument, TodoSection, TodoTask } from "$lib/todo/parser";
+  import { NotePencil, PencilSimple, X } from "phosphor-svelte";
 
   let editingTaskLine = $state<number | null>(null);
   let editingTaskValue = $state("");
@@ -99,7 +100,7 @@
     <div class="loading">Loading...</div>
   {:else if todoStore.parsed.sections.length === 0}
     <div class="empty">
-      <span class="empty-icon">📝</span>
+      <span class="empty-icon"><NotePencil size={24} /></span>
       <span class="empty-text">No tasks yet</span>
       <button class="add-section-btn" onclick={() => addingSection = true}>Add section</button>
     </div>
@@ -136,8 +137,8 @@
                 {section.title}
               </span>
               <div class="section-actions">
-                <button class="action-btn" title="Rename" onclick={() => startEditSection(section)}>✎</button>
-                <button class="action-btn danger" title="Delete section" onclick={() => deleteTodoSection(section.startLine, section.endLine)}>×</button>
+                <button class="action-btn" title="Rename" onclick={() => startEditSection(section)}><PencilSimple size={14} /></button>
+                <button class="action-btn danger" title="Delete section" onclick={() => deleteTodoSection(section.startLine, section.endLine)}><X size={14} /></button>
               </div>
             {/if}
           </div>
@@ -176,7 +177,7 @@
                   >{task.text}</span>
                 </label>
                 <div class="task-actions">
-                  <button class="action-btn danger" title="Delete" onclick={() => deleteTodoTask(task.lineIndex)}>×</button>
+                  <button class="action-btn danger" title="Delete" onclick={() => deleteTodoTask(task.lineIndex)}><X size={14} /></button>
                 </div>
               </div>
             {/if}

@@ -18,6 +18,7 @@
   import { DEFAULT_EVENT_PHRASES } from "$lib/mascot/types";
   import { saveSettings } from "$lib/workspace/settings";
   import { appSettings } from "$lib/workspace/settingsStore.svelte";
+  import { CaretRight, X } from "phosphor-svelte";
 
   const STATES: PetState[] = ["idle", "wave", "run", "failed", "review", "jump", "extra1", "extra2"];
   const EVENT_LABELS: Record<SemanticEvent, string> = {
@@ -175,7 +176,7 @@
   <!-- Installed Mascots -->
   <div class="section">
     <button class="section-header" onclick={() => toggleSection("mascotas")}>
-      <span class="section-arrow" class:open={expandedSections["mascotas"]}>▶</span>
+      <span class="section-arrow" class:open={expandedSections["mascotas"]}><CaretRight size={12} /></span>
       <span class="section-title">Mascotas</span>
     </button>
     {#if expandedSections["mascotas"]}
@@ -191,7 +192,7 @@
             {/if}
             <div class="mascot-info">
               <div class="mascot-name">{m.name}</div>
-              <button class="btn-delete" onclick={(e) => { e.stopPropagation(); removeMascot(m.slug); }}>×</button>
+              <button class="btn-delete" onclick={(e) => { e.stopPropagation(); removeMascot(m.slug); }}><X size={14} /></button>
             </div>
           </div>
         {:else}
@@ -205,7 +206,7 @@
   <!-- Appearance -->
   <div class="section">
     <button class="section-header" onclick={() => toggleSection("apariencia")}>
-      <span class="section-arrow" class:open={expandedSections["apariencia"]}>▶</span>
+      <span class="section-arrow" class:open={expandedSections["apariencia"]}><CaretRight size={12} /></span>
       <span class="section-title">Apariencia</span>
     </button>
     {#if expandedSections["apariencia"]}
@@ -224,7 +225,7 @@
   <!-- Audio -->
   <div class="section">
     <button class="section-header" onclick={() => toggleSection("audio")}>
-      <span class="section-arrow" class:open={expandedSections["audio"]}>▶</span>
+      <span class="section-arrow" class:open={expandedSections["audio"]}><CaretRight size={12} /></span>
       <span class="section-title">Audio</span>
     </button>
     {#if expandedSections["audio"]}
@@ -253,7 +254,7 @@
   <!-- Voice -->
   <div class="section">
     <button class="section-header" onclick={() => toggleSection("voz")}>
-      <span class="section-arrow" class:open={expandedSections["voz"]}>▶</span>
+      <span class="section-arrow" class:open={expandedSections["voz"]}><CaretRight size={12} /></span>
       <span class="section-title">Voz</span>
     </button>
     {#if expandedSections["voz"]}
@@ -279,7 +280,7 @@
   <!-- Event Mappings -->
   <div class="section">
     <button class="section-header" onclick={() => toggleSection("mapeos")}>
-      <span class="section-arrow" class:open={expandedSections["mapeos"]}>▶</span>
+      <span class="section-arrow" class:open={expandedSections["mapeos"]}><CaretRight size={12} /></span>
       <span class="section-title">Mapeos de eventos</span>
     </button>
     {#if expandedSections["mapeos"]}
@@ -299,7 +300,7 @@
   <!-- Event Phrases -->
   <div class="section">
     <button class="section-header" onclick={() => toggleSection("frases")}>
-      <span class="section-arrow" class:open={expandedSections["frases"]}>▶</span>
+      <span class="section-arrow" class:open={expandedSections["frases"]}><CaretRight size={12} /></span>
       <span class="section-title">Frases por evento</span>
     </button>
     {#if expandedSections["frases"]}
@@ -315,7 +316,7 @@
   <!-- State Labels -->
   <div class="section">
     <button class="section-header" onclick={() => toggleSection("estados")}>
-      <span class="section-arrow" class:open={expandedSections["estados"]}>▶</span>
+      <span class="section-arrow" class:open={expandedSections["estados"]}><CaretRight size={12} /></span>
       <span class="section-title">Nombres de estados</span>
     </button>
     {#if expandedSections["estados"]}
@@ -331,7 +332,7 @@
   <!-- Manual States -->
   <div class="section">
     <button class="section-header" onclick={() => toggleSection("manuales")}>
-      <span class="section-arrow" class:open={expandedSections["manuales"]}>▶</span>
+      <span class="section-arrow" class:open={expandedSections["manuales"]}><CaretRight size={12} /></span>
       <span class="section-title">Estados manuales</span>
     </button>
     {#if expandedSections["manuales"]}
@@ -348,7 +349,7 @@
   <!-- Info -->
   <div class="section">
     <button class="section-header" onclick={() => toggleSection("info")}>
-      <span class="section-arrow" class:open={expandedSections["info"]}>▶</span>
+      <span class="section-arrow" class:open={expandedSections["info"]}><CaretRight size={12} /></span>
       <span class="section-title">Info</span>
     </button>
     {#if expandedSections["info"]}
@@ -404,9 +405,11 @@
   .section-arrow {
     font-size: 10px;
     transition: transform 0.15s ease;
-    display: inline-block;
-    width: 10px;
-    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
   }
 
   .section-arrow.open {

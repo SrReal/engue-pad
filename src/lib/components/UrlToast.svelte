@@ -3,6 +3,7 @@
   import { openUrl } from "@tauri-apps/plugin-opener";
   import { addPreview, layoutState } from "$lib/layout/store.svelte";
   import { triggerMascotEvent } from "$lib/mascot/store.svelte";
+  import { X } from "phosphor-svelte";
 
   function dismiss(url: string, terminalId: string) {
     clearUrl(url, terminalId);
@@ -42,7 +43,7 @@
           type="button"
           aria-label="Dismiss"
         >
-          ×
+          <X size={14} />
         </button>
       </div>
     {/each}

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
+  import { CaretDown, CaretRight } from "phosphor-svelte";
 
   type ProcessInfo = {
     pid: number;
@@ -69,7 +70,7 @@
       }
     }}
   >
-    <span class="arrow">{expanded ? "▼" : "▶"}</span>
+    <span class="arrow">{#if expanded}<CaretDown size={12} />{:else}<CaretRight size={12} />{/if}</span>
     <span class="summary">Procesos lanzados</span>
     <span class="totals">CPU {totalCpu.toFixed(1)}% · {totalMemory} MB RAM</span>
   </div>

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
   import { onMount } from "svelte";
+  import { MusicNotes } from "phosphor-svelte";
 
   let { path }: { path: string } = $props();
   let src = $state<string>("");
@@ -43,7 +44,7 @@
 
 <div class="audio-player">
   <div class="info">
-    <span class="icon">🎵</span>
+    <span class="icon"><MusicNotes size={32} /></span>
     <span class="name">{fileName}</span>
   </div>
   {#if src}

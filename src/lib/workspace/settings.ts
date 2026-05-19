@@ -124,7 +124,7 @@ export async function loadSettings(): Promise<AppSettings> {
   try {
     const raw = await invoke<string>("read_file", { path });
     const parsed = JSON.parse(raw) as AppSettings;
-    return { ...getDefaultSettings(), ...parsed };
+    return { ...getDefaultSettings(), ...parsed, theme: "dark" };
   } catch {
     return getDefaultSettings();
   }
@@ -135,7 +135,8 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
   const dir = path.replace(/[/\\]settings\.json$/, "");
   try {
     await invoke("ensure_dir", { path: dir });
-    await invoke("write_file", { path, contents: JSON.stringify(settings, null, 2) });
+    const toSave = { ...settings, theme: "dark" as const };
+    await invoke("write_file", { path, contents: JSON.stringify(toSave, null, 2) });
   } catch (e) {
     console.error("Failed to save settings:", e);
   }

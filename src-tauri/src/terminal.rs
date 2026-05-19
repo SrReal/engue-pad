@@ -62,9 +62,9 @@ impl TerminalManager {
         rows: u16,
     ) -> Result<(), String> {
         {
-            let sessions = self.sessions.lock().unwrap();
-            if sessions.contains_key(&terminal_id) {
-                return Ok(());
+            let mut sessions = self.sessions.lock().unwrap();
+            if sessions.remove(&terminal_id).is_some() {
+                self.terminal_pids.lock().unwrap().remove(&terminal_id);
             }
         }
 

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { getDefaultSettings, saveSettings, type AppSettings } from "$lib/workspace/settings";
   import { appSettings, updateAppSettings } from "$lib/workspace/settingsStore.svelte";
+  import { X } from "phosphor-svelte";
   import { linterConfig } from "$lib/workspace/store.svelte";
 
   let { show = $bindable(false) }: { show?: boolean } = $props();
@@ -51,7 +52,7 @@
     <div class="modal" onclick={(e) => e.stopPropagation()}>
       <div class="modal-header">
         <span class="modal-title">Settings</span>
-        <button class="close-btn" onclick={cancel} aria-label="Close">×</button>
+        <button class="close-btn" onclick={cancel} aria-label="Close"><X size={16} /></button>
       </div>
       <div class="modal-body">
         <div class="tabs">
@@ -76,14 +77,6 @@
               <label class="field checkbox">
                 <input type="checkbox" checked={draft.restoreLayout ?? true} onchange={(e) => update("restoreLayout", e.currentTarget.checked)} />
                 <span>Restore layout on reopen</span>
-              </label>
-              <label class="field">
-                <span>Theme</span>
-                <select value={draft.theme ?? "dark"} onchange={(e) => update("theme", e.currentTarget.value as "dark" | "light" | "auto")}>
-                  <option value="dark">Dark</option>
-                  <option value="light">Light</option>
-                  <option value="auto">Auto</option>
-                </select>
               </label>
             </div>
           {:else if activeTab === "editor"}
@@ -294,8 +287,7 @@
   }
 
   .field input[type="text"],
-  .field input[type="number"],
-  .field select {
+  .field input[type="number"] {
     background: var(--bg-sidebar, #252526);
     border: 1px solid var(--border-color, #333);
     color: var(--text-color, #ccc);

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { openUrl } from "@tauri-apps/plugin-opener";
+  import { Desktop, DeviceMobile } from "phosphor-svelte";
 
   let { url }: { url: string } = $props();
   let iframeRef = $state<HTMLIFrameElement | null>(null);
@@ -28,7 +29,7 @@
   <div class="toolbar">
     <span class="url" title={url}>{url}</span>
     <button class="tool-btn" onclick={() => isMobile = !isMobile} title={isMobile ? "Desktop view" : "Mobile view"}>
-      {isMobile ? "🖥️" : "📱"}
+      {#if isMobile}<Desktop size={16} />{:else}<DeviceMobile size={16} />{/if}
     </button>
     <button class="tool-btn" onclick={refresh} title="Refresh">&#x21bb;</button>
     <button class="tool-btn" onclick={openExternal} title="Open in browser">&#x2197;</button>

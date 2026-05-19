@@ -7,6 +7,8 @@
   import TreeItem from "./TreeItem.svelte";
   import { fileDrag } from "$lib/tree/fileDragStore";
   import { triggerMascotEvent } from "$lib/mascot/store.svelte";
+  import { CaretRight, CaretDown } from "phosphor-svelte";
+  import FileIcon from "./FileIcon.svelte";
 
   type FileEntry = {
     name: string;
@@ -267,11 +269,12 @@
     aria-selected="false"
     onkeydown={(e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleClick(); } }}
   >
-    <span class="icon">
+    <span class="icon tree-icon">
       {#if node.entry.is_dir}
-        {node.expanded ? "▼" : "▶"}
+        {#if node.expanded}<CaretDown size={12} />{:else}<CaretRight size={12} />{/if}
+        <FileIcon type={node.expanded ? "folder-open" : "folder"} size={14} weight="fill" />
       {:else}
-        📄
+        <FileIcon path={node.entry.path} size={14} />
       {/if}
     </span>
     {#if isRenaming}
@@ -344,7 +347,7 @@
   }
 
   .item-row.drop-target.directory::after {
-    content: "▸ move here";
+    content: "move here";
     margin-left: auto;
     font-size: 10px;
     color: var(--accent-color, #4a9eff);
@@ -393,6 +396,13 @@
     user-select: none;
     -webkit-user-select: none;
     pointer-events: none;
+  }
+
+  .tree-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    width: auto;
   }
 
   .name {
