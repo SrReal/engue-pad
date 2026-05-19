@@ -331,10 +331,10 @@ Objetivo: registrar instancias, CLI local y IPC para agentes externos.
 
 ### 5.4 Sistema de aprobaciones
 
-- [ ] Recibir solicitud de aprobación desde CLI externo.
-- [ ] Mostrar diálogo modal en instancia destino.
-- [ ] Respuesta sí/no devuelta al solicitante.
-- [ ] Timeout de aprobación.
+- [x] Recibir solicitud de aprobación desde CLI externo.
+- [x] Mostrar diálogo modal en instancia destino.
+- [x] Respuesta sí/no devuelta al solicitante.
+- [x] Timeout de aprobación.
 
 ### 5.5 Skills para agentes
 

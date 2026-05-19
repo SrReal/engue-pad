@@ -16,6 +16,7 @@
   import ProblemsPanel from "./ProblemsPanel.svelte";
   import UrlToast from "./UrlToast.svelte";
   import SettingsModal from "./SettingsModal.svelte";
+  import ApprovalModal from "./ApprovalModal.svelte";
   import MascotPanel from "./MascotPanel.svelte";
   import MascotSidebar from "./MascotSidebar.svelte";
   import { open, confirm } from "@tauri-apps/plugin-dialog";
@@ -44,6 +45,11 @@ import type { SemanticEvent } from "$lib/mascot/types";
 
   let unlistenClose: (() => void) | null = null;
   let unlistenExternal: (() => void) | null = null;
+  let unlistenApproval: (() => void) | null = null;
+
+  let showApproval = $state(false);
+  let approvalRequestId = $state("");
+  let approvalMessage = $state("");
 
   onMount(async () => {
     const settings = await loadSettings();
@@ -106,11 +112,21 @@ import type { SemanticEvent } from "$lib/mascot/types";
         }
       }
     });
+
+    unlistenApproval = await listen("approval-request", (ev) => {
+      const data = ev.payload as { request_id?: string; message?: string };
+      if (data.request_id) {
+        approvalRequestId = data.request_id;
+        approvalMessage = data.message ?? "";
+        showApproval = true;
+      }
+    });
   });
 
   onDestroy(() => {
     unlistenClose?.();
     unlistenExternal?.();
+    unlistenApproval?.();
   });
 
   let gitRefreshInterval = $state(5000);
@@ -423,6 +439,9 @@ import type { SemanticEvent } from "$lib/mascot/types";
   </div>
   <UrlToast />
   <SettingsModal bind:show={showSettings} />
+  {#if showApproval}
+    <ApprovalModal requestId={approvalRequestId} message={approvalMessage} onClose={() => showApproval = false} />
+  {/if}
   <MascotPanel />
 </div>
 

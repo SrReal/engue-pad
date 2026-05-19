@@ -11,6 +11,7 @@ const HEARTBEAT_INTERVAL_SECS: u64 = 30;
 const STALE_THRESHOLD_SECS: u64 = 90;
 const RUNTIME_DIR: &str = "runtime";
 const INSTANCES_FILE: &str = "instances.json";
+const APPROVALS_DIR: &str = "approvals";
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct InstanceInfo {
@@ -28,6 +29,21 @@ pub struct ExternalEvent {
     pub event: String,
     #[serde(default)]
     pub payload: serde_json::Value,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ApprovalRequest {
+    pub request_id: String,
+    pub message: String,
+    pub timestamp: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub response: Option<ApprovalResponse>,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ApprovalResponse {
+    pub approved: bool,
+    pub responded_at: u64,
 }
 
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
@@ -102,9 +118,26 @@ impl InstanceManager {
     pub fn start_ipc_server(&self, app_handle: AppHandle) {
         let d = self.data.lock().unwrap();
         let ipc_path = d.ipc_address.clone();
+        let runtime_path = d.runtime_path.clone();
         drop(d);
 
         std::thread::spawn(move || {
+            let handle_approval = |event: &ExternalEvent, app: &AppHandle| {
+                if event.event == "approval_request" {
+                    if let Some(request_id) = event.payload.get("request_id").and_then(|v| v.as_str()) {
+                        let message = event.payload.get("message").and_then(|v| v.as_str()).unwrap_or("");
+                        let req = ApprovalRequest {
+                            request_id: request_id.to_string(),
+                            message: message.to_string(),
+                            timestamp: current_timestamp(),
+                            response: None,
+                        };
+                        let _ = InstanceManager::write_approval_request(&runtime_path, &req);
+                        let _ = app.emit("approval-request", req);
+                    }
+                }
+            };
+
             #[cfg(unix)]
             {
                 use std::os::unix::net::UnixListener;
@@ -130,6 +163,7 @@ impl InstanceManager {
                                     }
                                     match serde_json::from_str::<ExternalEvent>(&line) {
                                         Ok(event) => {
+                                            handle_approval(&event, &app);
                                             let _ = app.emit("external-event", event);
                                         }
                                         Err(e) => {
@@ -148,10 +182,6 @@ impl InstanceManager {
 
             #[cfg(windows)]
             {
-                use std::os::windows::io::{FromRawHandle, IntoRawHandle, RawHandle};
-                use std::ptr;
-                use windows_sys::Win32::System::Pipes::CreateNamedPipeW;
-                // Simplified: on Windows we use a local TCP port since named pipes require unsafe Win32 API
                 let port = Self::parse_port_from_ipc(&ipc_path);
                 let listener = match std::net::TcpListener::bind(format!("127.0.0.1:{}", port)) {
                     Ok(l) => l,
@@ -173,6 +203,7 @@ impl InstanceManager {
                                     }
                                     match serde_json::from_str::<ExternalEvent>(&line) {
                                         Ok(event) => {
+                                            handle_approval(&event, &app);
                                             let _ = app.emit("external-event", event);
                                         }
                                         Err(e) => {
@@ -269,6 +300,14 @@ impl InstanceManager {
         let raw = serde_json::to_string_pretty(file).map_err(|e| format!("Serialize failed: {}", e))?;
         fs::write(path, raw).map_err(|e| format!("Write failed: {}", e))
     }
+
+    fn write_approval_request(runtime_path: &PathBuf, request: &ApprovalRequest) -> Result<(), String> {
+        let approvals_path = runtime_path.join(APPROVALS_DIR);
+        let _ = fs::create_dir_all(&approvals_path);
+        let path = approvals_path.join(format!("{}.json", request.request_id));
+        let raw = serde_json::to_string_pretty(request).map_err(|e| format!("Serialize failed: {}", e))?;
+        fs::write(path, raw).map_err(|e| format!("Write failed: {}", e))
+    }
 }
 
 fn current_timestamp() -> u64 {
@@ -316,6 +355,32 @@ pub fn set_instance_workspace(
     root_path: String,
 ) -> Result<(), String> {
     state.set_workspace(workspace_id, project_name, root_path);
+    Ok(())
+}
+
+#[tauri::command]
+pub fn respond_approval(
+    state: tauri::State<Arc<InstanceManager>>,
+    request_id: String,
+    approved: bool,
+) -> Result<(), String> {
+    let runtime_path = {
+        let d = state.data.lock().unwrap();
+        d.runtime_path.clone()
+    };
+    let approvals_path = runtime_path.join(APPROVALS_DIR);
+    let path = approvals_path.join(format!("{}.json", request_id));
+    if !path.exists() {
+        return Err("Approval request not found".to_string());
+    }
+    let raw = fs::read_to_string(&path).map_err(|e| format!("Read failed: {}", e))?;
+    let mut request: ApprovalRequest = serde_json::from_str(&raw).map_err(|e| format!("Parse failed: {}", e))?;
+    request.response = Some(ApprovalResponse {
+        approved,
+        responded_at: current_timestamp(),
+    });
+    let updated = serde_json::to_string_pretty(&request).map_err(|e| format!("Serialize failed: {}", e))?;
+    fs::write(&path, updated).map_err(|e| format!("Write failed: {}", e))?;
     Ok(())
 }
 

@@ -368,7 +368,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .manage(Arc::clone(&terminal_manager))
-        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, read_file_bytes, write_file, write_file_bytes, ensure_dir, read_file_meta, get_app_data_dir, exit_app, rename_file, remove_dir_all, run_command, git_status, terminal::create_terminal, terminal::write_terminal, terminal::resize_terminal, terminal::get_terminal_cwd, terminal::kill_terminal, terminal::get_terminal_processes, get_app_stats, instance::get_instance_info, instance::list_instances, instance::set_instance_workspace, instance::send_event_to_instance])
+        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, read_file_bytes, write_file, write_file_bytes, ensure_dir, read_file_meta, get_app_data_dir, exit_app, rename_file, remove_dir_all, run_command, git_status, terminal::create_terminal, terminal::write_terminal, terminal::resize_terminal, terminal::get_terminal_cwd, terminal::kill_terminal, terminal::get_terminal_processes, get_app_stats, instance::get_instance_info, instance::list_instances, instance::set_instance_workspace, instance::send_event_to_instance, instance::respond_approval])
         .setup(|app| {
             let handle = app.handle().clone();
             let instance_manager = Arc::new(instance::InstanceManager::new(handle));

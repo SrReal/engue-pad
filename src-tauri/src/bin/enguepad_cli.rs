@@ -4,8 +4,10 @@ use std::collections::HashMap;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::Stdio;
+use std::time::Duration;
 
 const INSTANCES_FILE: &str = "runtime/instances.json";
+const APPROVALS_DIR: &str = "runtime/approvals";
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct InstanceInfo {
@@ -29,6 +31,21 @@ struct ExternalEvent {
     event: String,
     #[serde(default)]
     payload: serde_json::Value,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct ApprovalResponseData {
+    approved: bool,
+    responded_at: u64,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct ApprovalRequestFile {
+    request_id: String,
+    message: String,
+    timestamp: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    response: Option<ApprovalResponseData>,
 }
 
 #[derive(Parser)]
@@ -103,6 +120,26 @@ enum Commands {
         /// Target the most recently active instance
         #[arg(long)]
         active: bool,
+    },
+    /// Request user approval from an instance
+    Approve {
+        /// Approval message to show
+        message: String,
+        /// Target specific instance by ID
+        #[arg(long)]
+        instance: Option<String>,
+        /// Target instance by workspace ID
+        #[arg(long)]
+        workspace: Option<String>,
+        /// Target instance by project name
+        #[arg(long)]
+        project: Option<String>,
+        /// Target the most recently active instance
+        #[arg(long)]
+        active: bool,
+        /// Timeout in seconds (default: 30)
+        #[arg(long, default_value = "30")]
+        timeout: u64,
     },
 }
 
@@ -356,6 +393,31 @@ fn send_event(ipc_address: &str, event: &ExternalEvent) -> Result<(), String> {
     Ok(())
 }
 
+fn read_approval_response(request_id: &str) -> Result<Option<ApprovalResponseData>, String> {
+    let data_dir = app_data_dir().ok_or("Failed to determine app data directory")?;
+    let path = data_dir.join(APPROVALS_DIR).join(format!("{}.json", request_id));
+    if !path.exists() {
+        return Ok(None);
+    }
+    let raw = std::fs::read_to_string(&path).map_err(|e| format!("Read failed: {}", e))?;
+    let req: ApprovalRequestFile = serde_json::from_str(&raw).map_err(|e| format!("Parse failed: {}", e))?;
+    Ok(req.response)
+}
+
+fn poll_approval_response(request_id: &str, timeout_secs: u64) -> Result<bool, String> {
+    let start = std::time::Instant::now();
+    let timeout = Duration::from_secs(timeout_secs);
+    loop {
+        if start.elapsed() > timeout {
+            return Err("Approval request timed out".to_string());
+        }
+        match read_approval_response(request_id)? {
+            Some(resp) => return Ok(resp.approved),
+            None => std::thread::sleep(Duration::from_millis(500)),
+        }
+    }
+}
+
 fn main() {
     let cli = Cli::parse();
 
@@ -468,6 +530,49 @@ fn main() {
                     eprintln!("Failed to send mascot event to instance {}: {}", target.instance_id, e);
                 } else {
                     println!("Sent mascot state '{}' to instance {}", state, target.instance_id);
+                }
+            }
+        }
+        Commands::Approve {
+            message,
+            instance,
+            workspace,
+            project,
+            active,
+            timeout,
+        } => {
+            let request_id = uuid::Uuid::new_v4().to_string();
+            let ev = ExternalEvent {
+                event: "approval_request".to_string(),
+                payload: serde_json::json!({ "request_id": request_id, "message": message }),
+            };
+            let targets = match resolve_target(&file.instances, &instance, &workspace, &project, active) {
+                Ok(t) => t,
+                Err(e) => {
+                    eprintln!("{}", e);
+                    std::process::exit(1);
+                }
+            };
+            for target in targets {
+                if let Err(e) = send_event(&target.ipc_address, &ev) {
+                    eprintln!("Failed to send approval request to instance {}: {}", target.instance_id, e);
+                    std::process::exit(1);
+                } else {
+                    println!("Waiting for approval from instance {}... (timeout: {}s)", target.instance_id, timeout);
+                    match poll_approval_response(&request_id, timeout) {
+                        Ok(true) => {
+                            println!("Approved");
+                            std::process::exit(0);
+                        }
+                        Ok(false) => {
+                            println!("Rejected");
+                            std::process::exit(1);
+                        }
+                        Err(e) => {
+                            eprintln!("{}", e);
+                            std::process::exit(1);
+                        }
+                    }
                 }
             }
         }
