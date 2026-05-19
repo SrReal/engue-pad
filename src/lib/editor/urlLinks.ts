@@ -1,6 +1,7 @@
 import { EditorView, Decoration, ViewPlugin, ViewUpdate, EditorView as EV } from "@codemirror/view";
 import { RangeSetBuilder } from "@codemirror/state";
 import { addPreview } from "$lib/layout/store.svelte";
+import { triggerMascotEvent } from "$lib/mascot/store.svelte";
 
 const urlRegex = /https?:\/\/[^\s'"\)\]\>]+/g;
 
@@ -50,6 +51,7 @@ export function urlLinksFor(nodeId: string) {
       const url = link.textContent ?? "";
       if (!url) return false;
       addPreview(nodeId, url);
+      triggerMascotEvent("preview_abierto");
       return true;
     },
   });

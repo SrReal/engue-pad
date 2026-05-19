@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { addPreview } from "$lib/layout/store.svelte";
+  import { triggerMascotEvent } from "$lib/mascot/store.svelte";
   import Editor from "./Editor.svelte";
 
   let { nodeId, tabId, path, initialContent = "", dirty = false }: {
@@ -51,6 +52,7 @@
     if (!href) return;
     e.preventDefault();
     addPreview(nodeId, href);
+    triggerMascotEvent("preview_abierto");
   }
 
   onMount(() => {

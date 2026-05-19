@@ -6,6 +6,7 @@
   import type { Tab } from "$lib/layout/types";
   import TreeItem from "./TreeItem.svelte";
   import { fileDrag } from "$lib/tree/fileDragStore";
+  import { triggerMascotEvent } from "$lib/mascot/store.svelte";
 
   type FileEntry = {
     name: string;
@@ -70,6 +71,13 @@
     node.expanded = true;
   }
 
+  function isImage(path: string): boolean {
+    return /\.(png|jpe?g|gif|webp|svg|bmp|ico|tiff?)$/i.test(path);
+  }
+  function isAudio(path: string): boolean {
+    return /\.(mp3|wav|ogg|flac|m4a|aac|wma|opus)$/i.test(path);
+  }
+
   function handleFileClick() {
     if (node.entry.is_file) {
       const activeNodeId = layoutState.activeNodeId ?? layoutState.root.id;
@@ -78,6 +86,9 @@
         title: node.entry.name,
         path: node.entry.path,
       });
+      if (isImage(node.entry.path)) triggerMascotEvent("imagen_abierta");
+      else if (isAudio(node.entry.path)) triggerMascotEvent("audio_abierto");
+      else triggerMascotEvent("iniciando_tarea");
     }
   }
 

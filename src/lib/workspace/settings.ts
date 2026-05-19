@@ -35,6 +35,8 @@ export type AppSettings = {
   lastProjectPath: string | null;
   rightSidebarCollapsed?: boolean;
   rightSidebarWidth?: number;
+  mascotSidebarCollapsed?: boolean;
+  mascotSidebarWidth?: number;
   uiFontSize?: number;
   zoom?: number;
   restoreLayout?: boolean;
@@ -85,8 +87,11 @@ const DEFAULT_MASCOT: MascotSettings = {
   volume: 0.5,
   voiceEnabled: false,
   voiceLang: "es-ES",
+  voiceGender: "female",
   currentMascot: null,
   position: null,
+  stateLabels: {},
+  eventPhrases: {},
 };
 
 export function getDefaultSettings(): Required<Omit<AppSettings, "lastProjectPath">> & { lastProjectPath: string | null } {
@@ -94,6 +99,8 @@ export function getDefaultSettings(): Required<Omit<AppSettings, "lastProjectPat
     lastProjectPath: null,
     rightSidebarCollapsed: false,
     rightSidebarWidth: 260,
+    mascotSidebarCollapsed: true,
+    mascotSidebarWidth: 260,
     uiFontSize: 13,
     zoom: 1,
     restoreLayout: true,

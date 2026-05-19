@@ -2,14 +2,21 @@ import { mascotSettings } from "./store.svelte";
 
 let audioCtx: AudioContext | null = null;
 
-function getAudioContext(): AudioContext {
+async function getAudioContext(): Promise<AudioContext> {
   if (!audioCtx) audioCtx = new AudioContext();
+  if (audioCtx.state === "suspended") {
+    try {
+      await audioCtx.resume();
+    } catch {
+      // ignore
+    }
+  }
   return audioCtx;
 }
 
-export function playTone(frequency: number, duration: number, type: OscillatorType = "sine") {
+export async function playTone(frequency: number, duration: number, type: OscillatorType = "sine") {
   if (!mascotSettings.soundEnabled) return;
-  const ctx = getAudioContext();
+  const ctx = await getAudioContext();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.type = type;
@@ -22,29 +29,93 @@ export function playTone(frequency: number, duration: number, type: OscillatorTy
   osc.stop(ctx.currentTime + duration);
 }
 
-export function playStateSound(state: string) {
+export async function playStateSound(state: string) {
   if (!mascotSettings.soundEnabled) return;
   switch (state) {
     case "idle":
       break;
     case "wave":
-      playTone(523, 0.15, "sine");
+      await playTone(523, 0.15, "sine");
       break;
     case "run":
-      playTone(440, 0.1, "square");
+      await playTone(440, 0.1, "square");
       break;
     case "failed":
-      playTone(200, 0.4, "sawtooth");
+      await playTone(200, 0.4, "sawtooth");
       break;
     case "review":
-      playTone(600, 0.2, "triangle");
+      await playTone(600, 0.2, "triangle");
       break;
     case "jump":
-      playTone(880, 0.15, "sine");
+      await playTone(880, 0.15, "sine");
       setTimeout(() => playTone(1100, 0.15, "sine"), 120);
       break;
     default:
-      playTone(350, 0.1, "sine");
+      await playTone(350, 0.1, "sine");
+  }
+}
+
+function getVoiceForGender(lang: string, gender: string): SpeechSynthesisVoice | null {
+  const voices = window.speechSynthesis?.getVoices() ?? [];
+  const langPrefix = lang.split("-")[0].toLowerCase();
+  const candidates = voices.filter((v) => v.lang.toLowerCase().startsWith(langPrefix));
+
+  const nameLower = (n: string) => n.toLowerCase();
+  const findByKeywords = (keywords: string[]) =>
+    candidates.find((v) => keywords.some((k) => nameLower(v.name).includes(k)));
+
+  switch (gender) {
+    case "male":
+      return (
+        findByKeywords(["jorge", "diego", "carlos", "alberto", "david", "james", "john", "paul", "george", "daniel", "thomas", "robert", "michael", "mark", "matthew"]) ??
+        candidates[0] ??
+        null
+      );
+    case "female":
+      return (
+        findByKeywords(["monica", "laura", "elena", "carmen", "sofia", "anna", "sarah", "jennifer", "emma", "olivia", "mary", "linda", "patricia", "susan", "jessica"]) ??
+        candidates[0] ??
+        null
+      );
+    case "boy":
+      return (
+        findByKeywords(["junior", "boy", "nino", "child", "young"]) ??
+        candidates[0] ??
+        null
+      );
+    case "girl":
+      return (
+        findByKeywords(["girl", "nina", "child", "young", "sophie", "lily"]) ??
+        candidates[0] ??
+        null
+      );
+    default:
+      return candidates[0] ?? null;
+  }
+}
+
+function getPitchForGender(gender: string): number {
+  switch (gender) {
+    case "male":
+      return 0.9;
+    case "female":
+      return 1.3;
+    case "boy":
+      return 1.6;
+    case "girl":
+      return 1.8;
+    default:
+      return 1.2;
+  }
+}
+
+function getRateForGender(gender: string): number {
+  switch (gender) {
+    case "boy":
+    case "girl":
+      return 1.15;
+    default:
+      return 1.05;
   }
 }
 
@@ -54,8 +125,12 @@ export function speak(text: string) {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = mascotSettings.voiceLang;
     utterance.volume = mascotSettings.volume;
-    utterance.rate = 1.1;
-    utterance.pitch = 1.2;
+    utterance.rate = getRateForGender(mascotSettings.voiceGender);
+    utterance.pitch = getPitchForGender(mascotSettings.voiceGender);
+
+    const voice = getVoiceForGender(mascotSettings.voiceLang, mascotSettings.voiceGender);
+    if (voice) utterance.voice = voice;
+
     speechSynthesis.cancel();
     speechSynthesis.speak(utterance);
   } catch {

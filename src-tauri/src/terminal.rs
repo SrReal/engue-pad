@@ -11,6 +11,11 @@ struct TerminalOutput {
     data: Vec<u8>,
 }
 
+#[derive(Debug, Clone, serde::Serialize)]
+struct TerminalClosed {
+    terminal_id: String,
+}
+
 pub struct TerminalSession {
     writer: Arc<Mutex<Box<dyn Write + Send>>>,
     _pair: PtyPair,
@@ -112,6 +117,9 @@ impl TerminalManager {
                 }
             }
             sessions.lock().unwrap().remove(&id);
+            let _ = app_handle.emit("terminal-closed", TerminalClosed {
+                terminal_id: id.clone(),
+            });
         });
 
         self.sessions.lock().unwrap().insert(

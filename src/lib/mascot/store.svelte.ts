@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
-import { type MascotSettings, type MascotState, type PetInfo, type PetState } from "./types";
+import { type MascotSettings, type MascotState, type PetInfo, type PetState, type SemanticEvent, DEFAULT_EVENT_MAPPING, DEFAULT_EVENT_PHRASES } from "./types";
+import { speak } from "./sounds";
 import { detectSpriteFrames } from "./frameDetect";
 
 export const mascotSettings = $state<MascotSettings>({
@@ -10,8 +11,12 @@ export const mascotSettings = $state<MascotSettings>({
   volume: 0.5,
   voiceEnabled: false,
   voiceLang: "es-ES",
+  voiceGender: "female",
   currentMascot: null,
   position: null,
+  eventMappings: { ...DEFAULT_EVENT_MAPPING },
+  stateLabels: {},
+  eventPhrases: {},
 });
 
 export const mascotState = $state<MascotState>({
@@ -41,6 +46,15 @@ export function setMascotState(state: PetState) {
       setMascotState("idle");
     }, IDLE_RETURN_MS);
   }
+}
+
+export function triggerMascotEvent(event: SemanticEvent) {
+  const mappings = mascotSettings.eventMappings ?? DEFAULT_EVENT_MAPPING;
+  const state = mappings[event];
+  if (state) setMascotState(state);
+  const phrases = mascotSettings.eventPhrases ?? {};
+  const text = phrases[event] ?? DEFAULT_EVENT_PHRASES[event] ?? "";
+  if (text) speak(text);
 }
 
 export async function getMascotDir(): Promise<string> {

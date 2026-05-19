@@ -9,7 +9,7 @@
   import { reportUrl } from "$lib/terminal/urlDetector";
   import { addPreview } from "$lib/layout/store.svelte";
   import { appSettings } from "$lib/workspace/settingsStore.svelte";
-  import { setMascotState } from "$lib/mascot/store.svelte";
+  import { triggerMascotEvent } from "$lib/mascot/store.svelte";
 
   let { nodeId, tabId, cwd, shell }: {
     nodeId: string;
@@ -22,8 +22,11 @@
   let terminal = $state<XTerm | null>(null);
   let fitAddon = $state<FitAddon | null>(null);
   let unlisten = $state<UnlistenFn | null>(null);
+  let unlistenClosed = $state<UnlistenFn | null>(null);
   let textDecoder = $state(new TextDecoder());
   let urlBuffer = $state("");
+  let idleTimeout = $state<ReturnType<typeof setTimeout> | null>(null);
+  const IDLE_MS = 5000;
 
   onMount(async () => {
     if (!containerRef) return;
@@ -56,6 +59,7 @@
         if (e.ctrlKey || e.metaKey) {
           e.preventDefault();
           addPreview(nodeId, uri);
+          triggerMascotEvent("preview_abierto");
         }
       },
       {
@@ -126,9 +130,22 @@
         for (const match of matches) {
           reportUrl(match[0], tabId);
         }
+
+        // Reset idle timer
+        if (idleTimeout) clearTimeout(idleTimeout);
+        idleTimeout = setTimeout(() => {
+          triggerMascotEvent("esperando_comando");
+        }, IDLE_MS);
       }
     });
     unlisten = listener;
+
+    const closedListener = await listen<{ terminal_id: string }>("terminal-closed", (event) => {
+      if (event.payload.terminal_id === tabId) {
+        triggerMascotEvent("terminal_cerrado");
+      }
+    });
+    unlistenClosed = closedListener;
 
     term.attachCustomKeyEventHandler((e) => {
       if (e.type !== "keydown") return true;
@@ -171,8 +188,12 @@
     term.onData((data) => {
       invoke("write_terminal", { terminalId: tabId, data: Array.from(new TextEncoder().encode(data)) });
       if (data.trim().length > 0 && data.includes("\r")) {
-        setMascotState("run");
+        triggerMascotEvent("continuo_trabajando");
       }
+      if (idleTimeout) clearTimeout(idleTimeout);
+      idleTimeout = setTimeout(() => {
+        triggerMascotEvent("esperando_comando");
+      }, IDLE_MS);
     });
 
     terminal = term;
@@ -186,6 +207,8 @@
 
   onDestroy(() => {
     unlisten?.();
+    unlistenClosed?.();
+    if (idleTimeout) clearTimeout(idleTimeout);
     terminal?.dispose();
   });
 

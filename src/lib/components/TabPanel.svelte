@@ -5,6 +5,7 @@
   import { workspaceInfo } from "$lib/workspace/store.svelte";
   import { confirm } from "@tauri-apps/plugin-dialog";
   import { get } from "svelte/store";
+  import { triggerMascotEvent } from "$lib/mascot/store.svelte";
   import Editor from "./Editor.svelte";
   import MarkdownViewer from "./MarkdownViewer.svelte";
   import Terminal from "./Terminal.svelte";
@@ -152,11 +153,13 @@
       if (!confirmed) return;
     }
     closeTab(node.id, tabId);
+    triggerMascotEvent("idle");
   }
 
   function handleActivate(tabId: string) {
     setActiveTab(node.id, tabId);
     setActiveNode(node.id);
+    triggerMascotEvent("continuo_trabajando");
   }
 
   function handlePanelClick() {
@@ -215,6 +218,7 @@
       renameTab(node.id, tabId, renameValue.trim() || "Untitled");
       renamingTabId = null;
       renameValue = "";
+      triggerMascotEvent("archivo_renombrado");
     }
   }
 
@@ -274,7 +278,7 @@
   tabindex="0"
 >
   <div class="tab-bar" oncontextmenu={handlePanelContextMenu} role="toolbar" aria-label="Tabs" tabindex="0">
-    <button class="tab-add" onclick={() => addTerminal(node.id, "Terminal", workspaceInfo.rootPath ?? undefined)} title="New terminal" type="button"><span class="term-icon">&gt;_</span></button>
+    <button class="tab-add" onclick={() => { addTerminal(node.id, "Terminal", workspaceInfo.rootPath ?? undefined); triggerMascotEvent("terminal_creado"); }} title="New terminal" type="button"><span class="term-icon">&gt;_</span></button>
     <div class="tabs-scroll" bind:this={tabBarRef}>
       {#each node.tabs as tab, index (tab.id)}
         <div
@@ -314,8 +318,8 @@
       {/each}
     </div>
     <div class="panel-actions">
-      <button class="panel-action-btn" onclick={() => splitNode(node.id, 'horizontal')} title="Split horizontal" type="button">⬌</button>
-      <button class="panel-action-btn" onclick={() => splitNode(node.id, 'vertical')} title="Split vertical" type="button">⬍</button>
+      <button class="panel-action-btn" onclick={() => { splitNode(node.id, 'horizontal'); triggerMascotEvent("panel_dividido"); }} title="Split horizontal" type="button">⬌</button>
+      <button class="panel-action-btn" onclick={() => { splitNode(node.id, 'vertical'); triggerMascotEvent("panel_dividido"); }} title="Split vertical" type="button">⬍</button>
       <button class="panel-action-btn close" onclick={handleClosePanel} title="Close panel" type="button">×</button>
     </div>
   </div>

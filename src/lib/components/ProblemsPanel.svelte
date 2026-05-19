@@ -3,6 +3,7 @@
   import { linterAvailability } from "$lib/editor/linterAvailability.svelte";
   import { layoutState, addTab, setActiveTab, setActiveNode } from "$lib/layout/store.svelte";
   import { editorNavigation } from "$lib/editor/navigation";
+  import { triggerMascotEvent } from "$lib/mascot/store.svelte";
 
   let { onClose }: { onClose: () => void } = $props();
 
@@ -28,6 +29,7 @@
       path,
     });
     setActiveNode(nodeId);
+    triggerMascotEvent("llamar_atencion");
   }
 
   function severityIcon(severity: string): string {

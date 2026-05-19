@@ -277,15 +277,15 @@ Objetivo: mascota visual configurable reactiva a eventos internos. Compatible co
 - [x] Si mascota importada trae audio propio → usa ese; si no → defaults.
 - [x] Controles: activar/desactivar sonido, volumen.
 
-### 4.5 Eventos internos mapeados
+### 4.5 Eventos internos mapeados (semánticos)
 
-- [x] Mapeo de eventos a estados Petdex:
-  - `terminal.command.started` → run
-  - `terminal.command.failed` → failed
-  - `file.saved` → jump
-  - `lint.errors.found` → review
-  - `app.opened` → wave
-  - (idle por defecto)
+- [x] Sistema de 17 eventos semánticos mapeables a estados Petdex:
+  - `idle`, `esperando_respuesta`, `aviso_fin_tarea`, `error`, `iniciando_tarea`, `continuo_trabajando`, `llamar_atencion`
+  - `terminal_creado`, `terminal_cerrado`, `esperando_comando`
+  - `panel_dividido`, `preview_abierto`, `archivo_renombrado`
+  - `imagen_abierta`, `audio_abierto`, `maximizado`, `restaurado`
+- [x] Detección de `terminal_cerrado` desde backend Rust (evento PTY end).
+- [x] Detección de `esperando_comando` en frontend (timer de inactividad en terminal).
 
 ### Criterios de aceptación (test manual)
 

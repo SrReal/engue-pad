@@ -17,8 +17,9 @@
   import UrlToast from "./UrlToast.svelte";
   import SettingsModal from "./SettingsModal.svelte";
   import MascotPanel from "./MascotPanel.svelte";
+  import MascotSidebar from "./MascotSidebar.svelte";
   import { open, confirm } from "@tauri-apps/plugin-dialog";
-  import { setMascotState, updateMascotSettings } from "$lib/mascot/store.svelte";
+  import { triggerMascotEvent, updateMascotSettings } from "$lib/mascot/store.svelte";
 
   let sidebarWidth = $state(240);
   let isResizingSidebar = $state(false);
@@ -32,6 +33,11 @@
   let isResizingRightSidebar = $state(false);
   let rightSidebarCollapsed = $state(false);
   let lastRightSidebarWidth = $state(260);
+
+  let mascotSidebarWidth = $state(260);
+  let isResizingMascotSidebar = $state(false);
+  let mascotSidebarCollapsed = $state(true);
+  let lastMascotSidebarWidth = $state(260);
 
   let unlistenClose: (() => void) | null = null;
 
@@ -59,6 +65,13 @@
     if (typeof settings.rightSidebarWidth === "number" && settings.rightSidebarWidth >= 160) {
       rightSidebarWidth = settings.rightSidebarWidth;
       lastRightSidebarWidth = settings.rightSidebarWidth;
+    }
+    if (typeof settings.mascotSidebarCollapsed === "boolean") {
+      mascotSidebarCollapsed = settings.mascotSidebarCollapsed;
+    }
+    if (typeof settings.mascotSidebarWidth === "number" && settings.mascotSidebarWidth >= 160) {
+      mascotSidebarWidth = settings.mascotSidebarWidth;
+      lastMascotSidebarWidth = settings.mascotSidebarWidth;
     }
 
     unlistenClose = await listen("request-app-close", async () => {
@@ -88,7 +101,7 @@
       loadSettings().then((s) => {
         gitRefreshInterval = (s.git?.refreshInterval ?? 5) * 1000;
         if (s.mascot?.enabled && s.mascot?.currentMascot) {
-          setMascotState("wave");
+          triggerMascotEvent("iniciando_tarea");
         }
       });
     }
@@ -125,6 +138,7 @@
     } else {
       sidebarWidth = lastSidebarWidth || 240;
     }
+    triggerMascotEvent("iniciando_tarea");
   }
 
   function onRightSidebarPointerDown(e: PointerEvent) {
@@ -152,6 +166,35 @@
       rightSidebarWidth = lastRightSidebarWidth || 260;
     }
     saveSidebarState();
+    triggerMascotEvent("iniciando_tarea");
+  }
+
+  function onMascotSidebarPointerDown(e: PointerEvent) {
+    isResizingMascotSidebar = true;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }
+
+  function onMascotSidebarPointerMove(e: PointerEvent) {
+    if (!isResizingMascotSidebar) return;
+    const w = window.innerWidth - e.clientX;
+    mascotSidebarWidth = Math.max(200, Math.min(400, w));
+    if (mascotSidebarWidth > 40) lastMascotSidebarWidth = mascotSidebarWidth;
+  }
+
+  function onMascotSidebarPointerUp() {
+    isResizingMascotSidebar = false;
+  }
+
+  function toggleMascotSidebar() {
+    mascotSidebarCollapsed = !mascotSidebarCollapsed;
+    if (mascotSidebarCollapsed) {
+      lastMascotSidebarWidth = mascotSidebarWidth;
+      mascotSidebarWidth = 0;
+    } else {
+      mascotSidebarWidth = lastMascotSidebarWidth || 260;
+    }
+    saveSidebarState();
+    triggerMascotEvent("iniciando_tarea");
   }
 
   function saveSidebarState() {
@@ -160,13 +203,17 @@
       lastProjectPath: workspaceInfo.rootPath,
       rightSidebarCollapsed,
       rightSidebarWidth: rightSidebarCollapsed ? lastRightSidebarWidth : rightSidebarWidth,
+      mascotSidebarCollapsed,
+      mascotSidebarWidth: mascotSidebarCollapsed ? lastMascotSidebarWidth : mascotSidebarWidth,
     });
   }
 
   $effect(() => {
-    if (isResizingRightSidebar) return;
+    if (isResizingRightSidebar || isResizingMascotSidebar) return;
     const _w = rightSidebarWidth;
     const _c = rightSidebarCollapsed;
+    const _mw = mascotSidebarWidth;
+    const _mc = mascotSidebarCollapsed;
     if (workspaceInfo.rootPath) {
       saveSidebarState();
     }
@@ -271,6 +318,7 @@
     <button class="icon-btn" onclick={openFolder} title="Open folder">📂</button>
     <button class="icon-btn" onclick={triggerRefresh} title="Refresh tree">🔄</button>
     <button class="icon-btn" onclick={toggleRightSidebar} title="Toggle tasks sidebar">📝</button>
+    <button class="icon-btn" onclick={toggleMascotSidebar} title="Mascot">🐾</button>
     <button class="icon-btn" onclick={() => showSettings = true} title="Settings">⚙️</button>
   </header>
   <div class="body">
@@ -308,6 +356,19 @@
       <ProcessFooter />
       <StatusBar toggleProblems={() => showProblems = !showProblems} {showProblems} />
     </main>
+    {#if !mascotSidebarCollapsed}
+      <div
+        class="sidebar-divider"
+        onpointerdown={onMascotSidebarPointerDown}
+        onpointermove={onMascotSidebarPointerMove}
+        onpointerup={onMascotSidebarPointerUp}
+        role="separator"
+        aria-orientation="vertical"
+      ></div>
+    {/if}
+    <aside class="mascot-sidebar" class:collapsed={mascotSidebarCollapsed} style:width="{mascotSidebarCollapsed ? 0 : mascotSidebarWidth}px">
+      <MascotSidebar />
+    </aside>
     {#if !rightSidebarCollapsed}
       <div
         class="sidebar-divider"
@@ -319,9 +380,7 @@
       ></div>
     {/if}
     <aside class="right-sidebar" class:collapsed={rightSidebarCollapsed} style:width="{rightSidebarCollapsed ? 0 : rightSidebarWidth}px">
-      <div class="right-sidebar-content">
-        <TodoPanel />
-      </div>
+      <TodoPanel />
     </aside>
   </div>
   <UrlToast />
@@ -407,16 +466,19 @@
     min-width: 0;
   }
 
-  .right-sidebar.collapsed .right-sidebar-content {
-    display: none;
-  }
-
-  .right-sidebar-content {
-    flex: 1;
-    overflow: auto;
+  .mascot-sidebar {
     display: flex;
     flex-direction: column;
-    min-height: 0;
+    background: var(--bg-sidebar, #252526);
+    flex-shrink: 0;
+    min-width: 200px;
+    max-width: 400px;
+  }
+
+  .mascot-sidebar.collapsed {
+    overflow: hidden;
+    padding: 0;
+    min-width: 0;
   }
 
   .sidebar-content {
@@ -491,4 +553,5 @@
   .sidebar.collapsed .sidebar-content {
     display: none;
   }
+
 </style>

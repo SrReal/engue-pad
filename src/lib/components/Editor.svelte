@@ -23,7 +23,7 @@
   import { get } from "svelte/store";
   import { type EditorSettings } from "$lib/workspace/settings";
   import { appSettings } from "$lib/workspace/settingsStore.svelte";
-  import { setMascotState } from "$lib/mascot/store.svelte";
+  import { triggerMascotEvent } from "$lib/mascot/store.svelte";
   import { showMinimap } from "@replit/codemirror-minimap";
 
   let { nodeId, tabId, path, language, initialContent = "", dirty = false }: {
@@ -93,13 +93,13 @@
     try {
       await invoke("write_file", { path, contents: content });
       markTabSaved(nodeId, tabId);
-      setMascotState("jump");
+      triggerMascotEvent("aviso_fin_tarea");
       if (linterConfig.enabled && linterConfig.runOnSave && language) {
         forceLint(view, path, language);
       }
     } catch (e) {
       console.error("Failed to save file:", e);
-      setMascotState("failed");
+      triggerMascotEvent("error");
     }
   }
 
