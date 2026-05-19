@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { listen } from "@tauri-apps/api/event";
   import { invoke } from "@tauri-apps/api/core";
   import { layoutState, findAllDirtyTabs, resetLayout, activateNextTab, activatePrevTab, closeActiveTab } from "$lib/layout/store.svelte";
@@ -33,17 +33,22 @@
   let rightSidebarCollapsed = $state(false);
   let lastRightSidebarWidth = $state(260);
 
+  let unlistenClose: (() => void) | null = null;
+
   onMount(async () => {
     const settings = await loadSettings();
     updateAppSettings(settings);
     if (settings.mascot?.enabled && (!settings.mascot.position || (settings.mascot.position.x <= 50 && settings.mascot.position.y <= 50))) {
       const size = settings.mascot.size === "small" ? 96 : 160;
-      updateMascotSettings({
-        position: {
-          x: Math.round((window.innerWidth - size) / 2),
-          y: Math.round((window.innerHeight - size) / 2),
-        },
-      });
+      const pos = {
+        x: Math.round((window.innerWidth - size) / 2),
+        y: Math.round((window.innerHeight - size) / 2),
+      };
+      updateMascotSettings({ position: pos });
+      if (appSettings.mascot) {
+        appSettings.mascot.position = pos;
+      }
+      await saveSettings(appSettings);
     }
     if (settings.restoreLayout !== false && settings.lastProjectPath) {
       workspaceInfo.rootPath = settings.lastProjectPath;
@@ -56,7 +61,7 @@
       lastRightSidebarWidth = settings.rightSidebarWidth;
     }
 
-    const unlistenClose = await listen("request-app-close", async () => {
+    unlistenClose = await listen("request-app-close", async () => {
       const dirtyTabs = findAllDirtyTabs(layoutState.root);
       if (dirtyTabs.length > 0) {
         const names = dirtyTabs.map((t) => `"${t.title}"`).join(", ");
@@ -68,10 +73,10 @@
         await invoke("exit_app");
       }
     });
+  });
 
-    return () => {
-      unlistenClose();
-    };
+  onDestroy(() => {
+    unlistenClose?.();
   });
 
   let gitRefreshInterval = $state(5000);
@@ -151,6 +156,7 @@
 
   function saveSidebarState() {
     saveSettings({
+      ...appSettings,
       lastProjectPath: workspaceInfo.rootPath,
       rightSidebarCollapsed,
       rightSidebarWidth: rightSidebarCollapsed ? lastRightSidebarWidth : rightSidebarWidth,

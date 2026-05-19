@@ -22,13 +22,10 @@
     draft = { ...draft, [key]: value };
   }
 
-  function updateNested<
-    K extends keyof AppSettings,
-    N extends NonNullable<AppSettings[K]> extends object ? K : never
-  >(parent: N, key: keyof NonNullable<AppSettings[N]>, value: unknown) {
+  function updateNested(parent: keyof AppSettings, key: string, value: unknown) {
     const parentObj = (draft[parent] ?? {}) as Record<string, unknown>;
     const updated = { ...parentObj, [key]: value };
-    draft = { ...draft, [parent]: updated };
+    draft = { ...draft, [parent]: updated as AppSettings[keyof AppSettings] };
   }
 
   function apply() {
@@ -40,12 +37,6 @@
       linterConfig.runOnType = draft.lint.runOnType;
       if (draft.lint.languages) {
         linterConfig.languages = draft.lint.languages;
-      }
-    }
-    if (draft.mascot) {
-      updateMascotSettings(draft.mascot);
-      if (draft.mascot.currentMascot) {
-        loadMascot(draft.mascot.currentMascot);
       }
     }
     show = false;
@@ -225,7 +216,7 @@
                           <td class="thumb-cell">
                             {#if m.spritesheetUrl}
                               <div class="mascot-thumb-wrapper">
-                                <img src={m.spritesheetUrl} alt={m.name} class="mascot-thumb" draggable={false} />
+                                <div class="mascot-thumb" style="background-image: url('{m.spritesheetUrl}'); background-size: {Math.round((m.frameWidth * m.framesPerState) * (64 / m.frameWidth))}px {Math.round((m.frameHeight * m.states.length) * (64 / m.frameWidth))}px; background-position: 0 0; background-repeat: no-repeat;"></div>
                               </div>
                             {:else}
                               <div class="mascot-thumb-placeholder">?</div>
@@ -531,10 +522,8 @@
   }
 
   .mascot-thumb {
-    width: auto;
-    height: auto;
-    max-width: none;
-    max-height: none;
+    width: 64px;
+    height: 64px;
     display: block;
   }
 

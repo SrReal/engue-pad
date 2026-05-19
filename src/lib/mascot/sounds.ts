@@ -49,14 +49,18 @@ export function playStateSound(state: string) {
 }
 
 export function speak(text: string) {
-  if (!mascotSettings.voiceEnabled || !text) return;
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = mascotSettings.voiceLang;
-  utterance.volume = mascotSettings.volume;
-  utterance.rate = 1.1;
-  utterance.pitch = 1.2;
-  speechSynthesis.cancel();
-  speechSynthesis.speak(utterance);
+  if (!mascotSettings.voiceEnabled || !text || !window.speechSynthesis) return;
+  try {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = mascotSettings.voiceLang;
+    utterance.volume = mascotSettings.volume;
+    utterance.rate = 1.1;
+    utterance.pitch = 1.2;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utterance);
+  } catch {
+    // ignore speech errors
+  }
 }
 
 export function speakForState(state: string) {

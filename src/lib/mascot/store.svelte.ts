@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { type MascotSettings, type MascotState, type PetInfo, type PetState } from "./types";
+import { detectSpriteFrames } from "./frameDetect";
 
 export const mascotSettings = $state<MascotSettings>({
   mode: "disabled",
@@ -64,6 +65,7 @@ export async function loadMascot(slug: string): Promise<PetInfo | null> {
       frameWidth: parsed.frameWidth ?? parsed.frame_size?.width ?? 192,
       frameHeight: parsed.frameHeight ?? parsed.frame_size?.height ?? 208,
       framesPerState: parsed.framesPerState ?? 9,
+      framesPerRow: Array.isArray(parsed.framesPerRow) ? parsed.framesPerRow : undefined,
       states: parsed.states ?? ["idle", "wave", "run", "failed", "review", "jump", "extra1", "extra2"],
       loopMs: parsed.loopMs ?? 1100,
       spritesheet: `${dir}/${slug}/${spritesheetName}`,
@@ -135,10 +137,36 @@ export async function importMascotFromFolder(sourcePath: string): Promise<string
       await invoke("write_file_bytes", { path: `${destDir}/${file}`, contents: content });
     }
 
-    // Write generated pet.json if it didn't exist
-    if (!files.includes("pet.json")) {
-      await invoke("write_file", { path: `${destDir}/pet.json`, contents: JSON.stringify(parsed, null, 2) });
+    // Detect actual frames per row from the spritesheet
+    const spritesheetFile = files.find((f) => f.startsWith("spritesheet."));
+    if (spritesheetFile) {
+      try {
+        const bytes = await invoke<number[]>("read_file_bytes", { path: `${destDir}/${spritesheetFile}` });
+        const blob = new Blob([new Uint8Array(bytes)]);
+        const url = URL.createObjectURL(blob);
+        const img = new Image();
+        img.src = url;
+        await new Promise<void>((resolve) => {
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+        });
+        const fw = (parsed.frameWidth as number) ?? (parsed.frame_size as { width?: number })?.width ?? 192;
+        const fh = (parsed.frameHeight as number) ?? (parsed.frame_size as { height?: number })?.height ?? 208;
+        const detected = detectSpriteFrames(img, fw, fh);
+        if (detected.length > 0) {
+          parsed.framesPerRow = detected;
+          const maxFrames = Math.max(...detected);
+          if (maxFrames > 0 && maxFrames !== (parsed.framesPerState as number)) {
+            parsed.framesPerState = maxFrames;
+          }
+        }
+      } catch {
+        // ignore detection errors
+      }
     }
+
+    // Write/overwrite pet.json with updated metadata
+    await invoke("write_file", { path: `${destDir}/pet.json`, contents: JSON.stringify(parsed, null, 2) });
 
     return slug;
   } catch {
@@ -151,6 +179,10 @@ export type MascotItem = {
   name: string;
   spritesheetPath: string;
   spritesheetUrl: string | null;
+  frameWidth: number;
+  frameHeight: number;
+  framesPerState: number;
+  states: string[];
 };
 
 export async function listInstalledMascots(): Promise<MascotItem[]> {
@@ -174,9 +206,18 @@ export async function listInstalledMascots(): Promise<MascotItem[]> {
         } catch {
           spritesheetUrl = null;
         }
-        mascots.push({ slug, name, spritesheetPath, spritesheetUrl });
+        mascots.push({
+          slug,
+          name,
+          spritesheetPath,
+          spritesheetUrl,
+          frameWidth: parsed.frameWidth ?? parsed.frame_size?.width ?? 192,
+          frameHeight: parsed.frameHeight ?? parsed.frame_size?.height ?? 208,
+          framesPerState: parsed.framesPerState ?? 9,
+          states: parsed.states ?? ["idle", "wave", "run", "failed", "review", "jump", "extra1", "extra2"],
+        });
       } catch {
-        mascots.push({ slug: entry.name, name: entry.name, spritesheetPath: "", spritesheetUrl: null });
+        mascots.push({ slug: entry.name, name: entry.name, spritesheetPath: "", spritesheetUrl: null, frameWidth: 192, frameHeight: 208, framesPerState: 9, states: ["idle", "wave", "run", "failed", "review", "jump", "extra1", "extra2"] });
       }
     }
     return mascots;

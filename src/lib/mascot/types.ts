@@ -32,6 +32,7 @@ export type PetInfo = {
   frameWidth: number;
   frameHeight: number;
   framesPerState: number;
+  framesPerRow?: number[];
   states: PetState[];
   loopMs: number;
   spritesheet: string;

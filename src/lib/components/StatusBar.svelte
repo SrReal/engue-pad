@@ -79,8 +79,8 @@
       ✓
     {/if}
   </button>
-  {#if todoStore.total > 0}
-    <span class="info todo-count">📝 {todoStore.completed}/{todoStore.total}</span>
+  {#if todoStore.parsed.total > 0}
+    <span class="info todo-count">📝 {todoStore.parsed.completed}/{todoStore.parsed.total}</span>
   {/if}
   <span class="info">CPU {cpu.toFixed(1)}%</span>
   <span class="info">{memory} MB RAM</span>
