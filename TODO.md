@@ -7,6 +7,7 @@
 
 ## Mascota
 - testear eventos que concuerden
+- probar configuracion global/proyecto
 
 ## Panel
 

@@ -15,6 +15,13 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
     font-size: 14px;
     overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  :global(input, textarea, .cm-editor, .xterm, [contenteditable]) {
+    user-select: text;
+    -webkit-user-select: text;
   }
 
   :global(:root) {
