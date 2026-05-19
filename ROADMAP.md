@@ -316,18 +316,18 @@ Objetivo: registrar instancias, CLI local y IPC para agentes externos.
 
 ### 5.2 IPC local por instancia
 
-- [ ] Windows: named pipe por instancia.
-- [ ] Linux/macOS: Unix domain socket por instancia.
-- [ ] Canal de escucha en Rust que recibe eventos externos.
-- [ ] Validar payload y emitir eventos internos al Event Bus.
+- [x] Windows: TCP por instancia (simplificado desde named pipe).
+- [x] Linux/macOS: Unix domain socket por instancia.
+- [x] Canal de escucha en Rust que recibe eventos externos.
+- [x] Validar payload y emitir eventos internos al Event Bus.
 
 ### 5.3 CLI `enguepad`
 
-- [ ] Comando `enguepad instances`: listar instancias activas.
-- [ ] Comando `enguepad notify`: enviar evento a instancia/workspace/proyecto.
-- [ ] Comando `enguepad preview`: abrir preview en instancia destino.
-- [ ] Comando `enguepad mascot`: cambiar estado de mascota.
-- [ ] Resolución de destino: `--instance` > `--workspace` > `--project` > `--active`.
+- [x] Comando `enguepad instances`: listar instancias activas.
+- [x] Comando `enguepad notify`: enviar evento a instancia/workspace/proyecto.
+- [x] Comando `enguepad preview`: abrir preview en instancia destino.
+- [x] Comando `enguepad mascot`: cambiar estado de mascota.
+- [x] Resolución de destino: `--instance` > `--workspace` > `--project` > `--active`.
 
 ### 5.4 Sistema de aprobaciones
 

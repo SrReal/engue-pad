@@ -2,7 +2,7 @@
   import { onMount, onDestroy } from "svelte";
   import { listen } from "@tauri-apps/api/event";
   import { invoke } from "@tauri-apps/api/core";
-  import { layoutState, findAllDirtyTabs, resetLayout, activateNextTab, activatePrevTab, closeActiveTab } from "$lib/layout/store.svelte";
+  import { layoutState, findAllDirtyTabs, resetLayout, activateNextTab, activatePrevTab, closeActiveTab, addPreview } from "$lib/layout/store.svelte";
   import { workspaceInfo, loadWorkspace, scheduleSaveWorkspace } from "$lib/workspace/store.svelte";
   import { setTodoPath, ensureTodoFile, loadTodoFile } from "$lib/todo/store.svelte";
   import { loadSettings, saveSettings } from "$lib/workspace/settings";
@@ -41,6 +41,7 @@
   let lastMascotSidebarWidth = $state(260);
 
   let unlistenClose: (() => void) | null = null;
+  let unlistenExternal: (() => void) | null = null;
 
   onMount(async () => {
     const settings = await loadSettings();
@@ -87,10 +88,27 @@
         await invoke("exit_app");
       }
     });
+
+    unlistenExternal = await listen("external-event", (ev) => {
+      const data = ev.payload as { event: string; payload?: unknown };
+      console.log("[external-event]", data.event, data.payload);
+      if (data.event === "mascot") {
+        const p = data.payload as { state?: string } | undefined;
+        if (p?.state) triggerMascotEvent(p.state);
+      } else if (data.event === "open_preview") {
+        const p = data.payload as { url?: string } | undefined;
+        if (p?.url) {
+          const nodeId = layoutState.activeNodeId ?? layoutState.root.id;
+          addPreview(nodeId, p.url);
+          triggerMascotEvent("preview_abierto");
+        }
+      }
+    });
   });
 
   onDestroy(() => {
     unlistenClose?.();
+    unlistenExternal?.();
   });
 
   let gitRefreshInterval = $state(5000);

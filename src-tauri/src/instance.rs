@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 use std::fs;
+use std::io::{BufRead, BufReader, Write};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use uuid::Uuid;
 
 const HEARTBEAT_INTERVAL_SECS: u64 = 30;
@@ -19,6 +20,14 @@ pub struct InstanceInfo {
     pub root_path: Option<String>,
     pub pid: u32,
     pub last_heartbeat: u64,
+    pub ipc_address: String,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ExternalEvent {
+    pub event: String,
+    #[serde(default)]
+    pub payload: serde_json::Value,
 }
 
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
@@ -33,6 +42,7 @@ pub struct InstanceManager {
 struct InstanceData {
     instance_id: String,
     runtime_path: PathBuf,
+    ipc_address: String,
 }
 
 impl InstanceManager {
@@ -45,9 +55,12 @@ impl InstanceManager {
         let runtime_path = data_dir.join(RUNTIME_DIR);
         let _ = fs::create_dir_all(&runtime_path);
 
+        let ipc_address = Self::ipc_address(&instance_id, &runtime_path);
+
         let data = Arc::new(Mutex::new(InstanceData {
             instance_id: instance_id.clone(),
             runtime_path: runtime_path.clone(),
+            ipc_address: ipc_address.clone(),
         }));
 
         let data_clone = Arc::clone(&data);
@@ -66,6 +79,7 @@ impl InstanceManager {
                         root_path: None,
                         pid: std::process::id(),
                         last_heartbeat: now,
+                        ipc_address: d.ipc_address.clone(),
                     }
                 };
 
@@ -85,6 +99,98 @@ impl InstanceManager {
         Self { data }
     }
 
+    pub fn start_ipc_server(&self, app_handle: AppHandle) {
+        let d = self.data.lock().unwrap();
+        let ipc_path = d.ipc_address.clone();
+        drop(d);
+
+        std::thread::spawn(move || {
+            #[cfg(unix)]
+            {
+                use std::os::unix::net::UnixListener;
+                let socket_path = PathBuf::from(&ipc_path);
+                let _ = std::fs::remove_file(&socket_path);
+                let listener = match UnixListener::bind(&socket_path) {
+                    Ok(l) => l,
+                    Err(e) => {
+                        eprintln!("[ipc] failed to bind unix socket: {}", e);
+                        return;
+                    }
+                };
+                eprintln!("[ipc] listening on {}", socket_path.display());
+                let app = app_handle.clone();
+                for stream in listener.incoming() {
+                    match stream {
+                        Ok(stream) => {
+                            let reader = BufReader::new(stream);
+                            for line in reader.lines() {
+                                if let Ok(line) = line {
+                                    if line.trim().is_empty() {
+                                        continue;
+                                    }
+                                    match serde_json::from_str::<ExternalEvent>(&line) {
+                                        Ok(event) => {
+                                            let _ = app.emit("external-event", event);
+                                        }
+                                        Err(e) => {
+                                            eprintln!("[ipc] invalid json: {}", e);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("[ipc] connection error: {}", e);
+                        }
+                    }
+                }
+            }
+
+            #[cfg(windows)]
+            {
+                use std::os::windows::io::{FromRawHandle, IntoRawHandle, RawHandle};
+                use std::ptr;
+                use windows_sys::Win32::System::Pipes::CreateNamedPipeW;
+                // Simplified: on Windows we use a local TCP port since named pipes require unsafe Win32 API
+                let port = Self::parse_port_from_ipc(&ipc_path);
+                let listener = match std::net::TcpListener::bind(format!("127.0.0.1:{}", port)) {
+                    Ok(l) => l,
+                    Err(e) => {
+                        eprintln!("[ipc] failed to bind tcp: {}", e);
+                        return;
+                    }
+                };
+                eprintln!("[ipc] listening on 127.0.0.1:{}", port);
+                let app = app_handle.clone();
+                for stream in listener.incoming() {
+                    match stream {
+                        Ok(stream) => {
+                            let reader = BufReader::new(stream);
+                            for line in reader.lines() {
+                                if let Ok(line) = line {
+                                    if line.trim().is_empty() {
+                                        continue;
+                                    }
+                                    match serde_json::from_str::<ExternalEvent>(&line) {
+                                        Ok(event) => {
+                                            let _ = app.emit("external-event", event);
+                                        }
+                                        Err(e) => {
+                                            eprintln!("[ipc] invalid json: {}", e);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("[ipc] connection error: {}", e);
+                        }
+                    }
+                }
+            }
+        });
+    }
+
     pub fn set_workspace(&self, workspace_id: String, project_name: String, root_path: String) {
         let d = self.data.lock().unwrap();
         let now = current_timestamp();
@@ -95,12 +201,32 @@ impl InstanceManager {
             root_path: Some(root_path),
             pid: std::process::id(),
             last_heartbeat: now,
+            ipc_address: d.ipc_address.clone(),
         };
         let _ = Self::write_heartbeat(&d.runtime_path, &info);
     }
 
     pub fn instance_id(&self) -> String {
         self.data.lock().unwrap().instance_id.clone()
+    }
+
+    fn ipc_address(instance_id: &str, _runtime_path: &PathBuf) -> String {
+        #[cfg(unix)]
+        {
+            let hash = &instance_id[..8];
+            format!("/tmp/enguepad-{}.sock", hash)
+        }
+        #[cfg(windows)]
+        {
+            let hash = &instance_id[..8];
+            let port = 50000u16 + hash.chars().map(|c| c as u16).sum::<u16>() % 10000;
+            format!("127.0.0.1:{}", port)
+        }
+    }
+
+    #[cfg(windows)]
+    fn parse_port_from_ipc(ipc: &str) -> u16 {
+        ipc.split(':').nth(1).and_then(|s| s.parse().ok()).unwrap_or(50000)
     }
 
     fn write_heartbeat(runtime_path: &PathBuf, info: &InstanceInfo) -> Result<(), String> {
@@ -190,5 +316,35 @@ pub fn set_instance_workspace(
     root_path: String,
 ) -> Result<(), String> {
     state.set_workspace(workspace_id, project_name, root_path);
+    Ok(())
+}
+
+#[tauri::command]
+pub fn send_event_to_instance(
+    ipc_address: String,
+    event: String,
+    payload: serde_json::Value,
+) -> Result<(), String> {
+    let message = serde_json::to_string(&ExternalEvent { event, payload })
+        .map_err(|e| format!("Serialize failed: {}", e))?;
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::net::UnixStream;
+        let mut stream = UnixStream::connect(&ipc_address)
+            .map_err(|e| format!("Connect failed: {}", e))?;
+        stream.write_all(message.as_bytes()).map_err(|e| format!("Write failed: {}", e))?;
+        stream.write_all(b"\n").map_err(|e| format!("Write failed: {}", e))?;
+    }
+
+    #[cfg(windows)]
+    {
+        use std::io::Write;
+        let mut stream = std::net::TcpStream::connect(&ipc_address)
+            .map_err(|e| format!("Connect failed: {}", e))?;
+        stream.write_all(message.as_bytes()).map_err(|e| format!("Write failed: {}", e))?;
+        stream.write_all(b"\n").map_err(|e| format!("Write failed: {}", e))?;
+    }
+
     Ok(())
 }
