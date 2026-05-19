@@ -41,6 +41,7 @@
     audio_abierto: "Audio abierto",
     maximizado: "Maximizado",
     restaurado: "Restaurado",
+    approval_request: "Solicitud de aprobación",
   };
 
   let installedMascots = $state<MascotItem[]>([]);

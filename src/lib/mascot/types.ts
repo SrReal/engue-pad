@@ -30,7 +30,8 @@ export type SemanticEvent =
   | "imagen_abierta"
   | "audio_abierto"
   | "maximizado"
-  | "restaurado";
+  | "restaurado"
+  | "approval_request";
 
 export type EventMapping = Record<SemanticEvent, PetState>;
 
@@ -52,6 +53,7 @@ export const DEFAULT_EVENT_MAPPING: EventMapping = {
   audio_abierto: "wave",
   maximizado: "extra1",
   restaurado: "extra2",
+  approval_request: "review",
 };
 
 export type EventPhrases = Partial<Record<SemanticEvent, string>>;
@@ -74,6 +76,7 @@ export const DEFAULT_EVENT_PHRASES: Record<SemanticEvent, string> = {
   audio_abierto: "Reproduciendo audio...",
   maximizado: "Pantalla completa.",
   restaurado: "Ventana restaurada.",
+  approval_request: "¡Necesito tu aprobación!",
 };
 
 export type MascotSettings = {

@@ -4,6 +4,7 @@
 - Multidioma ingles/español
 - testear bien posibles bugs
 - al reducir tamaño que mascota se reubique
+- boton de nueva ventana
 
 ## Mascota
 - testear eventos que concuerden

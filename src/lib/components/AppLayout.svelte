@@ -119,6 +119,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
         approvalRequestId = data.request_id;
         approvalMessage = data.message ?? "";
         showApproval = true;
+        triggerMascotEvent("approval_request");
       }
     });
   });
