@@ -308,11 +308,11 @@ Objetivo: registrar instancias, CLI local y IPC para agentes externos.
 
 ### 5.1 Registro de instancias
 
-- [ ] Generar `instanceId` al arrancar (UUID + timestamp).
-- [ ] Crear registro en carpeta de runtime: `runtime/instances.json`.
-- [ ] Heartbeat periódico desde cada instancia.
-- [ ] Limpiar registros muertos (proceso inexistente o heartbeat caducado).
-- [ ] Exponer información: instanceId, workspaceId, projectName, rootPath, pid, IPC address.
+- [x] Generar `instanceId` al arrancar (UUID + timestamp).
+- [x] Crear registro en carpeta de runtime: `runtime/instances.json`.
+- [x] Heartbeat periódico desde cada instancia.
+- [x] Limpiar registros muertos (proceso inexistente o heartbeat caducado).
+- [x] Exponer información: instanceId, workspaceId, projectName, rootPath, pid.
 
 ### 5.2 IPC local por instancia
 

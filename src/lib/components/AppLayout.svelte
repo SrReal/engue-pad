@@ -98,7 +98,16 @@
   $effect(() => {
     const root = workspaceInfo.rootPath;
     if (root) {
-      loadWorkspace(root);
+      loadWorkspace(root).then(() => {
+        if (workspaceInfo.workspaceId) {
+          const projectName = root.split(/[\\/]/).pop() ?? "";
+          invoke("set_instance_workspace", {
+            workspaceId: workspaceInfo.workspaceId,
+            projectName,
+            rootPath: root,
+          }).catch(() => {});
+        }
+      });
       loadSettings().then((s) => {
         gitRefreshInterval = (s.git?.refreshInterval ?? 5) * 1000;
         if (s.mascot?.enabled && s.mascot?.currentMascot) {
