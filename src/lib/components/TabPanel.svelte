@@ -18,7 +18,6 @@
   let { node }: { node: TabGroup } = $props();
   let isActive = $derived(layoutState.activeNodeId === node.id);
   let tabContextMenu = $state<{ x: number; y: number; tabId: string } | null>(null);
-  let panelContextMenu = $state<{ x: number; y: number } | null>(null);
   let terminalRefs = $state<Record<string, Terminal>>({});
   let dragOverIndex = $state<number | null>(null);
   let dragOffsetX = $state(0);
@@ -229,33 +228,21 @@
     renameValue = "";
   }
 
-  function handlePanelContextMenu(e: MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    panelContextMenu = { x: e.clientX, y: e.clientY };
-  }
-
-  function closePanelContextMenu() {
-    panelContextMenu = null;
-  }
-
   async function handleClosePanel() {
     const dirtyTabs = node.tabs.filter((t) => t.dirty);
     if (dirtyTabs.length > 0) {
       const names = dirtyTabs.map((t) => `"${t.title}"`).join(", ");
       const confirmed = await confirm(`${names} has unsaved changes. Close the panel without saving?`, { title: "Unsaved Changes", kind: "warning" });
       if (!confirmed) {
-        closePanelContextMenu();
         return;
       }
     }
     removeNode(node.id);
-    closePanelContextMenu();
   }
 </script>
 
 <svelte:window
-  onclick={() => { closeTabContextMenu(); closePanelContextMenu(); }}
+  onclick={() => { closeTabContextMenu(); }}
   onmousemove={handleGlobalMouseMove}
   onmouseup={handleGlobalMouseUp}
   onmouseleave={handleWindowMouseLeave}
@@ -279,7 +266,7 @@
   role="tabpanel"
   tabindex="0"
 >
-  <div class="tab-bar" oncontextmenu={handlePanelContextMenu} role="toolbar" aria-label="Tabs" tabindex="0">
+  <div class="tab-bar" role="toolbar" aria-label="Tabs" tabindex="0">
     <button class="tab-add" onclick={() => { addTerminal(node.id, "Terminal", workspaceInfo.rootPath ?? undefined); triggerMascotEvent("terminal_creado"); }} title="New terminal" type="button"><TerminalWindow size={16} /></button>
     <div class="tabs-scroll" bind:this={tabBarRef}>
       {#each node.tabs as tab, index (tab.id)}
@@ -415,11 +402,6 @@
   </div>
 {/if}
 
-{#if panelContextMenu}
-  <div class="context-menu" style:left="{panelContextMenu.x}px" style:top="{panelContextMenu.y}px">
-    <button onclick={handleClosePanel}>Close panel</button>
-  </div>
-{/if}
 
 <style>
   .tab-panel {

@@ -348,7 +348,6 @@ fn create_main_window(app: &AppHandle) {
                 .title("EnguePad")
                 .inner_size(1200.0, 800.0)
                 .center()
-                .disable_context_menu()
                 .build();
             return;
         }
@@ -362,7 +361,6 @@ fn create_main_window(app: &AppHandle) {
         .title("EnguePad")
         .inner_size(width, height)
         .center()
-        .disable_context_menu()
         .build();
 }
 
@@ -376,7 +374,6 @@ fn create_new_window(app_handle: AppHandle) {
                 .title("EnguePad")
                 .inner_size(1200.0, 800.0)
                 .center()
-                .disable_context_menu()
                 .build();
             return;
         }
@@ -388,7 +385,6 @@ fn create_new_window(app_handle: AppHandle) {
         .title("EnguePad")
         .inner_size(width, height)
         .center()
-        .disable_context_menu()
         .build();
 }
 

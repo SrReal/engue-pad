@@ -1,5 +1,13 @@
 <script lang="ts">
+  import { onMount } from "svelte";
+
   let { children } = $props();
+
+  onMount(() => {
+    const handler = (e: MouseEvent) => e.preventDefault();
+    window.addEventListener("contextmenu", handler);
+    return () => window.removeEventListener("contextmenu", handler);
+  });
 </script>
 
 {@render children()}

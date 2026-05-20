@@ -24,7 +24,7 @@
   import { triggerMascotEvent, updateMascotSettings, applyMascotConfig, loadMascot } from "$lib/mascot/store.svelte";
 import { loadProjectMascotConfig } from "$lib/mascot/projectStore.svelte";
 import type { SemanticEvent } from "$lib/mascot/types";
-  import { SidebarSimple, FolderOpen, ArrowClockwise, NotePencil, PawPrint, Gear, AppWindow } from "phosphor-svelte";
+  import { SidebarSimple, FolderOpen, ArrowClockwise, NotePencil, PawPrint, Gear, AppWindow, Code } from "phosphor-svelte";
   const projectName = $derived(workspaceInfo.rootPath ? workspaceInfo.rootPath.split(/[\\/]/).pop() ?? "EnguePad" : "EnguePad");
 
   let sidebarWidth = $state(240);
@@ -395,13 +395,19 @@ import type { SemanticEvent } from "$lib/mascot/types";
 
 <div class="app-layout">
   <header class="top-bar">
-    <button class="icon-btn" onclick={toggleSidebar} title="Toggle sidebar"><SidebarSimple size={18} /></button>
-    <button class="icon-btn" onclick={openFolder} title="Open folder"><FolderOpen size={18} /></button>
-    <button class="icon-btn" onclick={triggerRefresh} title="Refresh tree"><ArrowClockwise size={18} /></button>
-    <button class="icon-btn" onclick={toggleRightSidebar} title="Toggle tasks sidebar"><NotePencil size={18} /></button>
-    <button class="icon-btn" onclick={toggleMascotSidebar} title="Mascot"><PawPrint size={18} /></button>
-    <button class="icon-btn" onclick={() => showSettings = true} title="Settings"><Gear size={18} /></button>
-    <button class="icon-btn" onclick={openNewWindow} title="New instance"><AppWindow size={18} /></button>
+    <div class="app-brand">
+      <Code size={22} weight="bold" />
+      <span class="app-name">EnguePad</span>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick={toggleSidebar} title="Toggle sidebar"><SidebarSimple size={18} /></button>
+      <button class="icon-btn" onclick={openFolder} title="Open folder"><FolderOpen size={18} /></button>
+      <button class="icon-btn" onclick={triggerRefresh} title="Refresh tree"><ArrowClockwise size={18} /></button>
+      <button class="icon-btn" onclick={toggleRightSidebar} title="Toggle tasks sidebar"><NotePencil size={18} /></button>
+      <button class="icon-btn" onclick={toggleMascotSidebar} title="Mascot"><PawPrint size={18} /></button>
+      <button class="icon-btn" onclick={() => showSettings = true} title="Settings"><Gear size={18} /></button>
+      <button class="icon-btn" onclick={openNewWindow} title="New instance"><AppWindow size={18} /></button>
+    </div>
     <span class="logo">{projectName}</span>
   </header>
   <div class="body">
@@ -493,7 +499,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
   .top-bar {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
     padding: 6px 12px;
     border-bottom: 1px solid var(--border-color, #333);
     background: var(--bg-sidebar, #252526);
@@ -501,11 +507,36 @@ import type { SemanticEvent } from "$lib/mascot/types";
     flex-shrink: 0;
   }
 
+  .app-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--accent-color, #4a9eff);
+    user-select: none;
+    -webkit-user-select: none;
+    flex-shrink: 0;
+  }
+
+  .app-name {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+  }
+
   .logo {
     color: var(--accent-color, #4a9eff);
     user-select: none;
     -webkit-user-select: none;
-    margin-left: auto;
+    flex-shrink: 0;
+    font-weight: 500;
+    font-size: 13px;
   }
 
   .icon-btn {
