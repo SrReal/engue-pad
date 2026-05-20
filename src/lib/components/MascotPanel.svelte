@@ -113,6 +113,29 @@
     saveSettings(appSettings);
   }
 
+  function clampPosition() {
+    const size = SIZE_MAP[mascotSettings.size];
+    const maxX = window.innerWidth - size;
+    const maxY = window.innerHeight - size;
+    let x = mascotSettings.position?.x ?? 20;
+    let y = mascotSettings.position?.y ?? 20;
+    let changed = false;
+    if (x > maxX) { x = Math.max(0, maxX); changed = true; }
+    if (y > maxY) { y = Math.max(0, maxY); changed = true; }
+    if (changed) {
+      updateMascotSettings({ position: { x, y } });
+      if (appSettings.mascot) {
+        appSettings.mascot.position = { x, y };
+      }
+      saveSettings(appSettings);
+    }
+  }
+
+  $effect(() => {
+    window.addEventListener("resize", clampPosition);
+    return () => window.removeEventListener("resize", clampPosition);
+  });
+
   onDestroy(() => {
     stopAnimation();
   });
