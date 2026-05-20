@@ -91,7 +91,6 @@ const DEFAULT_MASCOT: MascotSettings = {
   voiceGender: "female",
   currentMascot: null,
   position: null,
-  stateLabels: {},
   eventPhrases: {},
 };
 

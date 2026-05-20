@@ -1,12 +1,4 @@
-export type PetState =
-  | "idle"
-  | "wave"
-  | "run"
-  | "failed"
-  | "review"
-  | "jump"
-  | "extra1"
-  | "extra2";
+export type PetState = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 export type MascotMode = "disabled" | "compact" | "animated";
 export type MascotSize = "small" | "normal";
@@ -36,24 +28,24 @@ export type SemanticEvent =
 export type EventMapping = Record<SemanticEvent, PetState>;
 
 export const DEFAULT_EVENT_MAPPING: EventMapping = {
-  idle: "idle",
-  esperando_respuesta: "idle",
-  aviso_fin_tarea: "jump",
-  error: "failed",
-  iniciando_tarea: "wave",
-  continuo_trabajando: "run",
-  llamar_atencion: "review",
-  esperando_comando: "idle",
-  terminal_cerrado: "idle",
-  terminal_creado: "wave",
-  panel_dividido: "wave",
-  preview_abierto: "wave",
-  archivo_renombrado: "jump",
-  imagen_abierta: "wave",
-  audio_abierto: "wave",
-  maximizado: "extra1",
-  restaurado: "extra2",
-  approval_request: "review",
+  idle: 0,
+  esperando_respuesta: 0,
+  aviso_fin_tarea: 6,
+  error: 3,
+  iniciando_tarea: 1,
+  continuo_trabajando: 2,
+  llamar_atencion: 4,
+  esperando_comando: 0,
+  terminal_cerrado: 0,
+  terminal_creado: 1,
+  panel_dividido: 1,
+  preview_abierto: 1,
+  archivo_renombrado: 6,
+  imagen_abierta: 1,
+  audio_abierto: 1,
+  maximizado: 7,
+  restaurado: 5,
+  approval_request: 4,
 };
 
 export type EventPhrases = Partial<Record<SemanticEvent, string>>;
@@ -91,7 +83,6 @@ export type MascotSettings = {
   currentMascot: string | null;
   position: { x: number; y: number } | null;
   eventMappings?: EventMapping;
-  stateLabels?: Partial<Record<PetState, string>>;
   eventPhrases?: EventPhrases;
 };
 
@@ -105,24 +96,15 @@ export type PetInfo = {
   frameHeight: number;
   framesPerState: number;
   framesPerRow?: number[];
-  states: PetState[];
+  states: number[];
   loopMs: number;
   spritesheet: string;
 };
 
 export type MascotState = {
-  currentState: PetState;
-  prevState: PetState;
+  currentState: number;
+  prevState: number;
   idleTimeout: ReturnType<typeof setTimeout> | null;
 };
 
-export const PET_STATES: PetState[] = [
-  "idle",
-  "wave",
-  "run",
-  "failed",
-  "review",
-  "jump",
-  "extra1",
-  "extra2",
-];
+export const PET_STATES: PetState[] = [0, 1, 2, 3, 4, 5, 6, 7];

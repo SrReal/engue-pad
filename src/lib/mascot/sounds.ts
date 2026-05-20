@@ -29,24 +29,24 @@ export async function playTone(frequency: number, duration: number, type: Oscill
   osc.stop(ctx.currentTime + duration);
 }
 
-export async function playStateSound(state: string) {
+export async function playStateSound(state: number) {
   if (!mascotSettings.soundEnabled) return;
   switch (state) {
-    case "idle":
+    case 0:
       break;
-    case "wave":
+    case 1:
       await playTone(523, 0.15, "sine");
       break;
-    case "run":
+    case 2:
       await playTone(440, 0.1, "square");
       break;
-    case "failed":
+    case 3:
       await playTone(200, 0.4, "sawtooth");
       break;
-    case "review":
+    case 4:
       await playTone(600, 0.2, "triangle");
       break;
-    case "jump":
+    case 5:
       await playTone(880, 0.15, "sine");
       setTimeout(() => playTone(1100, 0.15, "sine"), 120);
       break;
@@ -138,17 +138,17 @@ export function speak(text: string) {
   }
 }
 
-export function speakForState(state: string) {
+export function speakForState(state: number) {
   if (!mascotSettings.voiceEnabled) return;
-  const phrases: Record<string, string> = {
-    idle: "",
-    wave: "¡Hola! ¿En qué puedo ayudarte?",
-    run: "Trabajando duro...",
-    failed: "¡Ups! Algo salió mal.",
-    review: "Revisando el código...",
-    jump: "¡Listo! Todo salió bien.",
-    extra1: "",
-    extra2: "",
+  const phrases: Record<number, string> = {
+    0: "",
+    1: "¡Hola! ¿En qué puedo ayudarte?",
+    2: "Trabajando duro...",
+    3: "¡Ups! Algo salió mal.",
+    4: "Revisando el código...",
+    5: "¡Listo! Todo salió bien.",
+    6: "",
+    7: "",
   };
   const text = phrases[state];
   if (text) speak(text);

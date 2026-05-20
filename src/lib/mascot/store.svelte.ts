@@ -15,13 +15,12 @@ export const mascotSettings = $state<MascotSettings>({
   currentMascot: null,
   position: null,
   eventMappings: { ...DEFAULT_EVENT_MAPPING },
-  stateLabels: {},
   eventPhrases: {},
 });
 
 export const mascotState = $state<MascotState>({
-  currentState: "idle",
-  prevState: "idle",
+  currentState: 0,
+  prevState: 0,
   idleTimeout: null,
 });
 
@@ -40,14 +39,14 @@ export function applyMascotConfig(config: MascotSettings) {
   Object.assign(mascotSettings, config);
 }
 
-export function setMascotState(state: PetState) {
+export function setMascotState(state: number) {
   if (!mascotSettings.enabled || mascotSettings.mode === "disabled") return;
   if (mascotState.idleTimeout) clearTimeout(mascotState.idleTimeout);
   mascotState.prevState = mascotState.currentState;
   mascotState.currentState = state;
-  if (state !== "idle") {
+  if (state !== 0) {
     mascotState.idleTimeout = setTimeout(() => {
-      setMascotState("idle");
+      setMascotState(0);
     }, IDLE_RETURN_MS);
   }
 }
@@ -55,7 +54,7 @@ export function setMascotState(state: PetState) {
 export function triggerMascotEvent(event: SemanticEvent) {
   const mappings = mascotSettings.eventMappings ?? DEFAULT_EVENT_MAPPING;
   const state = mappings[event];
-  if (state) setMascotState(state);
+  if (state != null) setMascotState(state);
   const phrases = mascotSettings.eventPhrases ?? {};
   const text = phrases[event] ?? DEFAULT_EVENT_PHRASES[event] ?? "";
   if (text) speak(text);
@@ -74,6 +73,14 @@ export async function loadMascot(slug: string): Promise<PetInfo | null> {
     const parsed = JSON.parse(raw);
     const spritesheetName: string =
       parsed.spritesheet ?? `spritesheet.${await spritesheetExtension(`${dir}/${slug}`)}`;
+
+    // Migrate legacy string states to numeric row indices
+    const rawStates = parsed.states ?? ["idle", "wave", "run", "failed", "review", "jump", "extra1", "extra2"];
+    const stateMap: Record<string, number> = { idle: 0, wave: 1, run: 2, failed: 3, review: 4, jump: 5, extra1: 6, extra2: 7 };
+    const states: number[] = Array.isArray(rawStates)
+      ? rawStates.map((s: string | number) => (typeof s === "string" ? (stateMap[s] ?? 0) : s))
+      : [0, 1, 2, 3, 4, 5, 6, 7];
+
     const pet: PetInfo = {
       name: parsed.name ?? slug,
       slug: parsed.slug ?? slug,
@@ -84,7 +91,7 @@ export async function loadMascot(slug: string): Promise<PetInfo | null> {
       frameHeight: parsed.frameHeight ?? parsed.frame_size?.height ?? 208,
       framesPerState: parsed.framesPerState ?? 9,
       framesPerRow: Array.isArray(parsed.framesPerRow) ? parsed.framesPerRow : undefined,
-      states: parsed.states ?? ["idle", "wave", "run", "failed", "review", "jump", "extra1", "extra2"],
+      states,
       loopMs: parsed.loopMs ?? 1100,
       spritesheet: `${dir}/${slug}/${spritesheetName}`,
     };
@@ -136,7 +143,7 @@ export async function importMascotFromFolder(sourcePath: string): Promise<string
         frameHeight: 208,
         framesPerState: 9,
         loopMs: 1100,
-        states: ["idle", "wave", "run", "failed", "review", "jump", "extra1", "extra2"],
+        states: [0, 1, 2, 3, 4, 5, 6, 7],
       };
     }
 
@@ -200,7 +207,7 @@ export type MascotItem = {
   frameWidth: number;
   frameHeight: number;
   framesPerState: number;
-  states: string[];
+  states: number[];
 };
 
 export async function listInstalledMascots(): Promise<MascotItem[]> {
@@ -224,6 +231,12 @@ export async function listInstalledMascots(): Promise<MascotItem[]> {
         } catch {
           spritesheetUrl = null;
         }
+        const stateMap: Record<string, number> = { idle: 0, wave: 1, run: 2, failed: 3, review: 4, jump: 5, extra1: 6, extra2: 7 };
+        const rawStates = parsed.states ?? ["idle", "wave", "run", "failed", "review", "jump", "extra1", "extra2"];
+        const states: number[] = Array.isArray(rawStates)
+          ? rawStates.map((s: string | number) => (typeof s === "string" ? (stateMap[s] ?? 0) : s))
+          : [0, 1, 2, 3, 4, 5, 6, 7];
+
         mascots.push({
           slug,
           name,
@@ -232,10 +245,10 @@ export async function listInstalledMascots(): Promise<MascotItem[]> {
           frameWidth: parsed.frameWidth ?? parsed.frame_size?.width ?? 192,
           frameHeight: parsed.frameHeight ?? parsed.frame_size?.height ?? 208,
           framesPerState: parsed.framesPerState ?? 9,
-          states: parsed.states ?? ["idle", "wave", "run", "failed", "review", "jump", "extra1", "extra2"],
+          states,
         });
       } catch {
-        mascots.push({ slug: entry.name, name: entry.name, spritesheetPath: "", spritesheetUrl: null, frameWidth: 192, frameHeight: 208, framesPerState: 9, states: ["idle", "wave", "run", "failed", "review", "jump", "extra1", "extra2"] });
+        mascots.push({ slug: entry.name, name: entry.name, spritesheetPath: "", spritesheetUrl: null, frameWidth: 192, frameHeight: 208, framesPerState: 9, states: [0, 1, 2, 3, 4, 5, 6, 7] });
       }
     }
     return mascots;

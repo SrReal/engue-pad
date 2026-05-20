@@ -1,16 +1,16 @@
-import { type PetInfo, type PetState } from "./types";
+import { type PetInfo } from "./types";
 
 export type AnimationEngine = {
   start: (canvas: HTMLCanvasElement, pet: PetInfo, image: HTMLImageElement) => void;
   stop: () => void;
-  setState: (state: PetState) => void;
+  setState: (state: number) => void;
 };
 
 export function createAnimationEngine(): AnimationEngine {
   let ctx: CanvasRenderingContext2D | null = null;
   let currentPet: PetInfo | null = null;
   let currentImage: HTMLImageElement | null = null;
-  let currentState: PetState = "idle";
+  let currentState = 0;
   let animFrame = 0;
   let frameIndex = 0;
   let running = false;
@@ -18,7 +18,7 @@ export function createAnimationEngine(): AnimationEngine {
   function draw() {
     if (!running || !ctx || !currentPet || !currentImage) return;
     const { frameWidth, frameHeight, framesPerState, loopMs, states } = currentPet;
-    const row = states.indexOf(currentState);
+    const row = Math.min(Math.max(0, currentState), states.length - 1);
     if (row < 0) return;
 
     const totalFrames = framesPerState;
@@ -52,7 +52,7 @@ export function createAnimationEngine(): AnimationEngine {
       if (!ctx) return;
       currentPet = pet;
       currentImage = image;
-      currentState = "idle";
+      currentState = 0;
       animFrame = Date.now();
       frameIndex = 0;
       running = true;

@@ -46,15 +46,15 @@
     const pet = mascotData.pet;
     const img = mascotData.image;
     if (!pet || !img) return;
-    const row = pet.states.indexOf(mascotState.currentState);
-    const maxFrames = actualFrames(pet, img, Math.max(0, row));
+    const row = Math.min(Math.max(0, mascotState.currentState), pet.states.length - 1);
+    const maxFrames = actualFrames(pet, img, row);
     const frameDuration = pet.loopMs / maxFrames;
     lastFrameTime = performance.now();
 
     function tick(now: number) {
       if (!pet || !img) return;
-      const currentRow = pet.states.indexOf(mascotState.currentState);
-      const max = actualFrames(pet, img, Math.max(0, currentRow));
+      const currentRow = Math.min(Math.max(0, mascotState.currentState), pet.states.length - 1);
+      const max = actualFrames(pet, img, currentRow);
       const elapsed = now - lastFrameTime;
       if (elapsed >= frameDuration) {
         frameIndex = (frameIndex + 1) % max;
@@ -77,7 +77,7 @@
     const img = mascotData.image;
     if (!pet || !img) return "";
     const maxRows = Math.min(pet.states.length, Math.floor(img.naturalHeight / pet.frameHeight));
-    const row = Math.min(Math.max(0, pet.states.indexOf(mascotState.currentState)), maxRows - 1);
+    const row = Math.min(Math.max(0, mascotState.currentState), maxRows - 1);
     const rowFrames = actualFrames(pet, img, row);
     const fi = mascotSettings.mode === "animated" ? Math.min(frameIndex, rowFrames - 1) : 0;
     const sx = fi * pet.frameWidth;

@@ -22,7 +22,7 @@
   import { saveProjectMascotConfig } from "$lib/mascot/projectStore.svelte";
   import { CaretRight, X } from "phosphor-svelte";
 
-  const STATES: PetState[] = ["idle", "wave", "run", "failed", "review", "jump", "extra1", "extra2"];
+  const STATES: PetState[] = [0, 1, 2, 3, 4, 5, 6, 7];
   const EVENT_LABELS: Record<SemanticEvent, string> = {
     idle: "Idle",
     esperando_respuesta: "Esperando respuesta",
@@ -115,7 +115,7 @@
     saveMascotSettings();
   }
 
-  function setEventMapping(key: SemanticEvent, state: PetState) {
+  function setEventMapping(key: SemanticEvent, state: number) {
     const mappings = { ...(mascotSettings.eventMappings ?? {}), [key]: state } as EventMapping;
     updateMascotSettings({ eventMappings: mappings });
     saveMascotSettings();
@@ -129,16 +129,6 @@
 
   function eventPhrase(key: SemanticEvent): string {
     return mascotSettings.eventPhrases?.[key] ?? DEFAULT_EVENT_PHRASES[key] ?? "";
-  }
-
-  function setStateLabel(state: PetState, label: string) {
-    const labels = { ...(mascotSettings.stateLabels ?? {}), [state]: label };
-    updateMascotSettings({ stateLabels: labels });
-    saveMascotSettings();
-  }
-
-  function stateLabel(state: PetState): string {
-    return mascotSettings.stateLabels?.[state] ?? state;
   }
 
   function selectMascot(slug: string) {
@@ -310,9 +300,9 @@
       {#each Object.entries(EVENT_LABELS) as [key, label]}
         <div class="field">
           <span>{label}</span>
-          <select value={mascotSettings.eventMappings?.[key as SemanticEvent] ?? "idle"} onchange={(e) => setEventMapping(key as SemanticEvent, e.currentTarget.value as PetState)}>
+          <select value={mascotSettings.eventMappings?.[key as SemanticEvent] ?? 0} onchange={(e) => setEventMapping(key as SemanticEvent, Number(e.currentTarget.value))}>
             {#each STATES as s}
-              <option value={s}>{stateLabel(s)}</option>
+              <option value={s}>Fila {s}</option>
             {/each}
           </select>
         </div>
@@ -336,22 +326,6 @@
     {/if}
   </div>
 
-  <!-- State Labels -->
-  <div class="section">
-    <button class="section-header" onclick={() => toggleSection("estados")}>
-      <span class="section-arrow" class:open={expandedSections["estados"]}><CaretRight size={12} /></span>
-      <span class="section-title">Nombres de estados</span>
-    </button>
-    {#if expandedSections["estados"]}
-      {#each STATES as state}
-        <div class="field">
-          <span>{state}</span>
-          <input type="text" value={stateLabel(state)} onchange={(e) => setStateLabel(state, e.currentTarget.value)} placeholder={state} />
-        </div>
-      {/each}
-    {/if}
-  </div>
-
   <!-- Manual States -->
   <div class="section">
     <button class="section-header" onclick={() => toggleSection("manuales")}>
@@ -362,7 +336,7 @@
       <div class="btn-grid">
         {#each STATES as state}
           <button class="btn state-btn" class:active={mascotState.currentState === state} onclick={() => triggerState(state)}>
-            {stateLabel(state)}
+            Fila {state}
           </button>
         {/each}
       </div>

@@ -3,9 +3,9 @@
   import { playTone, speak } from "$lib/mascot/sounds";
   import type { PetState } from "$lib/mascot/types";
 
-  const STATES: PetState[] = ["idle", "wave", "run", "failed", "review", "jump", "extra1", "extra2"];
+  const STATES: number[] = [0, 1, 2, 3, 4, 5, 6, 7];
 
-  function triggerState(state: PetState) {
+  function triggerState(state: number) {
     setMascotState(state);
   }
 
@@ -42,7 +42,7 @@
     <div class="btn-grid">
       {#each STATES as state}
         <button class="btn state-btn" class:active={mascotState.currentState === state} onclick={() => triggerState(state)}>
-          {state}
+          Fila {state}
         </button>
       {/each}
     </div>
