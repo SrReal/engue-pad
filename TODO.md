@@ -3,7 +3,6 @@
 - poder cerrar pestaña con boton de rueda de raton
 - Multidioma ingles/español
 - testear bien posibles bugs
-- boton de nueva ventana <--
 - modal de carga bonita
 - cambiar estilo
 - poner icono
@@ -11,7 +10,6 @@
 
 ## Mascota
 - testear eventos que concuerden
-- probar configuracion global/proyecto
 
 ## Panel
 
