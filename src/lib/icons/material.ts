@@ -2693,10 +2693,14 @@ export function getMaterialIcon(
   const fileNameIcon = FILE_NAME_MAP[lowerName];
   if (fileNameIcon) return fileNameIcon;
 
-  // Try extension match
-  const ext = lowerName.split(".").pop() ?? "";
-  const extIcon = FILE_EXTENSION_MAP[ext];
-  if (extIcon) return extIcon;
+  // Try extension match — from longest to shortest (e.g. d.ts → ts, tar.gz → gz)
+  const parts = lowerName.split(".");
+  parts.shift(); // remove filename
+  for (let i = 0; i < parts.length; i++) {
+    const ext = parts.slice(i).join(".");
+    const extIcon = FILE_EXTENSION_MAP[ext];
+    if (extIcon) return extIcon;
+  }
 
   return "file";
 }
