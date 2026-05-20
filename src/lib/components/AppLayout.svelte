@@ -24,7 +24,8 @@
   import { triggerMascotEvent, updateMascotSettings, applyMascotConfig, loadMascot } from "$lib/mascot/store.svelte";
 import { loadProjectMascotConfig } from "$lib/mascot/projectStore.svelte";
 import type { SemanticEvent } from "$lib/mascot/types";
-  import { List, FolderOpen, ArrowClockwise, NotePencil, PawPrint, Gear } from "phosphor-svelte";
+  import { SidebarSimple, FolderOpen, ArrowClockwise, NotePencil, PawPrint, Gear } from "phosphor-svelte";
+  const projectName = $derived(workspaceInfo.rootPath ? workspaceInfo.rootPath.split(/[\\/]/).pop() ?? "EnguePad" : "EnguePad");
 
   let sidebarWidth = $state(240);
   let isResizingSidebar = $state(false);
@@ -387,13 +388,13 @@ import type { SemanticEvent } from "$lib/mascot/types";
 
 <div class="app-layout">
   <header class="top-bar">
-    <button class="icon-btn" onclick={toggleSidebar} title="Toggle sidebar"><List size={18} /></button>
-    <span class="logo">EnguePad</span>
+    <button class="icon-btn" onclick={toggleSidebar} title="Toggle sidebar"><SidebarSimple size={18} /></button>
     <button class="icon-btn" onclick={openFolder} title="Open folder"><FolderOpen size={18} /></button>
     <button class="icon-btn" onclick={triggerRefresh} title="Refresh tree"><ArrowClockwise size={18} /></button>
     <button class="icon-btn" onclick={toggleRightSidebar} title="Toggle tasks sidebar"><NotePencil size={18} /></button>
     <button class="icon-btn" onclick={toggleMascotSidebar} title="Mascot"><PawPrint size={18} /></button>
     <button class="icon-btn" onclick={() => showSettings = true} title="Settings"><Gear size={18} /></button>
+    <span class="logo">{projectName}</span>
   </header>
   <div class="body">
     <aside class="sidebar" class:collapsed={sidebarCollapsed} style:width="{sidebarCollapsed ? 0 : sidebarWidth}px">
@@ -496,7 +497,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
     color: var(--accent-color, #4a9eff);
     user-select: none;
     -webkit-user-select: none;
-    margin-right: auto;
+    margin-left: auto;
   }
 
   .icon-btn {
