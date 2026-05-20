@@ -90,6 +90,8 @@
 
   function onPointerDown(e: PointerEvent) {
     if (!panelRef) return;
+    e.preventDefault();
+    panelRef.setPointerCapture(e.pointerId);
     isDragging = true;
     dragOffset = { x: e.clientX - (mascotSettings.position?.x ?? 0), y: e.clientY - (mascotSettings.position?.y ?? 0) };
     window.addEventListener("pointermove", onWindowPointerMove);
