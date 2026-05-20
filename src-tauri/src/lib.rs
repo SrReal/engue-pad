@@ -364,6 +364,30 @@ fn create_main_window(app: &AppHandle) {
         .build();
 }
 
+#[tauri::command]
+fn create_new_window(app_handle: AppHandle) {
+    let label = format!("enguepad-{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_millis());
+    let monitor = match app_handle.primary_monitor().unwrap_or(None) {
+        Some(m) => m,
+        None => {
+            let _ = tauri::WebviewWindowBuilder::new(&app_handle, &label, WebviewUrl::App("/".into()))
+                .title("EnguePad")
+                .inner_size(1200.0, 800.0)
+                .center()
+                .build();
+            return;
+        }
+    };
+    let size = monitor.size();
+    let width = (size.width as f64 * 0.5).round();
+    let height = (size.height as f64 * 0.5).round();
+    let _ = tauri::WebviewWindowBuilder::new(&app_handle, &label, WebviewUrl::App("/".into()))
+        .title("EnguePad")
+        .inner_size(width, height)
+        .center()
+        .build();
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let terminal_manager = Arc::new(terminal::TerminalManager::new());
@@ -373,7 +397,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .manage(Arc::clone(&terminal_manager))
-        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, read_file_bytes, write_file, write_file_bytes, ensure_dir, dir_exists, read_file_meta, get_app_data_dir, exit_app, rename_file, remove_dir_all, run_command, git_status, terminal::create_terminal, terminal::write_terminal, terminal::resize_terminal, terminal::get_terminal_cwd, terminal::kill_terminal, terminal::get_terminal_processes, get_app_stats, instance::get_instance_info, instance::list_instances, instance::set_instance_workspace, instance::send_event_to_instance, instance::respond_approval])
+        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, read_file_bytes, write_file, write_file_bytes, ensure_dir, dir_exists, read_file_meta, get_app_data_dir, exit_app, rename_file, remove_dir_all, run_command, git_status, terminal::create_terminal, terminal::write_terminal, terminal::resize_terminal, terminal::get_terminal_cwd, terminal::kill_terminal, terminal::get_terminal_processes, get_app_stats, create_new_window, instance::get_instance_info, instance::list_instances, instance::set_instance_workspace, instance::send_event_to_instance, instance::respond_approval])
         .setup(|app| {
             let handle = app.handle().clone();
             let instance_manager = Arc::new(instance::InstanceManager::new(handle));

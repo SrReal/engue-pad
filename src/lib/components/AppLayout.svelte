@@ -2,7 +2,6 @@
   import { onMount, onDestroy } from "svelte";
   import { listen } from "@tauri-apps/api/event";
   import { invoke } from "@tauri-apps/api/core";
-  import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
   import { layoutState, findAllDirtyTabs, resetLayout, activateNextTab, activatePrevTab, closeActiveTab, addPreview } from "$lib/layout/store.svelte";
   import { workspaceInfo, loadWorkspace, scheduleSaveWorkspace } from "$lib/workspace/store.svelte";
   import { setTodoPath, ensureTodoFile, loadTodoFile } from "$lib/todo/store.svelte";
@@ -326,8 +325,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
   }
 
   async function openNewWindow() {
-    const label = `enguepad-${Date.now()}`;
-    new WebviewWindow(label, { url: "/" });
+    await invoke("create_new_window");
   }
 
   function handleGlobalKeydown(e: KeyboardEvent) {
