@@ -7,7 +7,6 @@
   import TreeItem from "./TreeItem.svelte";
   import { fileDrag } from "$lib/tree/fileDragStore";
   import { triggerMascotEvent } from "$lib/mascot/store.svelte";
-  import { CaretRight, CaretDown } from "phosphor-svelte";
   import FileIcon from "./FileIcon.svelte";
 
   type FileEntry = {
@@ -271,8 +270,7 @@
   >
     <span class="icon tree-icon">
       {#if node.entry.is_dir}
-        {#if node.expanded}<CaretDown size={12} />{:else}<CaretRight size={12} />{/if}
-        <FileIcon type={node.expanded ? "folder-open" : "folder"} size={14} weight="fill" />
+        <FileIcon type={node.expanded ? "folder-open" : "folder"} size={14} />
       {:else}
         <FileIcon path={node.entry.path} size={14} />
       {/if}
