@@ -70,7 +70,14 @@ import type { SemanticEvent } from "$lib/mascot/types";
       await saveSettings(appSettings);
     }
     if (settings.restoreLayout !== false && settings.lastProjectPath) {
-      workspaceInfo.rootPath = settings.lastProjectPath;
+      const exists = await invoke<boolean>("dir_exists", { path: settings.lastProjectPath });
+      if (exists) {
+        workspaceInfo.rootPath = settings.lastProjectPath;
+      } else {
+        // Directory was deleted; clear saved path
+        await saveSettings({ ...settings, lastProjectPath: null });
+        isLoading = false;
+      }
     } else {
       isLoading = false;
     }
@@ -150,6 +157,9 @@ import type { SemanticEvent } from "$lib/mascot/types";
               rootPath: root,
             }).catch(() => {});
           }
+        }).catch(() => {
+          // Directory no longer exists; reset
+          workspaceInfo.rootPath = null;
         }),
         loadSettings().then(async (s) => {
           gitRefreshInterval = (s.git?.refreshInterval ?? 5) * 1000;

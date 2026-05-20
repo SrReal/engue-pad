@@ -1,5 +1,6 @@
 import { layoutState, syncTerminalCwds } from "$lib/layout/store.svelte";
 import { serializeNode, deserializeNode, type WorkspaceData, type LinterConfig } from "./persist";
+import { SKILL_FILES } from "./skills";
 
 export type WorkspaceInfo = {
   rootPath: string | null;
@@ -14,6 +15,13 @@ let saveTimeout: ReturnType<typeof setTimeout> | null = null;
 
 export async function loadWorkspace(rootPath: string): Promise<void> {
   const { invoke } = await import("@tauri-apps/api/core");
+
+  const exists = await invoke<boolean>("dir_exists", { path: rootPath });
+  if (!exists) {
+    console.warn("Project directory no longer exists:", rootPath);
+    throw new Error(`Directory does not exist: ${rootPath}`);
+  }
+
   const workspacePath = `${rootPath}/.enguepad/workspace.json`;
 
   try {
@@ -50,6 +58,17 @@ export async function loadWorkspace(rootPath: string): Promise<void> {
     try {
       await invoke("ensure_dir", { path: `${rootPath}/.enguepad` });
       await invoke("write_file", { path: workspacePath, contents: JSON.stringify(data, null, 2) });
+
+      // Create .enguepad/skills/ with default skill files
+      await invoke("ensure_dir", { path: `${rootPath}/.enguepad/skills` });
+      for (const [relPath, content] of Object.entries(SKILL_FILES)) {
+        const filePath = `${rootPath}/${relPath}`;
+        try {
+          await invoke("write_file", { path: filePath, contents: content });
+        } catch {
+          // ignore skill write errors
+        }
+      }
     } catch (writeErr) {
       console.error("Failed to create workspace.json", writeErr);
     }
