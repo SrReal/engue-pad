@@ -325,7 +325,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
   }
 
   async function openNewWindow() {
-    await invoke("create_new_window");
+    await invoke("spawn_new_instance");
   }
 
   function handleGlobalKeydown(e: KeyboardEvent) {
@@ -398,7 +398,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
     <button class="icon-btn" onclick={toggleRightSidebar} title="Toggle tasks sidebar"><NotePencil size={18} /></button>
     <button class="icon-btn" onclick={toggleMascotSidebar} title="Mascot"><PawPrint size={18} /></button>
     <button class="icon-btn" onclick={() => showSettings = true} title="Settings"><Gear size={18} /></button>
-    <button class="icon-btn" onclick={openNewWindow} title="New window"><AppWindow size={18} /></button>
+    <button class="icon-btn" onclick={openNewWindow} title="New instance"><AppWindow size={18} /></button>
     <span class="logo">{projectName}</span>
   </header>
   <div class="body">
