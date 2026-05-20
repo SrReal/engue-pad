@@ -2,6 +2,7 @@
   import { onMount, onDestroy } from "svelte";
   import { listen } from "@tauri-apps/api/event";
   import { invoke } from "@tauri-apps/api/core";
+  import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
   import { layoutState, findAllDirtyTabs, resetLayout, activateNextTab, activatePrevTab, closeActiveTab, addPreview } from "$lib/layout/store.svelte";
   import { workspaceInfo, loadWorkspace, scheduleSaveWorkspace } from "$lib/workspace/store.svelte";
   import { setTodoPath, ensureTodoFile, loadTodoFile } from "$lib/todo/store.svelte";
@@ -24,7 +25,7 @@
   import { triggerMascotEvent, updateMascotSettings, applyMascotConfig, loadMascot } from "$lib/mascot/store.svelte";
 import { loadProjectMascotConfig } from "$lib/mascot/projectStore.svelte";
 import type { SemanticEvent } from "$lib/mascot/types";
-  import { SidebarSimple, FolderOpen, ArrowClockwise, NotePencil, PawPrint, Gear } from "phosphor-svelte";
+  import { SidebarSimple, FolderOpen, ArrowClockwise, NotePencil, PawPrint, Gear, AppWindow } from "phosphor-svelte";
   const projectName = $derived(workspaceInfo.rootPath ? workspaceInfo.rootPath.split(/[\\/]/).pop() ?? "EnguePad" : "EnguePad");
 
   let sidebarWidth = $state(240);
@@ -324,6 +325,11 @@ import type { SemanticEvent } from "$lib/mascot/types";
     }
   }
 
+  async function openNewWindow() {
+    const label = `enguepad-${Date.now()}`;
+    new WebviewWindow(label, { url: "/" });
+  }
+
   function handleGlobalKeydown(e: KeyboardEvent) {
     // Skip if typing in an input or editor
     const target = e.target as HTMLElement;
@@ -394,6 +400,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
     <button class="icon-btn" onclick={toggleRightSidebar} title="Toggle tasks sidebar"><NotePencil size={18} /></button>
     <button class="icon-btn" onclick={toggleMascotSidebar} title="Mascot"><PawPrint size={18} /></button>
     <button class="icon-btn" onclick={() => showSettings = true} title="Settings"><Gear size={18} /></button>
+    <button class="icon-btn" onclick={openNewWindow} title="New window"><AppWindow size={18} /></button>
     <span class="logo">{projectName}</span>
   </header>
   <div class="body">
