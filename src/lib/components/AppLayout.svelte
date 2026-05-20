@@ -17,6 +17,7 @@
   import UrlToast from "./UrlToast.svelte";
   import SettingsModal from "./SettingsModal.svelte";
   import ApprovalModal from "./ApprovalModal.svelte";
+  import LoadingScreen from "./LoadingScreen.svelte";
   import MascotPanel from "./MascotPanel.svelte";
   import MascotSidebar from "./MascotSidebar.svelte";
   import { open, confirm } from "@tauri-apps/plugin-dialog";
@@ -51,6 +52,8 @@ import type { SemanticEvent } from "$lib/mascot/types";
   let approvalRequestId = $state("");
   let approvalMessage = $state("");
 
+  let isLoading = $state(true);
+
   onMount(async () => {
     const settings = await loadSettings();
     updateAppSettings(settings);
@@ -68,6 +71,8 @@ import type { SemanticEvent } from "$lib/mascot/types";
     }
     if (settings.restoreLayout !== false && settings.lastProjectPath) {
       workspaceInfo.rootPath = settings.lastProjectPath;
+    } else {
+      isLoading = false;
     }
     if (typeof settings.rightSidebarCollapsed === "boolean") {
       rightSidebarCollapsed = settings.rightSidebarCollapsed;
@@ -135,35 +140,39 @@ import type { SemanticEvent } from "$lib/mascot/types";
   $effect(() => {
     const root = workspaceInfo.rootPath;
     if (root) {
-      loadWorkspace(root).then(() => {
-        if (workspaceInfo.workspaceId) {
-          const projectName = root.split(/[\\/]/).pop() ?? "";
-          invoke("set_instance_workspace", {
-            workspaceId: workspaceInfo.workspaceId,
-            projectName,
-            rootPath: root,
-          }).catch(() => {});
-        }
-      });
-      loadSettings().then(async (s) => {
-        gitRefreshInterval = (s.git?.refreshInterval ?? 5) * 1000;
-        const scope = s.mascotScope ?? "global";
-        if (scope === "project") {
-          const projectConfig = await loadProjectMascotConfig(root);
-          if (projectConfig) {
-            applyMascotConfig(projectConfig);
-            if (projectConfig.currentMascot) {
-              loadMascot(projectConfig.currentMascot);
-            }
-          } else if (s.mascot) {
-            applyMascotConfig(s.mascot);
-            if (s.mascot.currentMascot) {
-              loadMascot(s.mascot.currentMascot);
-            }
+      Promise.all([
+        loadWorkspace(root).then(() => {
+          if (workspaceInfo.workspaceId) {
+            const projectName = root.split(/[\\/]/).pop() ?? "";
+            invoke("set_instance_workspace", {
+              workspaceId: workspaceInfo.workspaceId,
+              projectName,
+              rootPath: root,
+            }).catch(() => {});
           }
-        } else if (s.mascot?.enabled && s.mascot?.currentMascot) {
-          triggerMascotEvent("iniciando_tarea");
-        }
+        }),
+        loadSettings().then(async (s) => {
+          gitRefreshInterval = (s.git?.refreshInterval ?? 5) * 1000;
+          const scope = s.mascotScope ?? "global";
+          if (scope === "project") {
+            const projectConfig = await loadProjectMascotConfig(root);
+            if (projectConfig) {
+              applyMascotConfig(projectConfig);
+              if (projectConfig.currentMascot) {
+                loadMascot(projectConfig.currentMascot);
+              }
+            } else if (s.mascot) {
+              applyMascotConfig(s.mascot);
+              if (s.mascot.currentMascot) {
+                loadMascot(s.mascot.currentMascot);
+              }
+            }
+          } else if (s.mascot?.enabled && s.mascot?.currentMascot) {
+            triggerMascotEvent("iniciando_tarea");
+          }
+        }),
+      ]).finally(() => {
+        isLoading = false;
       });
     }
   });
@@ -444,6 +453,9 @@ import type { SemanticEvent } from "$lib/mascot/types";
     <ApprovalModal requestId={approvalRequestId} message={approvalMessage} onClose={() => showApproval = false} />
   {/if}
   <MascotPanel />
+  {#if isLoading}
+    <LoadingScreen />
+  {/if}
 </div>
 
 <style>
