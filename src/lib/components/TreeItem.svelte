@@ -270,7 +270,7 @@
   >
     <span class="icon tree-icon">
       {#if node.entry.is_dir}
-        <FileIcon type={node.expanded ? "folder-open" : "folder"} size={14} />
+        <FileIcon type={node.expanded ? "folder-open" : "folder"} path={node.entry.path} size={14} />
       {:else}
         <FileIcon path={node.entry.path} size={14} />
       {/if}
