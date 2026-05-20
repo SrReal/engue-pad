@@ -56,6 +56,9 @@ import type { SemanticEvent } from "$lib/mascot/types";
   let isLoading = $state(true);
 
   onMount(async () => {
+    const args = await invoke<string[]>("get_cli_args");
+    const noRestoreProject = args.includes("--no-restore-project");
+
     const settings = await loadSettings();
     updateAppSettings(settings);
     if (settings.mascot?.enabled && (!settings.mascot.position || (settings.mascot.position.x <= 50 && settings.mascot.position.y <= 50))) {
@@ -70,7 +73,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
       }
       await saveSettings(appSettings);
     }
-    if (settings.restoreLayout !== false && settings.lastProjectPath) {
+    if (!noRestoreProject && settings.restoreLayout !== false && settings.lastProjectPath) {
       const exists = await invoke<boolean>("dir_exists", { path: settings.lastProjectPath });
       if (exists) {
         workspaceInfo.rootPath = settings.lastProjectPath;
@@ -320,7 +323,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
       }
       resetLayout();
       workspaceInfo.rootPath = selected;
-      await saveSettings({ lastProjectPath: selected });
+      await saveSettings({ ...appSettings, lastProjectPath: selected });
     }
   }
 
