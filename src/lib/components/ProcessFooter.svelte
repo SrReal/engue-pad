@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
+  import { t } from "$lib/i18n";
   import { CaretDown, CaretRight } from "phosphor-svelte";
 
   type ProcessInfo = {
@@ -33,7 +34,7 @@
   async function copyPath(path: string) {
     try {
       await navigator.clipboard.writeText(path);
-      showToast("Ruta copiada");
+      showToast(t("processPathCopied"));
     } catch (e) {
       console.error("Failed to copy path:", e);
     }
@@ -71,21 +72,21 @@
     }}
   >
     <span class="arrow">{#if expanded}<CaretDown size={12} />{:else}<CaretRight size={12} />{/if}</span>
-    <span class="summary">Procesos lanzados</span>
-    <span class="totals">CPU {totalCpu.toFixed(1)}% · {totalMemory} MB RAM</span>
+    <span class="summary">{t("processLaunched")}</span>
+    <span class="totals">{t("statusCpu")} {totalCpu.toFixed(1)}% · {totalMemory} MB {t("statusRam")}</span>
   </div>
 
   {#if expanded}
     <div class="process-list">
       {#if processes.length === 0}
-        <div class="empty">Sin procesos activos</div>
+        <div class="empty">{t("processNoActive")}</div>
       {:else}
         <div class="process-header">
-          <span class="col name">Nombre</span>
-          <span class="col pid">PID</span>
-          <span class="col cpu">CPU</span>
-          <span class="col mem">RAM</span>
-          <span class="col cwd">Ruta</span>
+          <span class="col name">{t("processName")}</span>
+          <span class="col pid">{t("processPid")}</span>
+          <span class="col cpu">{t("processCpu")}</span>
+          <span class="col mem">{t("processRam")}</span>
+          <span class="col cwd">{t("processPath")}</span>
         </div>
         {#each processes as p (p.pid)}
           <div class="process-row">

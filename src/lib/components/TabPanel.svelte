@@ -7,6 +7,7 @@
   import { get } from "svelte/store";
   import { triggerMascotEvent } from "$lib/mascot/store.svelte";
   import { X, ArrowsOutLineVertical, ArrowsOutLineHorizontal, TerminalWindow, Globe } from "phosphor-svelte";
+  import { t } from "$lib/i18n";
   import FileIcon from "./FileIcon.svelte";
   import Editor from "./Editor.svelte";
   import MarkdownViewer from "./MarkdownViewer.svelte";
@@ -150,7 +151,7 @@
     e.stopPropagation();
     const tab = node.tabs.find((t) => t.id === tabId);
     if (tab?.dirty) {
-      const confirmed = await confirm(`"${tab.title}" has unsaved changes. Close without saving?`, { title: "Unsaved Changes", kind: "warning" });
+      const confirmed = await confirm(t("tabUnsavedChangesBody", tab.title), { title: t("tabUnsavedChangesTitle"), kind: "warning" });
       if (!confirmed) return;
     }
     closeTab(node.id, tabId);
@@ -160,7 +161,7 @@
   function handleActivate(tabId: string) {
     setActiveTab(node.id, tabId);
     setActiveNode(node.id);
-    triggerMascotEvent("continuo_trabajando");
+    triggerMascotEvent("keep_working");
   }
 
   function handlePanelClick() {
@@ -188,7 +189,7 @@
     if (tabContextMenu) {
       const tab = node.tabs.find((t) => t.id === tabContextMenu!.tabId);
       if (tab?.dirty) {
-        const confirmed = await confirm(`"${tab.title}" has unsaved changes. Close without saving?`, { title: "Unsaved Changes", kind: "warning" });
+        const confirmed = await confirm(t("tabUnsavedChangesBody", tab.title), { title: t("tabUnsavedChangesTitle"), kind: "warning" });
         if (!confirmed) {
           closeTabContextMenu();
           return;
@@ -216,10 +217,10 @@
 
   function submitRename(tabId: string) {
     if (renamingTabId === tabId) {
-      renameTab(node.id, tabId, renameValue.trim() || "Untitled");
+      renameTab(node.id, tabId, renameValue.trim() || t("tabUntitled"));
       renamingTabId = null;
       renameValue = "";
-      triggerMascotEvent("archivo_renombrado");
+      triggerMascotEvent("file_renamed");
     }
   }
 
@@ -232,7 +233,7 @@
     const dirtyTabs = node.tabs.filter((t) => t.dirty);
     if (dirtyTabs.length > 0) {
       const names = dirtyTabs.map((t) => `"${t.title}"`).join(", ");
-      const confirmed = await confirm(`${names} has unsaved changes. Close the panel without saving?`, { title: "Unsaved Changes", kind: "warning" });
+      const confirmed = await confirm(t("tabClosePanelBody", names), { title: t("tabUnsavedChangesTitle"), kind: "warning" });
       if (!confirmed) {
         return;
       }
@@ -267,7 +268,7 @@
   tabindex="0"
 >
   <div class="tab-bar" role="toolbar" aria-label="Tabs" tabindex="0">
-    <button class="tab-add" onclick={() => { addTerminal(node.id, "Terminal", workspaceInfo.rootPath ?? undefined); triggerMascotEvent("terminal_creado"); }} title="New terminal" type="button"><TerminalWindow size={16} /></button>
+    <button class="tab-add" onclick={() => { addTerminal(node.id, t("terminalDefaultTitle"), workspaceInfo.rootPath ?? undefined); triggerMascotEvent("terminal_created"); }} title={t("tabNewTerminal")} type="button"><TerminalWindow size={16} /></button>
     <div class="tabs-scroll" bind:this={tabBarRef}>
       {#each node.tabs as tab, index (tab.id)}
         <div
@@ -311,14 +312,14 @@
               <span class="tab-label">{tab.title}{#if tab.dirty}●{/if}</span>
             </span>
           {/if}
-          <button class="tab-close" onclick={(e) => handleClose(tab.id, e)} type="button" aria-label="Close tab"><X size={12} /></button>
+          <button class="tab-close" onclick={(e) => handleClose(tab.id, e)} type="button" aria-label={t("tabClose")}><X size={12} /></button>
         </div>
       {/each}
     </div>
     <div class="panel-actions">
-      <button class="panel-action-btn" onclick={() => { splitNode(node.id, 'horizontal'); triggerMascotEvent("panel_dividido"); }} title="Split horizontal" type="button"><ArrowsOutLineHorizontal size={14} /></button>
-      <button class="panel-action-btn" onclick={() => { splitNode(node.id, 'vertical'); triggerMascotEvent("panel_dividido"); }} title="Split vertical" type="button"><ArrowsOutLineVertical size={14} /></button>
-      <button class="panel-action-btn close" onclick={handleClosePanel} title="Close panel" type="button"><X size={14} /></button>
+      <button class="panel-action-btn" onclick={() => { splitNode(node.id, 'horizontal'); triggerMascotEvent("panel_split"); }} title={t("tabSplitHorizontal")} type="button"><ArrowsOutLineHorizontal size={14} /></button>
+      <button class="panel-action-btn" onclick={() => { splitNode(node.id, 'vertical'); triggerMascotEvent("panel_split"); }} title={t("tabSplitVertical")} type="button"><ArrowsOutLineVertical size={14} /></button>
+      <button class="panel-action-btn close" onclick={handleClosePanel} title={t("tabClosePanel")} type="button"><X size={14} /></button>
     </div>
   </div>
   {#if isDragOrigin && dragState.tabId}
@@ -378,7 +379,7 @@
     {#if !node.activeTabId}
       <div class="content-placeholder empty">
         <div class="empty-actions">
-          <span class="hint">Click a file in the sidebar to open</span>
+          <span class="hint">{t("tabHintOpenFile")}</span>
         </div>
       </div>
     {/if}
@@ -388,7 +389,7 @@
     <div class="drop-overlay">
       <div class="drop-indicator">
         <span class="drop-arrow"><ArrowsOutLineVertical size={28} weight="bold" /></span>
-        <span class="drop-label">Move here</span>
+        <span class="drop-label">{t("tabMoveHere")}</span>
       </div>
     </div>
   {/if}
@@ -396,9 +397,9 @@
 
 {#if tabContextMenu}
   <div class="context-menu" style:left="{tabContextMenu.x}px" style:top="{tabContextMenu.y}px">
-    <button onclick={handleCloseFromMenu}>Close</button>
-    <button onclick={handleRenameTab}>Rename</button>
-    <button onclick={handlePinTab}>Pin</button>
+    <button onclick={handleCloseFromMenu}>{t("tabCloseTab")}</button>
+    <button onclick={handleRenameTab}>{t("tabRename")}</button>
+    <button onclick={handlePinTab}>{t("tabPin")}</button>
   </div>
 {/if}
 

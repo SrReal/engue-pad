@@ -1,11 +1,12 @@
 <script lang="ts">
-  export let text = "Cargando proyecto...";
+  import { t } from "$lib/i18n";
+  export let text = "";
 </script>
 
 <div class="loading-screen">
   <div class="loading-content">
     <div class="spinner"></div>
-    <div class="loading-text">{text}</div>
+    <div class="loading-text">{text || t("loadingScreenDefault")}</div>
   </div>
 </div>
 

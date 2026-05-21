@@ -21,6 +21,7 @@ pub struct InstanceInfo {
     pub root_path: Option<String>,
     pub pid: u32,
     pub last_heartbeat: u64,
+    #[serde(default)]
     pub ipc_address: String,
 }
 

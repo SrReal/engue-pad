@@ -7,69 +7,48 @@ export type VoiceGender = "male" | "female" | "boy" | "girl";
 
 export type SemanticEvent =
   | "idle"
-  | "esperando_respuesta"
-  | "aviso_fin_tarea"
+  | "waiting_response"
+  | "task_done"
   | "error"
-  | "iniciando_tarea"
-  | "continuo_trabajando"
-  | "llamar_atencion"
-  | "esperando_comando"
-  | "terminal_cerrado"
-  | "terminal_creado"
-  | "panel_dividido"
-  | "preview_abierto"
-  | "archivo_renombrado"
-  | "imagen_abierta"
-  | "audio_abierto"
-  | "maximizado"
-  | "restaurado"
+  | "starting_task"
+  | "keep_working"
+  | "get_attention"
+  | "waiting_command"
+  | "terminal_closed"
+  | "terminal_created"
+  | "panel_split"
+  | "preview_opened"
+  | "file_renamed"
+  | "image_opened"
+  | "audio_opened"
+  | "maximized"
+  | "restored"
   | "approval_request";
 
 export type EventMapping = Record<SemanticEvent, PetState>;
 
 export const DEFAULT_EVENT_MAPPING: EventMapping = {
   idle: 0,
-  esperando_respuesta: 0,
-  aviso_fin_tarea: 6,
+  waiting_response: 0,
+  task_done: 6,
   error: 3,
-  iniciando_tarea: 1,
-  continuo_trabajando: 2,
-  llamar_atencion: 4,
-  esperando_comando: 0,
-  terminal_cerrado: 0,
-  terminal_creado: 1,
-  panel_dividido: 1,
-  preview_abierto: 1,
-  archivo_renombrado: 6,
-  imagen_abierta: 1,
-  audio_abierto: 1,
-  maximizado: 7,
-  restaurado: 5,
+  starting_task: 1,
+  keep_working: 2,
+  get_attention: 4,
+  waiting_command: 0,
+  terminal_closed: 0,
+  terminal_created: 1,
+  panel_split: 1,
+  preview_opened: 1,
+  file_renamed: 6,
+  image_opened: 1,
+  audio_opened: 1,
+  maximized: 7,
+  restored: 5,
   approval_request: 4,
 };
 
 export type EventPhrases = Partial<Record<SemanticEvent, string>>;
-
-export const DEFAULT_EVENT_PHRASES: Record<SemanticEvent, string> = {
-  idle: "",
-  esperando_respuesta: "Te estoy esperando...",
-  aviso_fin_tarea: "¡Listo! Todo salió bien.",
-  error: "¡Ups! Algo salió mal.",
-  iniciando_tarea: "¡Hola! ¿En qué puedo ayudarte?",
-  continuo_trabajando: "Trabajando duro...",
-  llamar_atencion: "Revisando el código...",
-  esperando_comando: "Esperando tu siguiente comando...",
-  terminal_cerrado: "Terminal cerrado.",
-  terminal_creado: "Nuevo terminal listo.",
-  panel_dividido: "Panel dividido.",
-  preview_abierto: "Abriendo preview...",
-  archivo_renombrado: "Archivo renombrado.",
-  imagen_abierta: "Mostrando imagen...",
-  audio_abierto: "Reproduciendo audio...",
-  maximizado: "Pantalla completa.",
-  restaurado: "Ventana restaurada.",
-  approval_request: "¡Necesito tu aprobación!",
-};
 
 export type MascotSettings = {
   mode: MascotMode;

@@ -51,7 +51,7 @@ export function urlLinksFor(nodeId: string) {
       const url = link.textContent ?? "";
       if (!url) return false;
       addPreview(nodeId, url);
-      triggerMascotEvent("preview_abierto");
+      triggerMascotEvent("preview_opened");
       return true;
     },
   });

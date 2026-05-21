@@ -10,6 +10,7 @@
     deleteTodoSection,
   } from "$lib/todo/store.svelte";
   import type { TodoDocument, TodoSection, TodoTask } from "$lib/todo/parser";
+  import { t } from "$lib/i18n";
   import { NotePencil, PencilSimple, X } from "phosphor-svelte";
 
   let editingTaskLine = $state<number | null>(null);
@@ -188,7 +189,7 @@
             <input
               class="new-task-input"
               type="text"
-              placeholder="Add task..."
+              placeholder={t("todoAddTaskPlaceholder")}
               bind:value={newTaskInputs[section.endLine]}
               onkeydown={(e) => handleNewTaskKeydown(e, section.endLine)}
             />
@@ -202,7 +203,7 @@
         <input
           class="new-section-input"
           type="text"
-          placeholder="Section name..."
+          placeholder={t("todoSectionPlaceholder")}
           bind:value={newSectionValue}
           onkeydown={handleSectionKeydown}
           onblur={() => { if (!newSectionValue.trim()) addingSection = false; }}

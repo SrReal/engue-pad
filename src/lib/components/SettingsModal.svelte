@@ -2,6 +2,7 @@
   import { getDefaultSettings, saveSettings, type AppSettings } from "$lib/workspace/settings";
   import { appSettings, updateAppSettings } from "$lib/workspace/settingsStore.svelte";
   import { X } from "phosphor-svelte";
+  import { t, setLocale } from "$lib/i18n";
   import { linterConfig } from "$lib/workspace/store.svelte";
 
   let { show = $bindable(false) }: { show?: boolean } = $props();
@@ -25,6 +26,7 @@
   }
 
   function apply() {
+    if (draft.locale) setLocale(draft.locale);
     updateAppSettings(draft);
     saveSettings(draft);
     if (draft.lint) {
@@ -51,127 +53,134 @@
   <div class="modal-backdrop" onclick={cancel} role="dialog" aria-modal="true" tabindex="-1">
     <div class="modal" onclick={(e) => e.stopPropagation()}>
       <div class="modal-header">
-        <span class="modal-title">Settings</span>
-        <button class="close-btn" onclick={cancel} aria-label="Close"><X size={16} /></button>
+        <span class="modal-title">{t("settingsTitle")}</span>
+        <button class="close-btn" onclick={cancel} aria-label={t("tabClose")}><X size={16} /></button>
       </div>
       <div class="modal-body">
         <div class="tabs">
-          <button class="tab-btn" class:active={activeTab === "general"} onclick={() => activeTab = "general"}>General</button>
-          <button class="tab-btn" class:active={activeTab === "editor"} onclick={() => activeTab = "editor"}>Editor</button>
-          <button class="tab-btn" class:active={activeTab === "terminal"} onclick={() => activeTab = "terminal"}>Terminal</button>
-          <button class="tab-btn" class:active={activeTab === "lint"} onclick={() => activeTab = "lint"}>Lint</button>
-          <button class="tab-btn" class:active={activeTab === "git"} onclick={() => activeTab = "git"}>Git</button>
+          <button class="tab-btn" class:active={activeTab === "general"} onclick={() => activeTab = "general"}>{t("settingsTabGeneral")}</button>
+          <button class="tab-btn" class:active={activeTab === "editor"} onclick={() => activeTab = "editor"}>{t("settingsTabEditor")}</button>
+          <button class="tab-btn" class:active={activeTab === "terminal"} onclick={() => activeTab = "terminal"}>{t("settingsTabTerminal")}</button>
+          <button class="tab-btn" class:active={activeTab === "lint"} onclick={() => activeTab = "lint"}>{t("settingsTabLint")}</button>
+          <button class="tab-btn" class:active={activeTab === "git"} onclick={() => activeTab = "git"}>{t("settingsTabGit")}</button>
         </div>
         <div class="tab-content">
           {#if activeTab === "general"}
             <div class="section">
               <label class="field">
-                <span>UI Font Size</span>
+                <span>{t("settingsUiFontSize")}</span>
                 <input type="number" min="10" max="20" value={draft.uiFontSize ?? 13} onchange={(e) => update("uiFontSize", +e.currentTarget.value)} />
               </label>
               <label class="field">
-                <span>Zoom</span>
+                <span>{t("settingsZoom")}</span>
                 <input type="range" min="0.8" max="1.5" step="0.05" value={draft.zoom ?? 1} onchange={(e) => update("zoom", +e.currentTarget.value)} />
                 <span class="value">{draft.zoom ?? 1}x</span>
               </label>
               <label class="field checkbox">
                 <input type="checkbox" checked={draft.restoreLayout ?? true} onchange={(e) => update("restoreLayout", e.currentTarget.checked)} />
-                <span>Restore layout on reopen</span>
+                <span>{t("settingsRestoreLayout")}</span>
               </label>
               <label class="field">
-                <span>Mascota</span>
+                <span>{t("settingsLanguage")}</span>
+                <select value={draft.locale ?? "en"} onchange={(e) => update("locale", e.currentTarget.value as "en" | "es")}>
+                  <option value="en">{t("settingsLanguageEnglish")}</option>
+                  <option value="es">{t("settingsLanguageSpanish")}</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>{t("settingsMascotScope")}</span>
                 <select value={draft.mascotScope ?? "global"} onchange={(e) => update("mascotScope", e.currentTarget.value as "global" | "project")}>
-                  <option value="global">Global (misma en todos los proyectos)</option>
-                  <option value="project">Por proyecto</option>
+                  <option value="global">{t("settingsMascotGlobal")}</option>
+                  <option value="project">{t("settingsMascotPerProject")}</option>
                 </select>
               </label>
             </div>
           {:else if activeTab === "editor"}
             <div class="section">
               <label class="field">
-                <span>Font Size</span>
+                <span>{t("settingsEditorFontSize")}</span>
                 <input type="number" min="10" max="24" value={draft.editor?.fontSize ?? 14} onchange={(e) => updateNested("editor", "fontSize", +e.currentTarget.value)} />
               </label>
               <label class="field">
-                <span>Line Height</span>
+                <span>{t("settingsEditorLineHeight")}</span>
                 <input type="number" min="1" max="2" step="0.1" value={draft.editor?.lineHeight ?? 1.5} onchange={(e) => updateNested("editor", "lineHeight", +e.currentTarget.value)} />
               </label>
               <label class="field checkbox">
                 <input type="checkbox" checked={draft.editor?.wordWrap ?? true} onchange={(e) => updateNested("editor", "wordWrap", e.currentTarget.checked)} />
-                <span>Word Wrap</span>
+                <span>{t("settingsEditorWordWrap")}</span>
               </label>
               <label class="field">
-                <span>Tab Size</span>
+                <span>{t("settingsEditorTabSize")}</span>
                 <input type="number" min="2" max="8" value={draft.editor?.tabSize ?? 2} onchange={(e) => updateNested("editor", "tabSize", +e.currentTarget.value)} />
               </label>
               <label class="field checkbox">
                 <input type="checkbox" checked={draft.editor?.insertSpaces ?? true} onchange={(e) => updateNested("editor", "insertSpaces", e.currentTarget.checked)} />
-                <span>Insert Spaces</span>
+                <span>{t("settingsEditorInsertSpaces")}</span>
               </label>
               <label class="field checkbox">
                 <input type="checkbox" checked={draft.editor?.showLineNumbers ?? true} onchange={(e) => updateNested("editor", "showLineNumbers", e.currentTarget.checked)} />
-                <span>Show Line Numbers</span>
+                <span>{t("settingsEditorShowLineNumbers")}</span>
               </label>
               <label class="field checkbox">
                 <input type="checkbox" checked={draft.editor?.highlightActiveLine ?? true} onchange={(e) => updateNested("editor", "highlightActiveLine", e.currentTarget.checked)} />
-                <span>Highlight Active Line</span>
+                <span>{t("settingsEditorHighlightActiveLine")}</span>
               </label>
               <label class="field checkbox">
                 <input type="checkbox" checked={draft.editor?.minimap ?? false} onchange={(e) => updateNested("editor", "minimap", e.currentTarget.checked)} />
-                <span>Minimap</span>
+                <span>{t("settingsEditorMinimap")}</span>
               </label>
             </div>
           {:else if activeTab === "terminal"}
             <div class="section">
               <label class="field">
-                <span>Default Shell</span>
-                <input type="text" value={draft.terminal?.defaultShell ?? ""} onchange={(e) => updateNested("terminal", "defaultShell", e.currentTarget.value)} placeholder="bash, zsh, pwsh..." />
+                <span>{t("settingsTerminalDefaultShell")}</span>
+                <input type="text" value={draft.terminal?.defaultShell ?? ""} onchange={(e) => updateNested("terminal", "defaultShell", e.currentTarget.value)} placeholder={t("settingsTerminalShellPlaceholder")} />
               </label>
               <label class="field">
-                <span>Font Size</span>
+                <span>{t("settingsEditorFontSize")}</span>
                 <input type="number" min="10" max="24" value={draft.terminal?.fontSize ?? 14} onchange={(e) => updateNested("terminal", "fontSize", +e.currentTarget.value)} />
               </label>
               <label class="field">
-                <span>Scrollback Lines</span>
+                <span>{t("settingsTerminalScrollback")}</span>
                 <input type="number" min="100" max="10000" value={draft.terminal?.scrollback ?? 1000} onchange={(e) => updateNested("terminal", "scrollback", +e.currentTarget.value)} />
               </label>
               <label class="field checkbox">
                 <input type="checkbox" checked={draft.terminal?.copyOnSelect ?? false} onchange={(e) => updateNested("terminal", "copyOnSelect", e.currentTarget.checked)} />
-                <span>Copy on Select</span>
+                <span>{t("settingsTerminalCopyOnSelect")}</span>
               </label>
             </div>
           {:else if activeTab === "lint"}
             <div class="section">
               <label class="field checkbox">
                 <input type="checkbox" checked={draft.lint?.enabled ?? true} onchange={(e) => updateNested("lint", "enabled", e.currentTarget.checked)} />
-                <span>Enable Linting</span>
+                <span>{t("settingsLintEnable")}</span>
               </label>
               <label class="field checkbox">
                 <input type="checkbox" checked={draft.lint?.runOnSave ?? false} onchange={(e) => updateNested("lint", "runOnSave", e.currentTarget.checked)} />
-                <span>Run on Save</span>
+                <span>{t("settingsLintRunOnSave")}</span>
               </label>
               <label class="field checkbox">
                 <input type="checkbox" checked={draft.lint?.runOnType ?? true} onchange={(e) => updateNested("lint", "runOnType", e.currentTarget.checked)} />
-                <span>Run on Type</span>
+                <span>{t("settingsLintRunOnType")}</span>
               </label>
             </div>
           {:else if activeTab === "git"}
             <div class="section">
               <label class="field">
-                <span>Refresh Interval (seconds)</span>
+                <span>{t("settingsGitRefreshInterval")}</span>
                 <input type="number" min="1" max="60" value={draft.git?.refreshInterval ?? 5} onchange={(e) => updateNested("git", "refreshInterval", +e.currentTarget.value)} />
               </label>
               <label class="field checkbox">
                 <input type="checkbox" checked={draft.git?.showIndicators ?? true} onchange={(e) => updateNested("git", "showIndicators", e.currentTarget.checked)} />
-                <span>Show Indicators in Tree</span>
+                <span>{t("settingsGitShowIndicators")}</span>
               </label>
             </div>
           {/if}
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn secondary" onclick={cancel}>Cancel</button>
-        <button class="btn primary" onclick={apply}>Apply</button>
+        <button class="btn secondary" onclick={cancel}>{t("settingsCancel")}</button>
+        <button class="btn primary" onclick={apply}>{t("settingsApply")}</button>
       </div>
     </div>
   </div>

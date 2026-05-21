@@ -1,4 +1,5 @@
 import { mascotSettings } from "./store.svelte";
+import { t } from "../i18n";
 
 let audioCtx: AudioContext | null = null;
 
@@ -140,16 +141,18 @@ export function speak(text: string) {
 
 export function speakForState(state: number) {
   if (!mascotSettings.voiceEnabled) return;
-  const phrases: Record<number, string> = {
+  const statePhraseMap: Record<number, string> = {
     0: "",
-    1: "¡Hola! ¿En qué puedo ayudarte?",
-    2: "Trabajando duro...",
-    3: "¡Ups! Algo salió mal.",
-    4: "Revisando el código...",
-    5: "¡Listo! Todo salió bien.",
+    1: "phraseStartingTask",
+    2: "phraseKeepWorking",
+    3: "phraseError",
+    4: "phraseWaitingResponse",
+    5: "phraseTaskDone",
     6: "",
     7: "",
   };
-  const text = phrases[state];
+  const key = statePhraseMap[state];
+  if (!key) return;
+  const text = t(key as any);
   if (text) speak(text);
 }

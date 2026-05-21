@@ -59,7 +59,7 @@
         if (e.ctrlKey || e.metaKey) {
           e.preventDefault();
           addPreview(nodeId, uri);
-          triggerMascotEvent("preview_abierto");
+          triggerMascotEvent("preview_opened");
         }
       },
       {
@@ -121,7 +121,7 @@
         // Reset idle timer
         if (idleTimeout) clearTimeout(idleTimeout);
         idleTimeout = setTimeout(() => {
-          triggerMascotEvent("esperando_comando");
+          triggerMascotEvent("waiting_command");
         }, IDLE_MS);
       }
     });
@@ -129,7 +129,7 @@
 
     const closedListener = await listen<{ terminal_id: string }>("terminal-closed", (event) => {
       if (event.payload.terminal_id === tabId) {
-        triggerMascotEvent("terminal_cerrado");
+        triggerMascotEvent("terminal_closed");
       }
     });
     unlistenClosed = closedListener;
@@ -191,11 +191,11 @@
     term.onData((data) => {
       invoke("write_terminal", { terminalId: tabId, data: Array.from(new TextEncoder().encode(data)) });
       if (data.trim().length > 0 && data.includes("\r")) {
-        triggerMascotEvent("continuo_trabajando");
+        triggerMascotEvent("keep_working");
       }
       if (idleTimeout) clearTimeout(idleTimeout);
       idleTimeout = setTimeout(() => {
-        triggerMascotEvent("esperando_comando");
+        triggerMascotEvent("waiting_command");
       }, IDLE_MS);
     });
 

@@ -139,14 +139,18 @@ export function deleteSectionInMarkdown(source: string, startLine: number, endLi
   return lines.join("\n");
 }
 
-export const DEFAULT_TODO_TEMPLATE = `# Project Tasks
+import { t } from "../i18n";
 
-## Todo
-- [ ] First task
+export function getDefaultTodoTemplate(): string {
+  return `# ${t("appName")} ${t("todoProgress")}
 
-## In Progress
-- [ ] Working on something
+## ${t("todoSectionTodo")}
+- [ ] ${t("todoTaskFirst")}
 
-## Done
-- [x] Completed task
+## ${t("todoSectionInProgress")}
+- [ ] ${t("todoTaskWorking")}
+
+## ${t("todoSectionDone")}
+- [x] ${t("todoTaskCompleted")}
 `;
+}

@@ -1,0 +1,8 @@
+  **Tauri bundle nativo** — `src-tauri/icons/`:
+  - `32x32.png` — macOS/Linux/Windows pequeño
+  - `128x128.png` — tamaño estándar
+  - `128x128@2x.png` — retina/HiDPI
+  - `icon.icns` — macOS bundle (varios tamaños empaquetados)
+  - `icon.ico` — Windows bundle (varios tamaños empaquetados)
+  - `icon.png` — genérico / Linux
+  - Varios `SquareNNNxNNNLogo.png` y `StoreLogo.png` — Windows MSIX/Store

@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
-import { type MascotSettings, type MascotState, type PetInfo, type PetState, type SemanticEvent, DEFAULT_EVENT_MAPPING, DEFAULT_EVENT_PHRASES } from "./types";
+import { type MascotSettings, type MascotState, type PetInfo, type PetState, type SemanticEvent, DEFAULT_EVENT_MAPPING } from "./types";
 import { speak } from "./sounds";
+import { t } from "../i18n";
 import { detectSpriteFrames } from "./frameDetect";
 
 export const mascotSettings = $state<MascotSettings>({
@@ -51,12 +52,34 @@ export function setMascotState(state: number) {
   }
 }
 
+const PHRASE_MAP: Record<SemanticEvent, string> = {
+  idle: "phraseIdle",
+  waiting_response: "phraseWaitingResponse",
+  task_done: "phraseTaskDone",
+  error: "phraseError",
+  starting_task: "phraseStartingTask",
+  keep_working: "phraseKeepWorking",
+  get_attention: "phraseWaitingResponse",
+  waiting_command: "phraseWaitingCommand",
+  terminal_closed: "phraseTerminalClosed",
+  terminal_created: "phraseTerminalCreated",
+  panel_split: "phrasePanelSplit",
+  preview_opened: "phrasePreviewOpened",
+  file_renamed: "phraseFileRenamed",
+  image_opened: "phraseImageOpened",
+  audio_opened: "phraseAudioOpened",
+  maximized: "phraseMaximized",
+  restored: "phraseRestored",
+  approval_request: "phraseApprovalRequest",
+};
+
 export function triggerMascotEvent(event: SemanticEvent) {
   const mappings = mascotSettings.eventMappings ?? DEFAULT_EVENT_MAPPING;
   const state = mappings[event];
   if (state != null) setMascotState(state);
   const phrases = mascotSettings.eventPhrases ?? {};
-  const text = phrases[event] ?? DEFAULT_EVENT_PHRASES[event] ?? "";
+  const i18nKey = PHRASE_MAP[event];
+  const text = phrases[event] ?? (i18nKey ? t(i18nKey as any) : "");
   if (text) speak(text);
 }
 

@@ -12,7 +12,7 @@
   function openPreview(url: string, terminalId: string) {
     const nodeId = layoutState.activeNodeId ?? layoutState.root.id;
     addPreview(nodeId, url);
-    triggerMascotEvent("preview_abierto");
+    triggerMascotEvent("preview_opened");
     clearUrl(url, terminalId);
   }
 

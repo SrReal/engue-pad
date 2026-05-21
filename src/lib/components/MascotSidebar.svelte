@@ -15,7 +15,8 @@
   } from "$lib/mascot/store.svelte";
   import { playTone, speak } from "$lib/mascot/sounds";
   import type { PetState, EventMapping, VoiceGender, SemanticEvent } from "$lib/mascot/types";
-  import { DEFAULT_EVENT_PHRASES } from "$lib/mascot/types";
+  import type { Dictionary } from "$lib/i18n";
+  import { t } from "$lib/i18n";
   import { saveSettings } from "$lib/workspace/settings";
   import { appSettings } from "$lib/workspace/settingsStore.svelte";
   import { workspaceInfo } from "$lib/workspace/store.svelte";
@@ -24,24 +25,24 @@
 
   const STATES: PetState[] = [0, 1, 2, 3, 4, 5, 6, 7];
   const EVENT_LABELS: Record<SemanticEvent, string> = {
-    idle: "Idle",
-    esperando_respuesta: "Esperando respuesta",
-    aviso_fin_tarea: "Aviso fin tarea",
-    error: "Error",
-    iniciando_tarea: "Iniciando tarea",
-    continuo_trabajando: "Continuo trabajando",
-    llamar_atencion: "Llamar atención",
-    esperando_comando: "Esperando comando",
-    terminal_cerrado: "Terminal cerrado",
-    terminal_creado: "Terminal creado",
-    panel_dividido: "Panel dividido",
-    preview_abierto: "Preview abierto",
-    archivo_renombrado: "Archivo renombrado",
-    imagen_abierta: "Imagen abierta",
-    audio_abierto: "Audio abierto",
-    maximizado: "Maximizado",
-    restaurado: "Restaurado",
-    approval_request: "Solicitud de aprobación",
+    idle: t("eventIdle"),
+    waiting_response: t("eventWaitingResponse"),
+    task_done: t("eventTaskDone"),
+    error: t("eventError"),
+    starting_task: t("eventStartingTask"),
+    keep_working: t("eventKeepWorking"),
+    get_attention: t("eventGetAttention"),
+    waiting_command: t("eventWaitingCommand"),
+    terminal_closed: t("eventTerminalClosed"),
+    terminal_created: t("eventTerminalCreated"),
+    panel_split: t("eventPanelSplit"),
+    preview_opened: t("eventPreviewOpened"),
+    file_renamed: t("eventFileRenamed"),
+    image_opened: t("eventImageOpened"),
+    audio_opened: t("eventAudioOpened"),
+    maximized: t("eventMaximized"),
+    restored: t("eventRestored"),
+    approval_request: t("eventApprovalRequest"),
   };
 
   let installedMascots = $state<MascotItem[]>([]);
@@ -127,8 +128,29 @@
     saveMascotSettings();
   }
 
+  const PHRASE_MAP: Record<SemanticEvent, string> = {
+    idle: "phraseIdle",
+    waiting_response: "phraseWaitingResponse",
+    task_done: "phraseTaskDone",
+    error: "phraseError",
+    starting_task: "phraseStartingTask",
+    keep_working: "phraseKeepWorking",
+    get_attention: "phraseWaitingResponse",
+    waiting_command: "phraseWaitingCommand",
+    terminal_closed: "phraseTerminalClosed",
+    terminal_created: "phraseTerminalCreated",
+    panel_split: "phrasePanelSplit",
+    preview_opened: "phrasePreviewOpened",
+    file_renamed: "phraseFileRenamed",
+    image_opened: "phraseImageOpened",
+    audio_opened: "phraseAudioOpened",
+    maximized: "phraseMaximized",
+    restored: "phraseRestored",
+    approval_request: "phraseApprovalRequest",
+  };
+
   function eventPhrase(key: SemanticEvent): string {
-    return mascotSettings.eventPhrases?.[key] ?? DEFAULT_EVENT_PHRASES[key] ?? "";
+    return mascotSettings.eventPhrases?.[key] ?? t(PHRASE_MAP[key] as keyof Dictionary) ?? "";
   }
 
   function selectMascot(slug: string) {
@@ -181,16 +203,16 @@
 <div class="mascot-sidebar">
   <!-- Scope selector -->
   <div class="scope-bar">
-    <span class="scope-label">Configuración:</span>
-    <button class="scope-btn" class:active={appSettings.mascotScope !== "project"} onclick={() => setScope("global")} type="button">Global</button>
-    <button class="scope-btn" class:active={appSettings.mascotScope === "project"} onclick={() => setScope("project")} type="button">Este proyecto</button>
+    <span class="scope-label">{t("mascotConfig")}:</span>
+    <button class="scope-btn" class:active={appSettings.mascotScope !== "project"} onclick={() => setScope("global")} type="button">{t("mascotScopeGlobal")}</button>
+    <button class="scope-btn" class:active={appSettings.mascotScope === "project"} onclick={() => setScope("project")} type="button">{t("mascotScopeProject")}</button>
   </div>
 
   <!-- Installed Mascots -->
   <div class="section">
     <button class="section-header" onclick={() => toggleSection("mascotas")}>
       <span class="section-arrow" class:open={expandedSections["mascotas"]}><CaretRight size={12} /></span>
-      <span class="section-title">Mascotas</span>
+      <span class="section-title">{t("mascotMascots")}</span>
     </button>
     {#if expandedSections["mascotas"]}
       <div class="mascot-list">
@@ -209,10 +231,10 @@
             </div>
           </div>
         {:else}
-          <div class="empty">Ninguna mascota instalada</div>
+          <div class="empty">{t("mascotNoMascots")}</div>
         {/each}
       </div>
-      <button class="btn-import" onclick={importMascot}>Importar desde carpeta</button>
+      <button class="btn-import" onclick={importMascot}>{t("mascotImportFromFolder")}</button>
     {/if}
   </div>
 
@@ -220,17 +242,17 @@
   <div class="section">
     <button class="section-header" onclick={() => toggleSection("apariencia")}>
       <span class="section-arrow" class:open={expandedSections["apariencia"]}><CaretRight size={12} /></span>
-      <span class="section-title">Apariencia</span>
+      <span class="section-title">{t("mascotAppearance")}</span>
     </button>
     {#if expandedSections["apariencia"]}
       <div class="row">
-        <button class="btn" class:active={mascotSettings.mode === "disabled"} onclick={() => setMode("disabled")}>Disabled</button>
-        <button class="btn" class:active={mascotSettings.mode === "compact"} onclick={() => setMode("compact")}>Compact</button>
-        <button class="btn" class:active={mascotSettings.mode === "animated"} onclick={() => setMode("animated")}>Animated</button>
+        <button class="btn" class:active={mascotSettings.mode === "disabled"} onclick={() => setMode("disabled")}>{t("mascotDisabled")}</button>
+        <button class="btn" class:active={mascotSettings.mode === "compact"} onclick={() => setMode("compact")}>{t("mascotCompact")}</button>
+        <button class="btn" class:active={mascotSettings.mode === "animated"} onclick={() => setMode("animated")}>{t("mascotAnimated")}</button>
       </div>
       <div class="row">
-        <button class="btn" class:active={mascotSettings.size === "small"} onclick={() => setSize("small")}>Small</button>
-        <button class="btn" class:active={mascotSettings.size === "normal"} onclick={() => setSize("normal")}>Normal</button>
+        <button class="btn" class:active={mascotSettings.size === "small"} onclick={() => setSize("small")}>{t("mascotSmall")}</button>
+        <button class="btn" class:active={mascotSettings.size === "normal"} onclick={() => setSize("normal")}>{t("mascotNormal")}</button>
       </div>
     {/if}
   </div>
@@ -239,25 +261,25 @@
   <div class="section">
     <button class="section-header" onclick={() => toggleSection("audio")}>
       <span class="section-arrow" class:open={expandedSections["audio"]}><CaretRight size={12} /></span>
-      <span class="section-title">Audio</span>
+      <span class="section-title">{t("mascotAudio")}</span>
     </button>
     {#if expandedSections["audio"]}
       <div class="row">
-        <button class="btn test-btn" onclick={testSound}>Probar sonido</button>
-        <button class="btn test-btn" onclick={testVoice}>Probar voz</button>
+        <button class="btn test-btn" onclick={testSound}>{t("mascotTestSound")}</button>
+        <button class="btn test-btn" onclick={testVoice}>{t("mascotTestVoice")}</button>
       </div>
       <div class="row check-row">
         <label class="check-label">
           <input type="checkbox" checked={mascotSettings.soundEnabled} onchange={toggleSound} />
-          Sonido
+          {t("mascotSound")}
         </label>
         <label class="check-label">
           <input type="checkbox" checked={mascotSettings.voiceEnabled} onchange={toggleVoice} />
-          Voz
+          {t("mascotVoice")}
         </label>
       </div>
       <div class="field">
-        <span>Volumen</span>
+        <span>{t("mascotVolume")}</span>
         <input type="range" min="0" max="1" step="0.1" value={mascotSettings.volume} oninput={(e) => setVolume(+e.currentTarget.value)} />
         <span class="value">{Math.round(mascotSettings.volume * 100)}%</span>
       </div>
@@ -268,23 +290,23 @@
   <div class="section">
     <button class="section-header" onclick={() => toggleSection("voz")}>
       <span class="section-arrow" class:open={expandedSections["voz"]}><CaretRight size={12} /></span>
-      <span class="section-title">Voz</span>
+      <span class="section-title">{t("mascotVoice")}</span>
     </button>
     {#if expandedSections["voz"]}
       <div class="field">
-        <span>Idioma</span>
+        <span>{t("mascotLanguage")}</span>
         <select value={mascotSettings.voiceLang} onchange={(e) => setVoiceLang(e.currentTarget.value)}>
           <option value="es-ES">Español</option>
           <option value="en-US">English</option>
         </select>
       </div>
       <div class="field">
-        <span>Tono</span>
+        <span>{t("mascotTone")}</span>
         <select value={mascotSettings.voiceGender} onchange={(e) => setVoiceGender(e.currentTarget.value as VoiceGender)}>
-          <option value="male">Hombre</option>
-          <option value="female">Mujer</option>
-          <option value="boy">Niño</option>
-          <option value="girl">Niña</option>
+          <option value="male">{t("mascotGenderMan")}</option>
+          <option value="female">{t("mascotGenderWoman")}</option>
+          <option value="boy">{t("mascotGenderBoy")}</option>
+          <option value="girl">{t("mascotGenderGirl")}</option>
         </select>
       </div>
     {/if}
@@ -294,7 +316,7 @@
   <div class="section">
     <button class="section-header" onclick={() => toggleSection("mapeos")}>
       <span class="section-arrow" class:open={expandedSections["mapeos"]}><CaretRight size={12} /></span>
-      <span class="section-title">Mapeos de eventos</span>
+      <span class="section-title">{t("mascotEventMappings")}</span>
     </button>
     {#if expandedSections["mapeos"]}
       {#each Object.entries(EVENT_LABELS) as [key, label]}
@@ -302,7 +324,7 @@
           <span>{label}</span>
           <select value={mascotSettings.eventMappings?.[key as SemanticEvent] ?? 0} onchange={(e) => setEventMapping(key as SemanticEvent, Number(e.currentTarget.value))}>
             {#each STATES as s}
-              <option value={s}>Fila {s}</option>
+              <option value={s}>{t("mascotRow")} {s}</option>
             {/each}
           </select>
         </div>
@@ -314,13 +336,13 @@
   <div class="section">
     <button class="section-header" onclick={() => toggleSection("frases")}>
       <span class="section-arrow" class:open={expandedSections["frases"]}><CaretRight size={12} /></span>
-      <span class="section-title">Frases por evento</span>
+      <span class="section-title">{t("mascotPhrases")}</span>
     </button>
     {#if expandedSections["frases"]}
       {#each Object.entries(EVENT_LABELS) as [key, label]}
         <div class="field phrase-field">
           <span>{label}</span>
-          <input type="text" value={eventPhrase(key as SemanticEvent)} onchange={(e) => setEventPhrase(key as SemanticEvent, e.currentTarget.value)} placeholder="Sin frase" />
+          <input type="text" value={eventPhrase(key as SemanticEvent)} onchange={(e) => setEventPhrase(key as SemanticEvent, e.currentTarget.value)} placeholder={t("mascotNoPhrase")} />
         </div>
       {/each}
     {/if}
@@ -330,13 +352,13 @@
   <div class="section">
     <button class="section-header" onclick={() => toggleSection("manuales")}>
       <span class="section-arrow" class:open={expandedSections["manuales"]}><CaretRight size={12} /></span>
-      <span class="section-title">Estados manuales</span>
+      <span class="section-title">{t("mascotManualStates")}</span>
     </button>
     {#if expandedSections["manuales"]}
       <div class="btn-grid">
         {#each STATES as state}
           <button class="btn state-btn" class:active={mascotState.currentState === state} onclick={() => triggerState(state)}>
-            Fila {state}
+            {t("mascotRow")} {state}
           </button>
         {/each}
       </div>
@@ -347,17 +369,17 @@
   <div class="section">
     <button class="section-header" onclick={() => toggleSection("info")}>
       <span class="section-arrow" class:open={expandedSections["info"]}><CaretRight size={12} /></span>
-      <span class="section-title">Info</span>
+      <span class="section-title">{t("mascotInfo")}</span>
     </button>
     {#if expandedSections["info"]}
       {#if mascotData.pet}
-        <div class="info-row"><span>Nombre:</span> {mascotData.pet.name}</div>
-        <div class="info-row"><span>Frame:</span> {mascotData.pet.frameWidth}x{mascotData.pet.frameHeight}</div>
-        <div class="info-row"><span>Frames/estado:</span> {mascotData.pet.framesPerState}</div>
-        <div class="info-row"><span>Frames por fila:</span> {mascotData.pet.framesPerRow?.join(", ") ?? "N/A"}</div>
-        <div class="info-row"><span>Loop:</span> {mascotData.pet.loopMs}ms</div>
+        <div class="info-row"><span>{t("mascotName")}</span> {mascotData.pet.name}</div>
+        <div class="info-row"><span>{t("mascotFrame")}</span> {mascotData.pet.frameWidth}x{mascotData.pet.frameHeight}</div>
+        <div class="info-row"><span>{t("mascotFramesPerState")}</span> {mascotData.pet.framesPerState}</div>
+        <div class="info-row"><span>{t("mascotFramesPerRow")}</span> {mascotData.pet.framesPerRow?.join(", ") ?? "N/A"}</div>
+        <div class="info-row"><span>{t("mascotLoop")}</span> {mascotData.pet.loopMs}ms</div>
       {:else}
-        <div class="info-row muted">Ninguna mascota cargada</div>
+        <div class="info-row muted">{t("mascotNoMascotLoaded")}</div>
       {/if}
     {/if}
   </div>

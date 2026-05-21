@@ -6,6 +6,7 @@
   import { updateLinterAvailability, linterAvailability } from "$lib/editor/linterAvailability.svelte";
   import { todoStore } from "$lib/todo/store.svelte";
   import type { LayoutNode, Tab } from "$lib/layout/types";
+  import { t } from "$lib/i18n";
   import { Check, NotePencil } from "phosphor-svelte";
 
   let { toggleProblems, showProblems }: { toggleProblems: () => void; showProblems: boolean } = $props();
@@ -42,7 +43,7 @@
     if (!path) return;
     try {
       await navigator.clipboard.writeText(path);
-      showToast("Ruta copiada");
+      showToast(t("statusPathCopied"));
     } catch (e) {
       console.error("Failed to copy path:", e);
     }
@@ -63,7 +64,7 @@
 </script>
 
 <div class="status-bar" onselectstart={(e) => e.preventDefault()}>
-  <span class="info path" onclick={() => copyPath(activeTab?.path)} title="Copiar ruta">{activeTab?.path ?? ""}</span>
+  <span class="info path" onclick={() => copyPath(activeTab?.path)} title={t("statusCopyPath")}>{activeTab?.path ?? ""}</span>
   <button class="info problems-btn" class:active={showProblems} onclick={toggleProblems}>
     {#if problemsStore.items.length > 0}
       {#if problemsStore.items.some((p) => p.severity === "error")}
@@ -83,10 +84,10 @@
   {#if todoStore.parsed.total > 0}
     <span class="info todo-count"><NotePencil size={12} /> {todoStore.parsed.completed}/{todoStore.parsed.total}</span>
   {/if}
-  <span class="info">CPU {cpu.toFixed(1)}%</span>
-  <span class="info">{memory} MB RAM</span>
-  <span class="info">{activeTab?.lineEnding ?? "LF"}</span>
-  <span class="info">UTF-8</span>
+  <span class="info">{t("statusCpu")} {cpu.toFixed(1)}%</span>
+  <span class="info">{memory} MB {t("statusRam")}</span>
+  <span class="info">{activeTab?.lineEnding ?? t("statusLf")}</span>
+  <span class="info">{t("statusUtf8")}</span>
   <span class="info">{activeTab?.language ?? ""}</span>
 </div>
 

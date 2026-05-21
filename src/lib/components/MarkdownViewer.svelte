@@ -52,7 +52,7 @@
     if (!href) return;
     e.preventDefault();
     addPreview(nodeId, href);
-    triggerMascotEvent("preview_abierto");
+    triggerMascotEvent("preview_opened");
   }
 
   onMount(() => {

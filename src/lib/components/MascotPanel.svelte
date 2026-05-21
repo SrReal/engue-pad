@@ -11,7 +11,7 @@
   let frameIndex = $state(0);
   let rafId: number | null = null;
   let lastFrameTime = 0;
-  let lastSoundState = "";
+  let lastSoundState = -1;
 
   const SIZE_MAP = { small: 96, normal: 160 };
 

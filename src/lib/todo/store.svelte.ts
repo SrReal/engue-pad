@@ -8,7 +8,7 @@ import {
   addSectionInMarkdown,
   editSectionTitleInMarkdown,
   deleteSectionInMarkdown,
-  DEFAULT_TODO_TEMPLATE,
+  getDefaultTodoTemplate,
   type TodoDocument,
 } from "./parser";
 
@@ -66,8 +66,8 @@ export async function ensureTodoFile(path: string): Promise<void> {
     todoStore.path = path;
   } catch {
     try {
-      await invoke("write_file", { path, contents: DEFAULT_TODO_TEMPLATE });
-      updateStore(DEFAULT_TODO_TEMPLATE);
+      await invoke("write_file", { path, contents: getDefaultTodoTemplate() });
+      updateStore(getDefaultTodoTemplate());
       todoStore.path = path;
     } catch (e) {
       console.error("Failed to create todo.md", e);

@@ -25,6 +25,7 @@
 import { loadProjectMascotConfig } from "$lib/mascot/projectStore.svelte";
 import type { SemanticEvent } from "$lib/mascot/types";
   import { SidebarSimple, FolderOpen, ArrowClockwise, NotePencil, PawPrint, Gear, AppWindow, Code } from "phosphor-svelte";
+  import { setLocale, t } from "$lib/i18n";
   const projectName = $derived(workspaceInfo.rootPath ? workspaceInfo.rootPath.split(/[\\/]/).pop() ?? "EnguePad" : "EnguePad");
 
   let sidebarWidth = $state(240);
@@ -61,6 +62,9 @@ import type { SemanticEvent } from "$lib/mascot/types";
 
     const settings = await loadSettings();
     updateAppSettings(settings);
+    if (settings.locale) {
+      setLocale(settings.locale);
+    }
     if (settings.mascot?.enabled && (!settings.mascot.position || (settings.mascot.position.x <= 50 && settings.mascot.position.y <= 50))) {
       const size = settings.mascot.size === "small" ? 96 : 160;
       const pos = {
@@ -104,7 +108,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
       const dirtyTabs = findAllDirtyTabs(layoutState.root);
       if (dirtyTabs.length > 0) {
         const names = dirtyTabs.map((t) => `"${t.title}"`).join(", ");
-        const confirmed = await confirm(`${names} has unsaved changes. Quit without saving?`, { title: "Quit", kind: "warning" });
+        const confirmed = await confirm(t("dialogQuitBody", names), { title: t("dialogQuitTitle"), kind: "warning" });
         if (confirmed) {
           await invoke("exit_app");
         }
@@ -124,7 +128,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
         if (p?.url) {
           const nodeId = layoutState.activeNodeId ?? layoutState.root.id;
           addPreview(nodeId, p.url);
-          triggerMascotEvent("preview_abierto");
+          triggerMascotEvent("preview_opened");
         }
       }
     });
@@ -182,7 +186,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
               }
             }
           } else if (s.mascot?.enabled && s.mascot?.currentMascot) {
-            triggerMascotEvent("iniciando_tarea");
+            triggerMascotEvent("starting_task");
           }
         }),
       ]).finally(() => {
@@ -222,7 +226,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
     } else {
       sidebarWidth = lastSidebarWidth || 240;
     }
-    triggerMascotEvent("iniciando_tarea");
+    triggerMascotEvent("starting_task");
   }
 
   function onRightSidebarPointerDown(e: PointerEvent) {
@@ -250,7 +254,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
       rightSidebarWidth = lastRightSidebarWidth || 260;
     }
     saveSidebarState();
-    triggerMascotEvent("iniciando_tarea");
+    triggerMascotEvent("starting_task");
   }
 
   function onMascotSidebarPointerDown(e: PointerEvent) {
@@ -278,7 +282,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
       mascotSidebarWidth = lastMascotSidebarWidth || 260;
     }
     saveSidebarState();
-    triggerMascotEvent("iniciando_tarea");
+    triggerMascotEvent("starting_task");
   }
 
   function saveSidebarState() {
@@ -318,7 +322,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
       const dirtyTabs = findAllDirtyTabs(layoutState.root);
       if (dirtyTabs.length > 0) {
         const names = dirtyTabs.map((t) => `"${t.title}"`).join(", ");
-        const confirmed = await confirm(`${names} has unsaved changes. Switch project without saving?`, { title: "Switch Project", kind: "warning" });
+        const confirmed = await confirm(t("dialogSwitchProjectBody", names), { title: t("dialogSwitchProjectTitle"), kind: "warning" });
         if (!confirmed) return;
       }
       resetLayout();
@@ -400,13 +404,13 @@ import type { SemanticEvent } from "$lib/mascot/types";
       <span class="app-name">EnguePad</span>
     </div>
     <div class="header-actions">
-      <button class="icon-btn" onclick={toggleSidebar} title="Toggle sidebar"><SidebarSimple size={18} /></button>
-      <button class="icon-btn" onclick={openFolder} title="Open folder"><FolderOpen size={18} /></button>
-      <button class="icon-btn" onclick={triggerRefresh} title="Refresh tree"><ArrowClockwise size={18} /></button>
-      <button class="icon-btn" onclick={toggleRightSidebar} title="Toggle tasks sidebar"><NotePencil size={18} /></button>
-      <button class="icon-btn" onclick={toggleMascotSidebar} title="Mascot"><PawPrint size={18} /></button>
-      <button class="icon-btn" onclick={() => showSettings = true} title="Settings"><Gear size={18} /></button>
-      <button class="icon-btn" onclick={openNewWindow} title="New instance"><AppWindow size={18} /></button>
+      <button class="icon-btn" onclick={toggleSidebar} title={t("headerToggleSidebar")}><SidebarSimple size={18} /></button>
+      <button class="icon-btn" onclick={openFolder} title={t("headerOpenFolder")}><FolderOpen size={18} /></button>
+      <button class="icon-btn" onclick={triggerRefresh} title={t("headerRefreshTree")}><ArrowClockwise size={18} /></button>
+      <button class="icon-btn" onclick={toggleRightSidebar} title={t("headerToggleTasksSidebar")}><NotePencil size={18} /></button>
+      <button class="icon-btn" onclick={toggleMascotSidebar} title={t("headerMascot")}><PawPrint size={18} /></button>
+      <button class="icon-btn" onclick={() => showSettings = true} title={t("headerSettings")}><Gear size={18} /></button>
+      <button class="icon-btn" onclick={openNewWindow} title={t("headerNewInstance")}><AppWindow size={18} /></button>
     </div>
     <span class="logo">{projectName}</span>
   </header>
@@ -415,7 +419,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
       <div class="sidebar-content">
         {#if !workspaceInfo.rootPath}
           <div class="placeholder">
-            <button class="open-btn" onclick={openFolder}>Open folder</button>
+            <button class="open-btn" onclick={openFolder}>{t("headerOpenFolder")}</button>
           </div>
         {:else}
           <FileTree rootPath={workspaceInfo.rootPath} {refreshSignal} />

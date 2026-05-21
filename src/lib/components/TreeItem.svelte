@@ -8,6 +8,7 @@
   import { fileDrag } from "$lib/tree/fileDragStore";
   import { triggerMascotEvent } from "$lib/mascot/store.svelte";
   import FileIcon from "./FileIcon.svelte";
+  import { t } from "$lib/i18n";
 
   type FileEntry = {
     name: string;
@@ -87,9 +88,9 @@
         title: node.entry.name,
         path: node.entry.path,
       });
-      if (isImage(node.entry.path)) triggerMascotEvent("imagen_abierta");
-      else if (isAudio(node.entry.path)) triggerMascotEvent("audio_abierto");
-      else triggerMascotEvent("iniciando_tarea");
+      if (isImage(node.entry.path)) triggerMascotEvent("image_opened");
+      else if (isAudio(node.entry.path)) triggerMascotEvent("audio_opened");
+      else triggerMascotEvent("starting_task");
     }
   }
 
@@ -185,7 +186,7 @@
       await invoke("rename_file", { from: src, to: dest });
       onRefresh();
     } catch (err) {
-      alert(`Failed to move: ${err}`);
+      alert(`${t("treeFailedMove")}: ${err}`);
     }
   }
 
@@ -238,7 +239,7 @@
       isRenaming = false;
       onRefresh();
     } catch (e) {
-      alert(`Failed to rename: ${e}`);
+      alert(`${t("treeFailedRename")}: ${e}`);
     }
   }
 
@@ -312,12 +313,12 @@
   {#if contextMenu}
     <div class="context-menu" style:left="{contextMenu.x}px" style:top="{contextMenu.y}px">
       {#if node.entry.is_file}
-        <button onclick={handleFileClick}>Abrir</button>
+        <button onclick={handleFileClick}>{t("treeOpen")}</button>
       {:else}
-        <button onclick={expandNode}>{node.expanded ? "Contraer" : "Expandir"}</button>
+        <button onclick={expandNode}>{node.expanded ? t("treeCollapse") : t("treeExpand")}</button>
       {/if}
-      <button onclick={startRename}>Renombrar</button>
-      <button onclick={copyPath}>Copiar ruta</button>
+      <button onclick={startRename}>{t("treeRename")}</button>
+      <button onclick={copyPath}>{t("treeCopyPath")}</button>
     </div>
   {/if}
 </div>

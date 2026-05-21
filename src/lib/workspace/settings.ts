@@ -41,6 +41,7 @@ export type AppSettings = {
   zoom?: number;
   restoreLayout?: boolean;
   theme?: "dark" | "light" | "auto";
+  locale?: "en" | "es";
   editor?: EditorSettings;
   terminal?: TerminalSettings;
   lint?: LinterSettings;
@@ -105,6 +106,7 @@ export function getDefaultSettings(): Required<Omit<AppSettings, "lastProjectPat
     zoom: 1,
     restoreLayout: true,
     theme: "dark",
+    locale: "en",
     editor: { ...DEFAULT_EDITOR },
     terminal: { ...DEFAULT_TERMINAL },
     lint: { ...DEFAULT_LINT },

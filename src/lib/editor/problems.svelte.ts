@@ -17,7 +17,7 @@ export function setProblemsForPath(path: string, newProblems: Problem[]) {
   if (newProblems.some((p) => p.severity === "error")) {
     triggerMascotEvent("error");
   } else if (newProblems.length > 0) {
-    triggerMascotEvent("llamar_atencion");
+    triggerMascotEvent("get_attention");
   }
 }
 

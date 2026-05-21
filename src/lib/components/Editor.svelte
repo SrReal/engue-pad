@@ -93,7 +93,7 @@
     try {
       await invoke("write_file", { path, contents: content });
       markTabSaved(nodeId, tabId);
-      triggerMascotEvent("aviso_fin_tarea");
+      triggerMascotEvent("task_done");
       if (linterConfig.enabled && linterConfig.runOnSave && language) {
         forceLint(view, path, language);
       }

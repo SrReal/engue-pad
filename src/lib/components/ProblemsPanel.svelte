@@ -30,7 +30,7 @@
       path,
     });
     setActiveNode(nodeId);
-    triggerMascotEvent("llamar_atencion");
+    triggerMascotEvent("get_attention");
   }
 
   const grouped = $derived.by(() => {
