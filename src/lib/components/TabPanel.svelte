@@ -418,7 +418,16 @@
   }
 
   .tab-panel.active {
-    outline-color: var(--accent-color, #4a9eff);
+    outline: none;
+  }
+
+  .tab-panel.active::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid #0EA5FF;
+    pointer-events: none;
+    z-index: 100;
   }
 
   .tab-panel.drag-target {
