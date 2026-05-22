@@ -45,13 +45,24 @@
     menuOpen = false;
   }
 
-  function handleCopy() {
-    document.execCommand("copy");
+  async function handleCopy() {
+    try {
+      const sel = window.getSelection()?.toString() ?? "";
+      if (sel) await navigator.clipboard.writeText(sel);
+    } catch {
+      document.execCommand("copy");
+    }
     menuOpen = false;
   }
 
-  function handleCut() {
-    document.execCommand("cut");
+  async function handleCut() {
+    try {
+      const sel = window.getSelection()?.toString() ?? "";
+      if (sel) await navigator.clipboard.writeText(sel);
+      document.execCommand("cut");
+    } catch {
+      document.execCommand("cut");
+    }
     menuOpen = false;
   }
 
@@ -133,6 +144,17 @@
 
   :global(::selection) {
     background: rgba(14, 165, 255, 0.35);
+  }
+
+  /* CodeMirror selection highlight */
+  :global(.cm-selectionBackground) {
+    background: rgba(14, 165, 255, 0.25) !important;
+  }
+  :global(.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground) {
+    background: rgba(14, 165, 255, 0.4) !important;
+  }
+  :global(.cm-cursor) {
+    border-left-color: var(--accent-color, #0ea5ff) !important;
   }
 
   :global(.tab-bar, .panel-actions, .app-header, .status-bar,
