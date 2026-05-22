@@ -4,7 +4,6 @@
 - testear bien posibles bugs
 - modal de carga bonita
 - cambiar estilo
-- estilo de pestaña y panel marcado con borde cuando activo, algo mas sutil
 
 ## Mascota
 - testear eventos que concuerden
