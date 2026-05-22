@@ -42,7 +42,7 @@
   .modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(3, 7, 18, 0.72);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -52,10 +52,10 @@
   .modal {
     background: var(--bg-panel, #1e1e1e);
     border: 1px solid var(--border-color, #333);
-    border-radius: 6px;
+    border-radius: 8px;
     width: 400px;
     max-width: 90vw;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
   }
 
   .modal-header {
@@ -99,7 +99,7 @@
 
   .btn {
     padding: 6px 16px;
-    border-radius: 4px;
+    border-radius: 6px;
     font-size: 13px;
     cursor: pointer;
     border: none;
@@ -117,6 +117,6 @@
   }
 
   .btn:hover {
-    opacity: 0.9;
+    filter: brightness(1.08);
   }
 </style>

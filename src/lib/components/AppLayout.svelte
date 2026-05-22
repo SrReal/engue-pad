@@ -10,9 +10,8 @@
   import LayoutNode from "./LayoutNode.svelte";
   import FileTree from "./FileTree.svelte";
   import TodoPanel from "./TodoPanel.svelte";
-  import StatusBar from "./StatusBar.svelte";
   import SidebarFooter from "./SidebarFooter.svelte";
-  import ProcessFooter from "./ProcessFooter.svelte";
+  import AppFooter from "./AppFooter.svelte";
   import ProblemsPanel from "./ProblemsPanel.svelte";
   import UrlToast from "./UrlToast.svelte";
   import SettingsModal from "./SettingsModal.svelte";
@@ -24,7 +23,7 @@
   import { triggerMascotEvent, updateMascotSettings, applyMascotConfig, loadMascot } from "$lib/mascot/store.svelte";
 import { loadProjectMascotConfig } from "$lib/mascot/projectStore.svelte";
 import type { SemanticEvent } from "$lib/mascot/types";
-  import { SidebarSimple, FolderOpen, ArrowClockwise, NotePencil, PawPrint, Gear, AppWindow, Code } from "phosphor-svelte";
+  import { SidebarSimple, FolderOpen, ArrowClockwise, NotePencil, PawPrint, Gear, AppWindow } from "phosphor-svelte";
   import { setLocale, t } from "$lib/i18n";
   const projectName = $derived(workspaceInfo.rootPath ? workspaceInfo.rootPath.split(/[\\/]/).pop() ?? "EnguePad" : "EnguePad");
 
@@ -400,7 +399,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
 <div class="app-layout">
   <header class="top-bar">
     <div class="app-brand">
-      <Code size={22} weight="bold" />
+      <img class="brand-icon" src="/favicon.png" alt="" />
       <span class="app-name">EnguePad</span>
     </div>
     <div class="header-actions">
@@ -446,8 +445,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
           <ProblemsPanel onClose={() => showProblems = false} />
         </div>
       {/if}
-      <ProcessFooter />
-      <StatusBar toggleProblems={() => showProblems = !showProblems} {showProblems} />
+      <AppFooter toggleProblems={() => showProblems = !showProblems} {showProblems} />
     </main>
     {#if !mascotSidebarCollapsed}
       <div
@@ -503,39 +501,48 @@ import type { SemanticEvent } from "$lib/mascot/types";
   .top-bar {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
+    gap: 10px;
+    min-height: 48px;
+    padding: 8px 14px;
     border-bottom: 1px solid var(--border-color, #333);
-    background: var(--bg-sidebar, #252526);
-    font-weight: 600;
+    background: linear-gradient(180deg, #0d1725 0%, var(--bg-tab-bar, #0b1220) 100%);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+    font-weight: 400;
     flex-shrink: 0;
   }
 
   .app-brand {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    color: var(--accent-color, #4a9eff);
+    gap: 9px;
+    color: var(--text-color, #ccc);
     user-select: none;
     -webkit-user-select: none;
     flex-shrink: 0;
   }
 
+  .brand-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    box-shadow: 0 0 0 1px rgba(14, 165, 255, 0.35), 0 8px 20px rgba(0, 0, 0, 0.28);
+  }
+
   .app-name {
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: -0.3px;
+    font-size: 18px;
+    font-weight: 400;
+    letter-spacing: 0;
   }
 
   .header-actions {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     flex: 1;
   }
 
   .logo {
-    color: var(--accent-color, #4a9eff);
+    color: var(--text-muted, #888);
     user-select: none;
     -webkit-user-select: none;
     flex-shrink: 0;
@@ -544,25 +551,43 @@ import type { SemanticEvent } from "$lib/mascot/types";
   }
 
   .icon-btn {
-    background: transparent;
-    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: rgba(17, 24, 39, 0.72);
+    border: 1px solid var(--border-color, #333);
     color: var(--text-color, #ccc);
     cursor: pointer;
-    padding: 2px 6px;
-    border-radius: 3px;
+    padding: 0;
+    border-radius: 7px;
     user-select: none;
     -webkit-user-select: none;
     font-size: 16px;
+    transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
   }
 
   .icon-btn:hover {
     background: var(--bg-tab-hover, #3d3d3d);
+    border-color: var(--accent-color, #4a9eff);
+    color: var(--accent-cyan, #00e5ff);
   }
 
   .body {
     display: flex;
     flex: 1;
     min-height: 0;
+    overflow: hidden;
+    padding: 8px;
+  }
+
+  .sidebar,
+  .right-sidebar,
+  .mascot-sidebar {
+    border: 1px solid var(--border-color, #333);
+    border-radius: 8px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
     overflow: hidden;
   }
 
@@ -588,6 +613,8 @@ import type { SemanticEvent } from "$lib/mascot/types";
     overflow: hidden;
     padding: 0;
     min-width: 0;
+    border: none;
+    box-shadow: none;
   }
 
   .mascot-sidebar {
@@ -595,7 +622,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
     flex-direction: column;
     background: var(--bg-sidebar, #252526);
     flex-shrink: 0;
-    min-width: 200px;
+    min-width: 320px;
     max-width: 400px;
   }
 
@@ -603,12 +630,14 @@ import type { SemanticEvent } from "$lib/mascot/types";
     overflow: hidden;
     padding: 0;
     min-width: 0;
+    border: none;
+    box-shadow: none;
   }
 
   .sidebar-content {
     flex: 1;
     overflow: auto;
-    padding: 8px;
+    padding: 10px 8px;
   }
 
   .placeholder {
@@ -623,31 +652,35 @@ import type { SemanticEvent } from "$lib/mascot/types";
     border: none;
     color: white;
     padding: 8px 16px;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
+    font-weight: 600;
   }
 
   .open-btn:hover {
-    opacity: 0.9;
+    background: var(--accent-hover, #0d8cff);
   }
 
   .sidebar-divider {
-    width: 4px;
+    width: 8px;
     flex-shrink: 0;
     cursor: col-resize;
-    background: var(--border-color, #333);
+    background: transparent;
+    z-index: 2;
   }
 
   .sidebar-divider:hover {
-    background: var(--accent-color, #4a9eff);
+    background: linear-gradient(90deg, transparent 3px, var(--accent-color, #4a9eff) 3px, var(--accent-color, #4a9eff) 5px, transparent 5px);
   }
 
   .main-area {
     flex: 1;
     display: flex;
     flex-direction: column;
+    gap: 8px;
     min-width: 0;
     min-height: 0;
+    background: transparent;
     overflow: hidden;
   }
 
@@ -672,6 +705,8 @@ import type { SemanticEvent } from "$lib/mascot/types";
     overflow: hidden;
     padding: 0;
     min-width: 0;
+    border: none;
+    box-shadow: none;
   }
 
   .sidebar.collapsed .sidebar-content {

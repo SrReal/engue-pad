@@ -332,15 +332,15 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 3px 8px;
+    padding: 4px 8px;
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: 6px;
     user-select: none;
     -webkit-user-select: none;
   }
 
   .item-row.drop-target {
-    background: rgba(74, 158, 255, 0.2);
+    background: var(--accent-soft, rgba(74, 158, 255, 0.2));
     outline: 1px dashed var(--accent-color, #4a9eff);
     outline-offset: -1px;
   }
@@ -362,13 +362,13 @@
     position: fixed;
     z-index: 9999;
     pointer-events: none;
-    background: var(--bg-sidebar, #252526);
+    background: var(--bg-surface, #252526);
     border: 1px solid var(--border-color, #333);
-    border-radius: 4px;
+    border-radius: 6px;
     padding: 4px 10px;
     font-size: 13px;
     color: var(--text-color, #ccc);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
     white-space: nowrap;
     max-width: 200px;
     overflow: hidden;
@@ -418,7 +418,7 @@
     color: var(--text-color, #ccc);
     padding: 1px 4px;
     font-size: 13px;
-    border-radius: 3px;
+    border-radius: 5px;
     outline: none;
     max-width: 140px;
   }
@@ -438,19 +438,19 @@
   }
 
   .git-dot.git-modified {
-    background: #f0a732;
+    background: var(--warning-color, #f0a732);
   }
 
   .git-dot.git-added {
-    background: #4caf50;
+    background: var(--success-color, #4caf50);
   }
 
   .git-dot.git-deleted {
-    background: #f14c4c;
+    background: var(--error-color, #f14c4c);
   }
 
   .git-dot.git-untracked {
-    background: #888;
+    background: var(--text-muted, #888);
   }
 
   .git-dot.git-renamed {
@@ -458,20 +458,20 @@
   }
 
   .name.git-modified {
-    color: #f0a732;
+    color: var(--warning-color, #f0a732);
   }
 
   .name.git-added {
-    color: #4caf50;
+    color: var(--success-color, #4caf50);
   }
 
   .name.git-deleted {
-    color: #f14c4c;
+    color: var(--error-color, #f14c4c);
     text-decoration: line-through;
   }
 
   .name.git-untracked {
-    color: #888;
+    color: var(--text-muted, #888);
   }
 
   .name.git-renamed {
@@ -484,12 +484,12 @@
 
   .context-menu {
     position: fixed;
-    background: var(--bg-sidebar, #252526);
+    background: var(--bg-surface, #252526);
     border: 1px solid var(--border-color, #333);
-    border-radius: 4px;
+    border-radius: 7px;
     padding: 4px 0;
     z-index: 1000;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.44);
   }
 
   .context-menu button {

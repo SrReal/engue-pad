@@ -63,8 +63,8 @@
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    border-radius: 6px;
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.38);
   }
 
   .loading {

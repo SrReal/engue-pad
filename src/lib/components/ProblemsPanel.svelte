@@ -158,11 +158,11 @@
   }
 
   .count.error {
-    color: #f14c4c;
+    color: var(--error-color, #f14c4c);
   }
 
   .count.warning {
-    color: #f0a732;
+    color: var(--warning-color, #f0a732);
   }
 
   .count.info {
@@ -220,7 +220,7 @@
     color: var(--text-muted, #888);
     background: var(--bg-tab-bar, #2d2d2d);
     padding: 1px 6px;
-    border-radius: 10px;
+    border-radius: 999px;
   }
 
   .path-issues {

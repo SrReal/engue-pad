@@ -18,7 +18,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg-app, #1a1a1a);
+    background: linear-gradient(180deg, #0b1220 0%, var(--bg-app, #1a1a1a) 100%);
     color: var(--text-color, #ccc);
   }
 
@@ -33,7 +33,7 @@
     width: 48px;
     height: 48px;
     border: 4px solid var(--border-color, #333);
-    border-top-color: var(--accent-color, #4a9eff);
+    border-top-color: var(--accent-cyan, #00e5ff);
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }

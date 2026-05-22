@@ -68,10 +68,10 @@
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    background: var(--bg-sidebar, #252526);
+    background: var(--bg-surface, #252526);
     border: 1px solid var(--border-color, #333);
     border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.44);
     font-size: 13px;
     animation: slideIn 0.2s ease;
   }
@@ -107,7 +107,7 @@
   }
 
   .url-action:hover {
-    opacity: 0.9;
+    background: var(--accent-hover, #0d8cff);
   }
 
   .url-action.secondary {

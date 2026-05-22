@@ -192,7 +192,7 @@
   .modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(3, 7, 18, 0.72);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -207,7 +207,7 @@
     height: 480px;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
   }
 
   .modal-header {
@@ -216,6 +216,7 @@
     justify-content: space-between;
     padding: 12px 16px;
     border-bottom: 1px solid var(--border-color, #333);
+    background: var(--bg-tab-bar, #0b1220);
     flex-shrink: 0;
   }
 
@@ -232,7 +233,7 @@
     font-size: 20px;
     line-height: 1;
     padding: 0 4px;
-    border-radius: 3px;
+    border-radius: 5px;
   }
 
   .close-btn:hover {
@@ -252,6 +253,7 @@
     width: 120px;
     flex-shrink: 0;
     border-right: 1px solid var(--border-color, #333);
+    background: var(--bg-sidebar, #0e1622);
     padding: 8px 0;
   }
 
@@ -274,7 +276,7 @@
 
   .tab-btn.active {
     color: var(--accent-color, #4a9eff);
-    background: rgba(74, 158, 255, 0.08);
+    background: var(--accent-soft, rgba(74, 158, 255, 0.08));
     border-left-color: var(--accent-color, #4a9eff);
   }
 
@@ -303,12 +305,14 @@
   }
 
   .field input[type="text"],
-  .field input[type="number"] {
-    background: var(--bg-sidebar, #252526);
+  .field input[type="number"],
+  .field select {
+    background-color: var(--bg-surface, #252526);
     border: 1px solid var(--border-color, #333);
     color: var(--text-color, #ccc);
-    padding: 4px 8px;
-    border-radius: 3px;
+    min-height: 30px;
+    padding: 5px 9px;
+    border-radius: 6px;
     font-size: 13px;
     flex: 1;
     min-width: 0;
@@ -338,12 +342,14 @@
     gap: 8px;
     padding: 12px 16px;
     border-top: 1px solid var(--border-color, #333);
+    background: var(--bg-tab-bar, #0b1220);
     flex-shrink: 0;
   }
 
   .btn {
+    min-height: 32px;
     padding: 6px 16px;
-    border-radius: 4px;
+    border-radius: 6px;
     font-size: 13px;
     cursor: pointer;
     border: none;
@@ -365,7 +371,7 @@
   }
 
   .btn.primary:hover {
-    opacity: 0.9;
+    background: var(--accent-hover, #0d8cff);
   }
 
 </style>

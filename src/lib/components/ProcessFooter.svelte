@@ -108,7 +108,7 @@
 
 <style>
   .process-footer {
-    background: var(--bg-sidebar, #252526);
+    background: var(--bg-tab-bar, #252526);
     border-top: 1px solid var(--border-color, #333);
     color: var(--text-muted, #888);
     font-size: 12px;
@@ -122,7 +122,7 @@
     align-items: center;
     gap: 8px;
     padding: 0 12px;
-    height: 22px;
+    height: 28px;
     cursor: pointer;
     user-select: none;
   }
@@ -149,6 +149,8 @@
   .totals {
     margin-left: auto;
     white-space: nowrap;
+    padding-left: 14px;
+    border-left: 1px solid var(--border-color, #333);
   }
 
   .process-list {
@@ -209,13 +211,13 @@
     bottom: 32px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--bg-sidebar, #252526);
+    background: var(--bg-surface, #252526);
     color: var(--text-color, #ccc);
     padding: 6px 12px;
-    border-radius: 4px;
+    border-radius: 6px;
     font-size: 13px;
     border: 1px solid var(--border-color, #333);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
     z-index: 9999;
     pointer-events: none;
     user-select: none;

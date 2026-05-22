@@ -154,13 +154,20 @@
           fontSize: `${editorSettings.fontSize}px`,
           lineHeight: `${editorSettings.lineHeight}`,
           height: "100%",
+          backgroundColor: "var(--bg-panel, #0b1422)",
         },
         ".cm-content": {
           fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
           padding: "8px 0",
         },
+        ".cm-editor": {
+          backgroundColor: "var(--bg-panel, #0b1422)",
+        },
+        ".cm-scroller": {
+          backgroundColor: "var(--bg-panel, #0b1422)",
+        },
         ".cm-gutters": {
-          background: "var(--bg-panel, #1e1e1e)",
+          background: "var(--bg-panel, #0b1422)",
           borderRight: "1px solid var(--border-color, #333)",
           fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
         },
@@ -301,11 +308,11 @@
   }
 
   .editor-container :global(.cm-diagnostic-error) {
-    border-left-color: #f14c4c;
+    border-left-color: var(--error-color, #f14c4c);
   }
 
   .editor-container :global(.cm-diagnostic-warning) {
-    border-left-color: #f0a732;
+    border-left-color: var(--warning-color, #f0a732);
   }
 
   .editor-container :global(.cm-diagnostic-info) {
@@ -315,17 +322,17 @@
   .editor-container :global(.cm-tooltip-lint) {
     background: var(--bg-panel, #1e1e1e);
     border: 1px solid var(--border-color, #333);
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    border-radius: 6px;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
     max-width: 400px;
   }
 
   .editor-container :global(.cm-lintRange-error) {
-    text-decoration: underline wavy #f14c4c;
+    text-decoration: underline wavy var(--error-color, #f14c4c);
   }
 
   .editor-container :global(.cm-lintRange-warning) {
-    text-decoration: underline wavy #f0a732;
+    text-decoration: underline wavy var(--warning-color, #f0a732);
   }
 
   .editor-container :global(.cm-lintRange-info) {

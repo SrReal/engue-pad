@@ -220,8 +220,8 @@
   .todo-panel {
     flex: 1;
     overflow: auto;
-    padding: 12px 8px;
-    background: var(--bg-sidebar, #252526);
+    padding: 14px 10px;
+    background: transparent;
     color: var(--text-color, #ccc);
     font-size: 13px;
     display: flex;
@@ -255,14 +255,14 @@
     align-items: center;
     gap: 10px;
     margin-bottom: 14px;
-    padding: 0 4px 10px;
+    padding: 0 4px 12px;
     border-bottom: 1px solid var(--border-color, #333);
     flex-shrink: 0;
   }
 
   .progress-bar {
     flex: 1;
-    height: 5px;
+    height: 6px;
     background: var(--bg-panel, #1e1e1e);
     border-radius: 3px;
     overflow: hidden;
@@ -271,7 +271,7 @@
   .progress-fill {
     display: block;
     height: 100%;
-    background: var(--accent-color, #4a9eff);
+    background: linear-gradient(90deg, var(--accent-color, #4a9eff), var(--accent-cyan, #00e5ff));
     border-radius: 3px;
     transition: width 0.2s ease;
   }
@@ -299,7 +299,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 4px;
-    padding: 4px 4px 4px 2px;
+    padding: 6px 4px;
     border-bottom: 1px solid var(--border-color, #333);
     margin-bottom: 2px;
   }
@@ -307,7 +307,7 @@
   .section-title {
     font-weight: 600;
     font-size: 12px;
-    color: var(--text-color, #ccc);
+    color: #cbd5e1;
     text-transform: uppercase;
     letter-spacing: 0.3px;
     flex: 1;
@@ -321,12 +321,13 @@
 
   .section-title-input {
     flex: 1;
-    background: var(--bg-panel, #1e1e1e);
+    background-color: var(--bg-surface, #1e1e1e);
     border: 1px solid var(--accent-color, #4a9eff);
     color: var(--text-color, #ccc);
-    padding: 2px 6px;
+    min-height: 28px;
+    padding: 5px 9px;
     font-size: 12px;
-    border-radius: 3px;
+    border-radius: 5px;
     outline: none;
     font-weight: 600;
   }
@@ -349,7 +350,7 @@
     display: flex;
     align-items: center;
     gap: 2px;
-    border-radius: 4px;
+    border-radius: 6px;
     transition: background 0.1s;
   }
 
@@ -362,7 +363,7 @@
     align-items: flex-start;
     gap: 6px;
     padding: 3px 4px;
-    border-radius: 3px;
+    border-radius: 5px;
     cursor: pointer;
     flex: 1;
     min-width: 0;
@@ -371,7 +372,7 @@
   }
 
   .task input[type="checkbox"] {
-    margin-top: 2px;
+    margin-top: 1px;
     accent-color: var(--accent-color, #4a9eff);
     cursor: pointer;
     flex-shrink: 0;
@@ -386,7 +387,7 @@
 
   .task-text.editable {
     cursor: text;
-    border-radius: 3px;
+    border-radius: 5px;
     padding: 1px 2px;
     margin: -1px -2px;
   }
@@ -407,12 +408,13 @@
 
   .task-edit-input {
     flex: 1;
-    background: var(--bg-panel, #1e1e1e);
+    background-color: var(--bg-surface, #1e1e1e);
     border: 1px solid var(--accent-color, #4a9eff);
     color: var(--text-color, #ccc);
-    padding: 2px 6px;
+    min-height: 28px;
+    padding: 5px 9px;
     font-size: 13px;
-    border-radius: 3px;
+    border-radius: 5px;
     outline: none;
   }
 
@@ -427,7 +429,7 @@
     color: var(--text-muted, #888);
     cursor: pointer;
     font-size: 12px;
-    border-radius: 3px;
+    border-radius: 5px;
     padding: 0;
     line-height: 1;
   }
@@ -438,7 +440,7 @@
   }
 
   .action-btn.danger:hover {
-    background: #c44;
+    background: var(--error-color, #c44);
     color: white;
   }
 
@@ -464,7 +466,7 @@
 
   .new-task-input {
     flex: 1;
-    background: transparent;
+    background-color: transparent;
     border: none;
     border-bottom: 1px solid transparent;
     color: var(--text-color, #ccc);
@@ -480,6 +482,7 @@
 
   .new-task-input:focus {
     border-bottom-color: var(--accent-color, #4a9eff);
+    box-shadow: none;
   }
 
   .add-section-area {
@@ -490,10 +493,10 @@
   .add-section-btn {
     width: 100%;
     padding: 6px;
-    background: transparent;
-    border: 1px dashed var(--border-color, #333);
-    color: var(--text-muted, #888);
-    border-radius: 4px;
+    background: var(--bg-surface, #111827);
+    border: 1px solid var(--border-color, #333);
+    color: var(--text-color, #ccc);
+    border-radius: 6px;
     cursor: pointer;
     font-size: 12px;
     transition: all 0.15s;
@@ -506,12 +509,13 @@
 
   .new-section-input {
     width: 100%;
-    background: var(--bg-panel, #1e1e1e);
+    background-color: var(--bg-surface, #1e1e1e);
     border: 1px solid var(--accent-color, #4a9eff);
     color: var(--text-color, #ccc);
-    padding: 6px 8px;
+    min-height: 30px;
+    padding: 5px 9px;
     font-size: 13px;
-    border-radius: 4px;
+    border-radius: 6px;
     outline: none;
   }
 </style>

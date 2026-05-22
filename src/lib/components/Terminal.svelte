@@ -27,6 +27,50 @@
   let urlBuffer = $state("");
   let idleTimeout = $state<ReturnType<typeof setTimeout> | null>(null);
   const IDLE_MS = 5000;
+  const TERMINAL_PROMPT_COLOR = "#0EA5FF";
+
+  function normalizeHexColor(color: string): string {
+    const trimmed = color.trim();
+    if (/^#[0-9a-f]{6}$/i.test(trimmed)) return trimmed;
+    if (/^#[0-9a-f]{3}$/i.test(trimmed)) {
+      return `#${trimmed[1]}${trimmed[1]}${trimmed[2]}${trimmed[2]}${trimmed[3]}${trimmed[3]}`;
+    }
+    const rgb = trimmed.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+    if (rgb) {
+      return `#${[rgb[1], rgb[2], rgb[3]].map((value) => Number(value).toString(16).padStart(2, "0")).join("")}`;
+    }
+    return "#00e5ff";
+  }
+
+  function rgbFromHex(hex: string): { r: number; g: number; b: number } {
+    const clean = hex.replace("#", "");
+    return {
+      r: parseInt(clean.slice(0, 2), 16),
+      g: parseInt(clean.slice(2, 4), 16),
+      b: parseInt(clean.slice(4, 6), 16),
+    };
+  }
+
+  function buildPromptInitCommand(shellPath: string, accentColor: string): string | null {
+    const shellName = shellPath.split(/[\\/]/).pop()?.toLowerCase() ?? "";
+    const promptHex = normalizeHexColor(accentColor || TERMINAL_PROMPT_COLOR);
+    const { r, g, b } = rgbFromHex(promptHex);
+
+    if (shellName.includes("zsh")) {
+      return [
+        `function enguepad_prompt_color(){ PROMPT='%F{${promptHex}}%n@%m %1~ %#%f '; }`,
+        "precmd_functions=(${precmd_functions:#enguepad_prompt_color} enguepad_prompt_color)",
+        "enguepad_prompt_color",
+        "printf '\\033[2J\\033[H'",
+      ].join("; ") + "\n";
+    }
+
+    if (shellName.includes("bash") || shellName === "sh") {
+      return `export PS1='\\[\\e[38;2;${r};${g};${b}m\\]\\u@\\h \\W \\\\$ \\[\\e[0m\\]'; printf '\\033[2J\\033[H'\n`;
+    }
+
+    return null;
+  }
 
   onMount(async () => {
     if (!containerRef) return;
@@ -37,6 +81,10 @@
       scrollback: 1000,
       copyOnSelect: false,
     };
+    const rootStyles = getComputedStyle(document.documentElement);
+    const panelBg = rootStyles.getPropertyValue("--bg-panel").trim() || "#0b1422";
+    const textColor = rootStyles.getPropertyValue("--text-color").trim() || "#f1f5f9";
+    const accentColor = rootStyles.getPropertyValue("--accent-cyan").trim() || "#00e5ff";
 
     const term = new XTerm({
       cursorBlink: true,
@@ -44,10 +92,10 @@
       fontSize: tSettings.fontSize,
       scrollback: tSettings.scrollback,
       theme: {
-        background: "#1e1e1e",
-        foreground: "#cccccc",
-        cursor: "#cccccc",
-        selectionBackground: "#264f78",
+        background: panelBg,
+        foreground: textColor,
+        cursor: accentColor,
+        selectionBackground: "#164e78",
       },
     });
 
@@ -148,6 +196,16 @@
     } catch (e) {
       term.writeln(`Failed to start terminal: ${e}`);
       return;
+    }
+
+    const promptInitCommand = buildPromptInitCommand(effectiveShell, TERMINAL_PROMPT_COLOR);
+    if (promptInitCommand) {
+      setTimeout(() => {
+        invoke("write_terminal", {
+          terminalId: tabId,
+          data: Array.from(new TextEncoder().encode(promptInitCommand)),
+        }).catch(() => {});
+      }, 80);
     }
 
     term.attachCustomKeyEventHandler((e) => {

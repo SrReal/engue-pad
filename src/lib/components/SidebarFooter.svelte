@@ -28,9 +28,9 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 4px 10px;
+    padding: 5px 10px;
     border-top: 1px solid var(--border-color, #333);
-    background: var(--bg-sidebar, #252526);
+    background: var(--bg-tab-bar, #252526);
     font-size: 11px;
     color: var(--text-muted, #888);
     user-select: none;
@@ -46,7 +46,7 @@
   }
 
   .changes {
-    color: #f0a732;
+    color: var(--warning-color, #f0a732);
     font-size: 10px;
   }
 

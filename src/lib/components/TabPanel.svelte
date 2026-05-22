@@ -411,29 +411,25 @@
     flex: 1;
     min-height: 0;
     background: var(--bg-panel, #1e1e1e);
+    border: 1px solid var(--border-color, #333);
     outline: 2px solid transparent;
     outline-offset: -2px;
-    transition: outline-color 0.15s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
     position: relative;
+    border-radius: 6px;
+    overflow: hidden;
   }
 
   .tab-panel.active {
     outline: none;
-  }
-
-  .tab-panel.active::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border: 1px solid #0EA5FF;
-    pointer-events: none;
-    z-index: 100;
+    border-color: rgba(14, 165, 255, 0.78);
+    box-shadow: inset 0 0 0 1px rgba(14, 165, 255, 0.16);
   }
 
   .tab-panel.drag-target {
     outline: 2px dashed var(--accent-color, #4a9eff);
     outline-offset: -2px;
-    background: rgba(74, 158, 255, 0.05);
+    background: var(--accent-soft, rgba(74, 158, 255, 0.05));
   }
 
   .drop-overlay {
@@ -442,7 +438,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(74, 158, 255, 0.08);
+    background: rgba(14, 165, 255, 0.1);
     z-index: 50;
     animation: dropFadeIn 0.15s ease;
     pointer-events: none;
@@ -454,10 +450,10 @@
     align-items: center;
     gap: 8px;
     padding: 20px 32px;
-    background: var(--bg-sidebar, #252526);
+    background: var(--bg-surface, #252526);
     border: 2px dashed var(--accent-color, #4a9eff);
     border-radius: 8px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.42);
     animation: dropBounceIn 0.2s ease;
   }
 
@@ -495,6 +491,7 @@
     background: var(--bg-tab-bar, #2d2d2d);
     border-bottom: 1px solid var(--border-color, #333);
     overflow: hidden;
+    min-height: 34px;
   }
 
   .tabs-scroll {
@@ -503,7 +500,7 @@
     overflow-x: auto;
     min-width: 0;
     scrollbar-width: thin;
-    scrollbar-color: var(--border-color, #333) transparent;
+    scrollbar-color: var(--border-strong, #333) transparent;
   }
 
   .tabs-scroll::-webkit-scrollbar {
@@ -523,7 +520,8 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 12px;
+    min-height: 34px;
+    padding: 7px 34px 7px 12px;
     background: var(--bg-tab, #2d2d2d);
     border: none;
     border-right: 1px solid var(--border-color, #333);
@@ -537,6 +535,7 @@
     max-width: 220px;
     position: relative;
     --tab-close-bg: var(--bg-tab, #2d2d2d);
+    transition: background 0.12s ease, color 0.12s ease;
   }
 
   .tab:hover {
@@ -546,8 +545,20 @@
 
   .tab.active {
     background: var(--bg-panel, #1e1e1e);
+    color: #ffffff;
     border-bottom: 1px solid var(--bg-panel, #1e1e1e);
     --tab-close-bg: var(--bg-panel, #1e1e1e);
+  }
+
+  .tab.active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-color, #4a9eff), var(--accent-cyan, #00e5ff));
+    pointer-events: none;
   }
 
   .tab.preview .tab-title {
@@ -572,7 +583,7 @@
 
   .tab-close {
     position: absolute;
-    right: 4px;
+    right: 8px;
     top: 50%;
     transform: translateY(-50%);
     display: flex;
@@ -580,7 +591,7 @@
     justify-content: center;
     width: 16px;
     height: 16px;
-    border-radius: 3px;
+    border-radius: 4px;
     font-size: 14px;
     line-height: 1;
     opacity: 0;
@@ -604,15 +615,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
-    margin: 2px 2px;
+    width: 32px;
+    height: 32px;
+    margin: 1px 2px;
     background: transparent;
     border: none;
     color: var(--text-color, #ccc);
     cursor: pointer;
     font-size: 16px;
-    border-radius: 3px;
+    border-radius: 6px;
     user-select: none;
     -webkit-user-select: none;
     flex-shrink: 0;
@@ -644,11 +655,11 @@
     padding: 6px 12px;
     background: var(--bg-tab, #2d2d2d);
     border: 1px solid var(--border-color, #333);
-    border-radius: 4px;
+    border-radius: 6px;
     color: var(--text-color, #ccc);
     font-size: 13px;
     white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
     user-select: none;
     -webkit-user-select: none;
   }
@@ -688,7 +699,7 @@
     color: var(--text-color, #ccc);
     padding: 2px 6px;
     font-size: 13px;
-    border-radius: 3px;
+    border-radius: 5px;
     outline: none;
     max-width: 140px;
   }
@@ -727,14 +738,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     background: transparent;
     border: none;
     color: var(--text-muted, #888);
     cursor: pointer;
     font-size: 14px;
-    border-radius: 3px;
+    border-radius: 6px;
     user-select: none;
     -webkit-user-select: none;
     padding: 0;
@@ -752,12 +763,12 @@
 
   .context-menu {
     position: fixed;
-    background: var(--bg-sidebar, #252526);
+    background: var(--bg-surface, #252526);
     border: 1px solid var(--border-color, #333);
-    border-radius: 4px;
+    border-radius: 7px;
     padding: 4px 0;
     z-index: 1000;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.44);
   }
 
   .context-menu button {

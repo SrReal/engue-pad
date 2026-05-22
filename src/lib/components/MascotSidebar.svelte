@@ -198,15 +198,21 @@
       await saveProjectMascotConfig(workspaceInfo.rootPath, { ...mascotSettings });
     }
   }
+
+  function currentScope(): "global" | "project" {
+    return appSettings.mascotScope === "project" ? "project" : "global";
+  }
 </script>
 
 <div class="mascot-sidebar">
   <!-- Scope selector -->
-  <div class="scope-bar">
-    <span class="scope-label">{t("mascotConfig")}:</span>
-    <button class="scope-btn" class:active={appSettings.mascotScope !== "project"} onclick={() => setScope("global")} type="button">{t("mascotScopeGlobal")}</button>
-    <button class="scope-btn" class:active={appSettings.mascotScope === "project"} onclick={() => setScope("project")} type="button">{t("mascotScopeProject")}</button>
-  </div>
+  <label class="scope-bar">
+    <span class="scope-label">{t("mascotConfig")}</span>
+    <select value={currentScope()} onchange={(e) => setScope(e.currentTarget.value as "global" | "project")}>
+      <option value="global">{t("mascotScopeGlobal")}</option>
+      <option value="project">{t("mascotScopeProject")}</option>
+    </select>
+  </label>
 
   <!-- Installed Mascots -->
   <div class="section">
@@ -245,12 +251,15 @@
       <span class="section-title">{t("mascotAppearance")}</span>
     </button>
     {#if expandedSections["apariencia"]}
-      <div class="row">
-        <button class="btn" class:active={mascotSettings.mode === "disabled"} onclick={() => setMode("disabled")}>{t("mascotDisabled")}</button>
-        <button class="btn" class:active={mascotSettings.mode === "compact"} onclick={() => setMode("compact")}>{t("mascotCompact")}</button>
-        <button class="btn" class:active={mascotSettings.mode === "animated"} onclick={() => setMode("animated")}>{t("mascotAnimated")}</button>
+      <div class="field">
+        <span>{t("mascotAppearance")}</span>
+        <select value={mascotSettings.mode} onchange={(e) => setMode(e.currentTarget.value as "disabled" | "compact" | "animated")}>
+          <option value="disabled">{t("mascotDisabled")}</option>
+          <option value="compact">{t("mascotCompact")}</option>
+          <option value="animated">{t("mascotAnimated")}</option>
+        </select>
       </div>
-      <div class="row">
+      <div class="row size-row">
         <button class="btn" class:active={mascotSettings.size === "small"} onclick={() => setSize("small")}>{t("mascotSmall")}</button>
         <button class="btn" class:active={mascotSettings.size === "normal"} onclick={() => setSize("normal")}>{t("mascotNormal")}</button>
       </div>
@@ -264,7 +273,7 @@
       <span class="section-title">{t("mascotAudio")}</span>
     </button>
     {#if expandedSections["audio"]}
-      <div class="row">
+      <div class="row test-row">
         <button class="btn test-btn" onclick={testSound}>{t("mascotTestSound")}</button>
         <button class="btn test-btn" onclick={testVoice}>{t("mascotTestVoice")}</button>
       </div>
@@ -280,7 +289,16 @@
       </div>
       <div class="field">
         <span>{t("mascotVolume")}</span>
-        <input type="range" min="0" max="1" step="0.1" value={mascotSettings.volume} oninput={(e) => setVolume(+e.currentTarget.value)} />
+        <input
+          class="volume-slider"
+          type="range"
+          min="0"
+          max="1"
+          step="0.1"
+          value={mascotSettings.volume}
+          style="--value: {mascotSettings.volume * 100}%"
+          oninput={(e) => setVolume(+e.currentTarget.value)}
+        />
         <span class="value">{Math.round(mascotSettings.volume * 100)}%</span>
       </div>
     {/if}
@@ -389,7 +407,7 @@
   .mascot-sidebar {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
     padding: 12px;
     font-size: 13px;
     overflow: auto;
@@ -398,7 +416,13 @@
   .section {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color, #333);
+  }
+
+  .section:last-child {
+    border-bottom: none;
   }
 
   .section-header {
@@ -456,7 +480,7 @@
     align-items: center;
     gap: 8px;
     padding: 6px 8px;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     border: 1px solid transparent;
   }
@@ -466,7 +490,7 @@
   }
 
   .mascot-item.active {
-    background: rgba(74, 158, 255, 0.12);
+    background: var(--accent-soft, rgba(74, 158, 255, 0.12));
     border-color: var(--accent-color, #4a9eff);
   }
 
@@ -509,50 +533,79 @@
   }
 
   .btn-delete {
-    background: none;
-    border: none;
-    color: #c75450;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--error-color, #c75450);
     cursor: pointer;
     font-size: 16px;
     line-height: 1;
     padding: 0 4px;
+    border-radius: 5px;
+  }
+
+  .btn-delete:hover {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.35);
   }
 
   .btn-import {
     background: var(--accent-color, #4a9eff);
     border: none;
     color: white;
-    padding: 6px 12px;
-    border-radius: 4px;
+    min-height: 34px;
+    padding: 7px 12px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 12px;
+    font-weight: 600;
     text-align: center;
   }
 
   .btn-import:hover {
-    opacity: 0.9;
+    background: var(--accent-hover, #0d8cff);
   }
 
   .row {
-    display: flex;
+    display: grid;
     gap: 8px;
-    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .size-row,
+  .test-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .size-row .btn {
+    min-height: 28px;
+    padding: 4px 8px;
   }
 
   .check-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: center;
   }
 
   .btn {
-    flex: 1;
-    background: var(--bg-tab, #2d2d2d);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-surface, #2d2d2d);
     border: 1px solid var(--border-color, #333);
     color: var(--text-color, #ccc);
-    padding: 6px 10px;
-    border-radius: 4px;
+    min-height: 34px;
+    padding: 6px 8px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 12px;
+    font-weight: 500;
+    line-height: 1.2;
     min-width: 0;
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
   }
 
   .btn:hover {
@@ -566,8 +619,8 @@
   }
 
   .test-btn {
-    background: transparent;
-    border: 1px dashed var(--border-color, #555);
+    background: var(--bg-surface, #111827);
+    border: 1px solid var(--border-color, #555);
   }
 
   .test-btn:hover {
@@ -582,37 +635,91 @@
     cursor: pointer;
     font-size: 12px;
     color: var(--text-color, #ccc);
+    min-height: 34px;
+    padding: 0 10px;
+    background: var(--bg-surface, #111827);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 6px;
+    min-width: 0;
   }
 
   .field {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(86px, 112px) minmax(0, 1fr) auto;
     align-items: center;
     gap: 8px;
-    font-size: 12px;
-  }
-
-  .field span:first-child {
-    width: 120px;
-    flex-shrink: 0;
-    color: var(--text-muted, #888);
-  }
-
-  .field select,
-  .field input[type="range"],
-  .field input[type="text"] {
-    flex: 1;
-    background: var(--bg-sidebar, #252526);
-    border: 1px solid var(--border-color, #333);
-    color: var(--text-color, #ccc);
-    padding: 3px 6px;
-    border-radius: 3px;
     font-size: 12px;
     min-width: 0;
   }
 
+  .field span:first-child {
+    color: var(--text-muted, #888);
+    min-width: 0;
+  }
+
+  .field select,
+  .field input[type="text"] {
+    background-color: var(--bg-surface, #252526);
+    border: 1px solid var(--border-color, #333);
+    color: var(--text-color, #ccc);
+    min-height: 34px;
+    padding: 5px 9px;
+    border-radius: 6px;
+    font-size: 12px;
+    min-width: 0;
+  }
+
+  .field input[type="range"] {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .volume-slider {
+    appearance: none;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(
+      90deg,
+      #0ea5ff 0 var(--value),
+      rgba(30, 41, 59, 0.92) var(--value) 100%
+    );
+    accent-color: #0ea5ff;
+  }
+
+  .volume-slider::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #0ea5ff;
+    border: 2px solid #0b1220;
+    box-shadow: 0 0 0 1px rgba(14, 165, 255, 0.45);
+  }
+
+  .volume-slider::-moz-range-track {
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(30, 41, 59, 0.92);
+  }
+
+  .volume-slider::-moz-range-progress {
+    height: 6px;
+    border-radius: 999px;
+    background: #0ea5ff;
+  }
+
+  .volume-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #0ea5ff;
+    border: 2px solid #0b1220;
+    box-shadow: 0 0 0 1px rgba(14, 165, 255, 0.45);
+  }
+
   .phrase-field span {
-    width: 120px;
-    flex-shrink: 0;
     color: var(--text-muted, #888);
   }
 
@@ -629,7 +736,7 @@
   }
 
   .state-btn.active {
-    background: rgba(74, 158, 255, 0.2);
+    background: var(--accent-soft, rgba(74, 158, 255, 0.2));
     border-color: var(--accent-color, #4a9eff);
     color: var(--accent-color, #4a9eff);
   }
@@ -661,33 +768,31 @@
   }
 
   .scope-bar {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(76px, auto) minmax(0, 1fr);
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     padding: 8px;
-    border-bottom: 1px solid var(--border-color, #333);
-    background: var(--bg-sidebar, #252526);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 6px;
+    background: var(--bg-tab-bar, #252526);
   }
 
   .scope-label {
     font-size: 11px;
     color: var(--text-muted, #888);
-    margin-right: auto;
+    min-width: 0;
   }
 
-  .scope-btn {
-    background: transparent;
+  .scope-bar select {
+    width: 100%;
+    min-width: 0;
+    min-height: 34px;
+    background-color: var(--bg-surface, #111827);
     border: 1px solid var(--border-color, #333);
     color: var(--text-color, #ccc);
-    padding: 2px 8px;
-    border-radius: 3px;
-    font-size: 11px;
-    cursor: pointer;
-  }
-
-  .scope-btn.active {
-    background: var(--accent-color, #4a9eff);
-    color: white;
-    border-color: var(--accent-color, #4a9eff);
+    padding: 5px 9px;
+    border-radius: 6px;
+    font-size: 12px;
   }
 </style>

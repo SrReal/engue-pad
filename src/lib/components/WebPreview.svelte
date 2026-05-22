@@ -82,7 +82,7 @@
     color: var(--text-color, #ccc);
     cursor: pointer;
     padding: 2px 6px;
-    border-radius: 3px;
+    border-radius: 5px;
     font-size: 14px;
     line-height: 1;
   }
@@ -124,6 +124,6 @@
     height: 667px;
     border: 1px solid var(--border-color, #333);
     border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.44);
   }
 </style>

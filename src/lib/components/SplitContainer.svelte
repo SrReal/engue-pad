@@ -104,32 +104,48 @@
   }
 
   .divider {
-    background: var(--border-color, #333);
+    background: transparent;
     flex-shrink: 0;
   }
 
   .divider.horizontal {
-    width: 4px;
+    width: 8px;
     cursor: col-resize;
   }
 
   .divider.vertical {
-    height: 4px;
+    height: 8px;
     cursor: row-resize;
   }
 
   .divider:hover {
-    background: var(--accent-color, #4a9eff);
+    background: linear-gradient(
+      90deg,
+      transparent 3px,
+      var(--accent-color, #4a9eff) 3px,
+      var(--accent-color, #4a9eff) 5px,
+      transparent 5px
+    );
+  }
+
+  .divider.vertical:hover {
+    background: linear-gradient(
+      180deg,
+      transparent 3px,
+      var(--accent-color, #4a9eff) 3px,
+      var(--accent-color, #4a9eff) 5px,
+      transparent 5px
+    );
   }
 
   .context-menu {
     position: fixed;
-    background: var(--bg-sidebar, #252526);
+    background: var(--bg-surface, #252526);
     border: 1px solid var(--border-color, #333);
-    border-radius: 4px;
+    border-radius: 7px;
     padding: 4px 0;
     z-index: 1000;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.44);
   }
 
   .context-menu button {

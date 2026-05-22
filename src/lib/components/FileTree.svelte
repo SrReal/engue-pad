@@ -195,13 +195,14 @@
   .file-tree {
     font-size: 13px;
     user-select: none;
+    color: var(--text-color, #ccc);
   }
 
   .file-tree.root-drop-target {
-    background: rgba(74, 158, 255, 0.1);
+    background: var(--accent-soft, rgba(74, 158, 255, 0.1));
     outline: 1px dashed var(--accent-color, #4a9eff);
     outline-offset: -1px;
-    border-radius: 4px;
+    border-radius: 6px;
   }
 
   .file-tree.root-drop-target::after {

@@ -103,7 +103,7 @@
     border: 1px solid var(--border-color, #333);
     color: var(--text-color, #ccc);
     padding: 2px 8px;
-    border-radius: 3px;
+    border-radius: 5px;
     cursor: pointer;
     font-size: 12px;
   }
@@ -127,7 +127,7 @@
   }
 
   .rendered :global(blockquote) {
-    border-left: 3px solid var(--border-color, #333);
+    border-left: 3px solid var(--accent-color, #4a9eff);
     padding-left: 12px;
     margin: 8px 0;
     color: var(--text-muted, #888);

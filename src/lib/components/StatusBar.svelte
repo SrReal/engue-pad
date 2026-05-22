@@ -99,10 +99,10 @@
   .status-bar {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 0;
     padding: 0 12px;
-    height: 22px;
-    background: var(--bg-sidebar, #252526);
+    height: 28px;
+    background: var(--bg-tab-bar, #252526);
     border-top: 1px solid var(--border-color, #333);
     color: var(--text-muted, #888);
     font-size: 12px;
@@ -115,6 +115,8 @@
     white-space: nowrap;
     user-select: none;
     -webkit-user-select: none;
+    padding: 0 10px;
+    border-left: 1px solid var(--border-color, #333);
   }
 
   .path {
@@ -124,6 +126,8 @@
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
+    padding-left: 0;
+    border-left: none;
   }
 
   .problems-btn {
@@ -131,8 +135,8 @@
     border: none;
     color: var(--text-muted, #888);
     cursor: pointer;
-    padding: 0 6px;
-    border-radius: 3px;
+    padding: 3px 8px;
+    border-radius: 5px;
     display: flex;
     align-items: center;
     gap: 3px;
@@ -150,11 +154,11 @@
   }
 
   .problem-dot.error {
-    color: #f14c4c;
+    color: var(--error-color, #f14c4c);
   }
 
   .problem-dot.warning {
-    color: #f0a732;
+    color: var(--warning-color, #f0a732);
   }
 
   .problem-dot.info {
@@ -163,6 +167,9 @@
 
   .todo-count {
     color: var(--accent-color, #4a9eff);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
 
   .toast {
@@ -170,13 +177,13 @@
     bottom: 32px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--bg-sidebar, #252526);
+    background: var(--bg-surface, #252526);
     color: var(--text-color, #ccc);
     padding: 6px 12px;
-    border-radius: 4px;
+    border-radius: 6px;
     font-size: 13px;
     border: 1px solid var(--border-color, #333);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
     z-index: 9999;
     pointer-events: none;
     user-select: none;
