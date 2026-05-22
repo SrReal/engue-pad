@@ -146,7 +146,10 @@
     background: rgba(14, 165, 255, 0.35);
   }
 
-  /* CodeMirror selection highlight */
+  /* CodeMirror selection highlight - override oneDark theme */
+  :global(.cm-content ::selection) {
+    background: rgba(14, 165, 255, 0.35) !important;
+  }
   :global(.cm-selectionBackground) {
     background: rgba(14, 165, 255, 0.25) !important;
   }
@@ -155,6 +158,10 @@
   }
   :global(.cm-cursor) {
     border-left-color: var(--accent-color, #0ea5ff) !important;
+  }
+  /* xterm selection */
+  :global(.xterm-selection div) {
+    background: rgba(14, 165, 255, 0.35) !important;
   }
 
   :global(.tab-bar, .panel-actions, .app-header, .status-bar,

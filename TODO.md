@@ -7,7 +7,6 @@
 - en panel de ficheros habilitar click derecho con copiar, cortar, pegar, formatear
   
 - quitar del click derecho en pestaña cerrar y fijar
-- ya no sale lo de linter para instalar
 
 - en sidebar directorio de ficheros añadir el boton de buscar, nuevo archivo, nueva carpeta y mover ahi el refrescar carpeta
 - poner en la derecha antes del titulo del proyecto un buscado de texto que reacciones a ctrol+f, un check de este fichero o global
