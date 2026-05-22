@@ -12,6 +12,8 @@
     "fs:allow-read-file",
     "fs:allow-write-file",
     "fs:allow-watch",
-    "core:window:allow-create"
+    "core:window:allow-create",
+    "clipboard-manager:allow-read-text",
+    "clipboard-manager:allow-write-text"
   ]
 }

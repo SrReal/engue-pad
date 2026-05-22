@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
 
   let { children } = $props();
 
@@ -28,7 +29,8 @@
     const active = document.activeElement as HTMLElement | null;
     if (!active) return;
     try {
-      const text = await navigator.clipboard.readText();
+      const text = await readText();
+      if (!text) return;
       if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
         const start = active.selectionStart ?? 0;
         const end = active.selectionEnd ?? 0;
@@ -38,9 +40,11 @@
         active.dispatchEvent(new Event("input", { bubbles: true }));
       } else if (active.isContentEditable) {
         document.execCommand("insertText", false, text);
+      } else if (active.closest(".cm-editor")) {
+        document.execCommand("insertText", false, text);
       }
     } catch {
-      // Clipboard read failed silently
+      // Clipboard read failed
     }
     menuOpen = false;
   }
@@ -48,7 +52,7 @@
   async function handleCopy() {
     try {
       const sel = window.getSelection()?.toString() ?? "";
-      if (sel) await navigator.clipboard.writeText(sel);
+      if (sel) await writeText(sel);
     } catch {
       document.execCommand("copy");
     }
@@ -58,8 +62,10 @@
   async function handleCut() {
     try {
       const sel = window.getSelection()?.toString() ?? "";
-      if (sel) await navigator.clipboard.writeText(sel);
-      document.execCommand("cut");
+      if (sel) {
+        await writeText(sel);
+        document.execCommand("delete");
+      }
     } catch {
       document.execCommand("cut");
     }
