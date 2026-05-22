@@ -129,15 +129,17 @@
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
     font-size: 14px;
     overflow: hidden;
-    user-select: none;
-    -webkit-user-select: none;
   }
 
-  :global(input, textarea, .cm-editor, .xterm, [contenteditable],
-    .tab-content, .preview-tab-content, .terminal-tab-content,
-    .markdown-body, .problems-list, .todo-panel, .tree-item-label) {
-    user-select: text;
-    -webkit-user-select: text;
+  :global(::selection) {
+    background: rgba(14, 165, 255, 0.35);
+  }
+
+  :global(.tab-bar, .panel-actions, .app-header, .status-bar,
+    .context-menu, .global-context-menu, .drag-ghost, .drop-overlay,
+    .tree-item, button, [role="tab"], [role="toolbar"]) {
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   :global(:root) {
