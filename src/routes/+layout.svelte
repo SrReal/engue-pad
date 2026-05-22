@@ -10,6 +10,7 @@
   let menuCanCut = $state(false);
   let menuCanCopy = $state(false);
   let menuCanPaste = $state(false);
+  let menuTargetEl = $state<HTMLElement | null>(null);
 
   function isEditable(el: EventTarget | null): boolean {
     if (!(el instanceof HTMLElement)) return false;
@@ -26,8 +27,10 @@
   }
 
   async function handlePaste() {
-    const active = document.activeElement as HTMLElement | null;
-    if (!active) return;
+    const target = menuTargetEl;
+    if (!target) return;
+    const editorEl = target.closest(".cm-editor") as HTMLElement | null;
+    const active = editorEl || target;
     try {
       const text = await readText();
       if (!text) return;
@@ -38,13 +41,12 @@
         active.value = value.slice(0, start) + text + value.slice(end);
         active.selectionStart = active.selectionEnd = start + text.length;
         active.dispatchEvent(new Event("input", { bubbles: true }));
-      } else if (active.isContentEditable) {
-        document.execCommand("insertText", false, text);
-      } else if (active.closest(".cm-editor")) {
+      } else {
+        active.focus();
         document.execCommand("insertText", false, text);
       }
-    } catch {
-      // Clipboard read failed
+    } catch (e) {
+      console.error("Paste failed:", e);
     }
     menuOpen = false;
   }
@@ -88,6 +90,7 @@
       menuCanCut = editable && selection;
       menuCanCopy = selection;
       menuCanPaste = editable;
+      menuTargetEl = e.target as HTMLElement;
       menuOpen = true;
     };
 

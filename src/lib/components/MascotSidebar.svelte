@@ -552,7 +552,7 @@
     background: var(--accent-color, #4a9eff);
     border: none;
     color: white;
-    min-height: 34px;
+    min-height: 28px;
     padding: 7px 12px;
     border-radius: 6px;
     cursor: pointer;
@@ -577,8 +577,8 @@
   }
 
   .size-row .btn {
-    min-height: 28px;
-    padding: 4px 8px;
+    min-height: 26px;
+    padding: 3px 8px;
   }
 
   .check-row {
@@ -594,11 +594,11 @@
     background: var(--bg-surface, #2d2d2d);
     border: 1px solid var(--border-color, #333);
     color: var(--text-color, #ccc);
-    min-height: 34px;
-    padding: 6px 8px;
+    min-height: 28px;
+    padding: 4px 8px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
     line-height: 1.2;
     min-width: 0;
@@ -635,7 +635,7 @@
     cursor: pointer;
     font-size: 12px;
     color: var(--text-color, #ccc);
-    min-height: 34px;
+    min-height: 28px;
     padding: 0 10px;
     background: var(--bg-surface, #111827);
     border: 1px solid var(--border-color, #333);
@@ -662,7 +662,7 @@
     background-color: var(--bg-surface, #252526);
     border: 1px solid var(--border-color, #333);
     color: var(--text-color, #ccc);
-    min-height: 34px;
+    min-height: 28px;
     padding: 5px 9px;
     border-radius: 6px;
     font-size: 12px;
@@ -787,7 +787,7 @@
   .scope-bar select {
     width: 100%;
     min-width: 0;
-    min-height: 34px;
+    min-height: 28px;
     background-color: var(--bg-surface, #111827);
     border: 1px solid var(--border-color, #333);
     color: var(--text-color, #ccc);
