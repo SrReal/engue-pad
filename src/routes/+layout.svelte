@@ -19,21 +19,6 @@
     padding: 0;
   }
 
-  @font-face {
-    font-family: "Inter";
-    src: url("/fonts/InterVariable.ttf") format("truetype");
-    font-weight: 100 900;
-    font-display: swap;
-  }
-
-  @font-face {
-    font-family: "Inter";
-    src: url("/fonts/InterVariable-Italic.ttf") format("truetype");
-    font-weight: 100 900;
-    font-style: italic;
-    font-display: swap;
-  }
-
   :global(body) {
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
     font-size: 14px;
