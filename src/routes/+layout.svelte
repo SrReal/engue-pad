@@ -1,7 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { get } from "svelte/store";
   import { invoke } from "@tauri-apps/api/core";
   import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
+  import { terminalClipboardStore } from "$lib/terminal/clipboardStore";
 
   let { children } = $props();
 
@@ -25,7 +27,17 @@
 
   function hasSelection(): boolean {
     const sel = window.getSelection();
-    return !!sel && sel.toString().trim().length > 0;
+    if (!!sel && sel.toString().trim().length > 0) return true;
+    const termClip = get(terminalClipboardStore);
+    return !!termClip && termClip.text.length > 0;
+  }
+
+  function getSelectedText(target: HTMLElement | null): string {
+    if (target?.closest(".xterm")) {
+      const termClip = get(terminalClipboardStore);
+      return termClip?.text ?? "";
+    }
+    return window.getSelection()?.toString() ?? "";
   }
 
   async function handlePaste() {
@@ -67,24 +79,31 @@
 
   async function handleCopy() {
     try {
-      const sel = window.getSelection()?.toString() ?? "";
+      const sel = getSelectedText(menuTargetEl);
       if (sel) await writeText(sel);
     } catch {
       document.execCommand("copy");
     }
+    terminalClipboardStore.set(null);
     menuOpen = false;
   }
 
   async function handleCut() {
     try {
-      const sel = window.getSelection()?.toString() ?? "";
+      const sel = getSelectedText(menuTargetEl);
       if (sel) {
         await writeText(sel);
-        document.execCommand("delete");
+        if (menuTargetEl?.closest(".xterm")) {
+          // xterm selection is cleared by the terminal itself or stays
+          // we rely on the terminal's own selection handling
+        } else {
+          document.execCommand("delete");
+        }
       }
     } catch {
       document.execCommand("cut");
     }
+    terminalClipboardStore.set(null);
     menuOpen = false;
   }
 

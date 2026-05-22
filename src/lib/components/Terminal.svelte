@@ -10,6 +10,7 @@
   import { addPreview } from "$lib/layout/store.svelte";
   import { appSettings } from "$lib/workspace/settingsStore.svelte";
   import { triggerMascotEvent } from "$lib/mascot/store.svelte";
+  import { terminalClipboardStore } from "$lib/terminal/clipboardStore";
 
   let { nodeId, tabId, cwd, shell }: {
     nodeId: string;
@@ -293,7 +294,7 @@
   }
 </script>
 
-<div class="terminal-wrapper" data-terminal-id={tabId} bind:this={containerRef} onmousedown={() => terminal?.focus()}></div>
+<div class="terminal-wrapper" data-terminal-id={tabId} bind:this={containerRef} onmousedown={() => terminal?.focus()} oncontextmenu={() => { if (terminal?.hasSelection()) terminalClipboardStore.set({ text: terminal.getSelection() }); else terminalClipboardStore.set(null); }}></div>
 
 <style>
   .terminal-wrapper {
