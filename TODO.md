@@ -4,7 +4,6 @@
 - testear bien posibles bugs
 - modal de carga bonita
 - cambiar estilo
-- botones cerrar pestaña que sea una X que aparece cuando puntero encima
 - estilo de pestaña y panel marcado con borde cuando activo, algo mas sutil
 
 ## Mascota
