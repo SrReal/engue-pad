@@ -293,7 +293,7 @@
   }
 </script>
 
-<div class="terminal-wrapper" bind:this={containerRef} onmousedown={() => terminal?.focus()}></div>
+<div class="terminal-wrapper" data-terminal-id={tabId} bind:this={containerRef} onmousedown={() => terminal?.focus()}></div>
 
 <style>
   .terminal-wrapper {

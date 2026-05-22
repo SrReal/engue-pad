@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { invoke } from "@tauri-apps/api/core";
   import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
 
   let { children } = $props();
@@ -18,6 +19,7 @@
     if (tag === "input" || tag === "textarea") return true;
     if (el.isContentEditable) return true;
     if (el.closest(".cm-editor")) return true;
+    if (el.closest(".xterm")) return true;
     return false;
   }
 
@@ -29,11 +31,23 @@
   async function handlePaste() {
     const target = menuTargetEl;
     if (!target) return;
-    const editorEl = target.closest(".cm-editor") as HTMLElement | null;
-    const active = editorEl || target;
     try {
       const text = await readText();
       if (!text) return;
+      const terminalWrapper = target.closest(".terminal-wrapper") as HTMLElement | null;
+      if (terminalWrapper) {
+        const terminalId = terminalWrapper.dataset.terminalId;
+        if (terminalId) {
+          await invoke("write_terminal", {
+            terminalId,
+            data: Array.from(new TextEncoder().encode(text)),
+          });
+        }
+        menuOpen = false;
+        return;
+      }
+      const editorEl = target.closest(".cm-editor") as HTMLElement | null;
+      const active = editorEl || target;
       if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
         const start = active.selectionStart ?? 0;
         const end = active.selectionEnd ?? 0;

@@ -3,7 +3,6 @@
 - poder cerrar pestaña con boton de rueda de raton
 - testear bien posibles bugs
 
-- texto de panel no seleccionable
 - en panel de ficheros habilitar click derecho con copiar, cortar, pegar, formatear
   
 - quitar del click derecho en pestaña cerrar y fijar
@@ -25,3 +24,4 @@
 
 ## Terminal
 - tienen una fila en negro al final del terminal
+- no funcinoa copiar y pegar con click
