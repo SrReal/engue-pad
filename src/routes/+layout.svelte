@@ -3,20 +3,126 @@
 
   let { children } = $props();
 
+  let menuOpen = $state(false);
+  let menuX = $state(0);
+  let menuY = $state(0);
+  let menuCanCut = $state(false);
+  let menuCanCopy = $state(false);
+  let menuCanPaste = $state(false);
+
+  function isEditable(el: EventTarget | null): boolean {
+    if (!(el instanceof HTMLElement)) return false;
+    const tag = el.tagName.toLowerCase();
+    if (tag === "input" || tag === "textarea") return true;
+    if (el.isContentEditable) return true;
+    if (el.closest(".cm-editor")) return true;
+    return false;
+  }
+
+  function hasSelection(): boolean {
+    const sel = window.getSelection();
+    return !!sel && sel.toString().trim().length > 0;
+  }
+
+  async function handlePaste() {
+    const active = document.activeElement as HTMLElement | null;
+    if (!active) return;
+    try {
+      const text = await navigator.clipboard.readText();
+      if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
+        const start = active.selectionStart ?? 0;
+        const end = active.selectionEnd ?? 0;
+        const value = active.value;
+        active.value = value.slice(0, start) + text + value.slice(end);
+        active.selectionStart = active.selectionEnd = start + text.length;
+        active.dispatchEvent(new Event("input", { bubbles: true }));
+      } else if (active.isContentEditable) {
+        document.execCommand("insertText", false, text);
+      }
+    } catch {
+      // Clipboard read failed silently
+    }
+    menuOpen = false;
+  }
+
+  function handleCopy() {
+    document.execCommand("copy");
+    menuOpen = false;
+  }
+
+  function handleCut() {
+    document.execCommand("cut");
+    menuOpen = false;
+  }
+
   onMount(() => {
-    const handler = (e: MouseEvent) => e.preventDefault();
-    window.addEventListener("contextmenu", handler);
-    return () => window.removeEventListener("contextmenu", handler);
+    const ctxHandler = (e: MouseEvent) => {
+      const editable = isEditable(e.target);
+      const selection = hasSelection();
+      // If no text selected and not editable, silently block the native menu
+      if (!selection && !editable) {
+        e.preventDefault();
+        menuOpen = false;
+        return;
+      }
+      e.preventDefault();
+      menuX = e.clientX;
+      menuY = e.clientY;
+      menuCanCut = editable && selection;
+      menuCanCopy = selection;
+      menuCanPaste = editable;
+      menuOpen = true;
+    };
+
+    const clickHandler = () => {
+      menuOpen = false;
+    };
+
+    window.addEventListener("contextmenu", ctxHandler);
+    window.addEventListener("click", clickHandler);
+    return () => {
+      window.removeEventListener("contextmenu", ctxHandler);
+      window.removeEventListener("click", clickHandler);
+    };
   });
 </script>
 
 {@render children()}
+
+{#if menuOpen}
+  <div class="global-context-menu" style:left="{menuX}px" style:top="{menuY}px">
+    {#if menuCanCut}
+      <button onclick={handleCut}>Cortar</button>
+    {/if}
+    {#if menuCanCopy}
+      <button onclick={handleCopy}>Copiar</button>
+    {/if}
+    {#if menuCanPaste}
+      <button onclick={handlePaste}>Pegar</button>
+    {/if}
+  </div>
+{/if}
 
 <style>
   :global(*) {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+  }
+
+  @font-face {
+    font-family: "Inter";
+    src: url("/fonts/InterVariable.ttf") format("truetype");
+    font-weight: 100 900;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "Inter";
+    src: url("/fonts/InterVariable-Italic.ttf") format("truetype");
+    font-weight: 100 900;
+    font-style: italic;
+    font-display: swap;
   }
 
   :global(body) {
@@ -27,7 +133,9 @@
     -webkit-user-select: none;
   }
 
-  :global(input, textarea, .cm-editor, .xterm, [contenteditable]) {
+  :global(input, textarea, .cm-editor, .xterm, [contenteditable],
+    .tab-content, .preview-tab-content, .terminal-tab-content,
+    .markdown-body, .problems-list, .todo-panel, .tree-item-label) {
     user-select: text;
     -webkit-user-select: text;
   }
@@ -155,5 +263,33 @@
 
   :global(input[type="range"]) {
     accent-color: var(--accent-color, #0ea5ff);
+  }
+
+  .global-context-menu {
+    position: fixed;
+    background: var(--bg-surface, #111827);
+    border: 1px solid var(--border-color, #2a3342);
+    border-radius: 7px;
+    padding: 4px 0;
+    z-index: 10000;
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.44);
+    min-width: 140px;
+  }
+
+  .global-context-menu button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 7px 16px;
+    background: none;
+    border: none;
+    color: var(--text-color, #f1f5f9);
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+  }
+
+  .global-context-menu button:hover {
+    background: var(--bg-tab-hover, #172438);
   }
 </style>
