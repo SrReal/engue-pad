@@ -2,9 +2,9 @@
 
 - poder cerrar pestaña con boton de rueda de raton
 - testear bien posibles bugs
-- los toogle de config,mascotas y demas, que se muestre iluminado o no.
 - he instalado lint y no lo aplica
-- La miniatura que se llame como el proyecto, no que ponga enguepad
+- La miniatura que se llame como el proyecto, no que ponga enguepad <-
+- en todo poder mover lineas entre categorias
 
 - en panel de ficheros habilitar click derecho con copiar, cortar, pegar, formatear
   
@@ -27,4 +27,3 @@
 - Definirlas bien en sus rutas correctas
 
 ## Terminal
-- tienen una fila en negro al final del terminal
