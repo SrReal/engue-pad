@@ -396,14 +396,16 @@ fn get_cli_args() -> Vec<String> {
 #[tauri::command]
 #[cfg(target_os = "macos")]
 fn set_dock_badge(label: String) {
-    use objc::runtime::{Object, Sel};
+    use objc::msg_send;
+    use objc::runtime::Object;
     use std::ffi::CString;
     unsafe {
-        let cls = objc::runtime::Class::get("NSApplication").unwrap();
-        let ns_app: *mut Object = msg_send![cls, sharedApplication];
+        let app_cls = objc::runtime::Class::get("NSApplication").unwrap();
+        let ns_app: *mut Object = msg_send![app_cls, sharedApplication];
         let dock_tile: *mut Object = msg_send![ns_app, dockTile];
+        let nsstring_cls = objc::runtime::Class::get("NSString").unwrap();
         let cstring = CString::new(label).unwrap();
-        let ns_string: *mut Object = msg_send![cls, stringWithUTF8String: cstring.as_ptr()];
+        let ns_string: *mut Object = msg_send![nsstring_cls, stringWithUTF8String: cstring.as_ptr()];
         let _: () = msg_send![dock_tile, setBadgeLabel: ns_string];
     }
 }
