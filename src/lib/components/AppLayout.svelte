@@ -403,11 +403,11 @@ import type { SemanticEvent } from "$lib/mascot/types";
       <span class="app-name">EnguePad</span>
     </div>
     <div class="header-actions">
-      <button class="icon-btn" onclick={toggleSidebar} title={t("headerToggleSidebar")}><SidebarSimple size={18} /></button>
+      <button class="icon-btn" class:active={!sidebarCollapsed} onclick={toggleSidebar} title={t("headerToggleSidebar")}><SidebarSimple size={18} /></button>
       <button class="icon-btn" onclick={openFolder} title={t("headerOpenFolder")}><FolderOpen size={18} /></button>
       <button class="icon-btn" onclick={triggerRefresh} title={t("headerRefreshTree")}><ArrowClockwise size={18} /></button>
-      <button class="icon-btn" onclick={toggleRightSidebar} title={t("headerToggleTasksSidebar")}><NotePencil size={18} /></button>
-      <button class="icon-btn" onclick={toggleMascotSidebar} title={t("headerMascot")}><PawPrint size={18} /></button>
+      <button class="icon-btn" class:active={!rightSidebarCollapsed} onclick={toggleRightSidebar} title={t("headerToggleTasksSidebar")}><NotePencil size={18} /></button>
+      <button class="icon-btn" class:active={!mascotSidebarCollapsed} onclick={toggleMascotSidebar} title={t("headerMascot")}><PawPrint size={18} /></button>
       <button class="icon-btn" onclick={() => showSettings = true} title={t("headerSettings")}><Gear size={18} /></button>
       <button class="icon-btn" onclick={openNewWindow} title={t("headerNewInstance")}><AppWindow size={18} /></button>
     </div>
@@ -572,6 +572,12 @@ import type { SemanticEvent } from "$lib/mascot/types";
     background: var(--bg-tab-hover, #3d3d3d);
     border-color: var(--accent-color, #4a9eff);
     color: var(--accent-cyan, #00e5ff);
+  }
+
+  .icon-btn.active {
+    background: var(--accent-color, #0ea5ff);
+    border-color: var(--accent-color, #0ea5ff);
+    color: #ffffff;
   }
 
   .body {
