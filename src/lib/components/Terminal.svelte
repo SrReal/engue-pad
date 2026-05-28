@@ -302,9 +302,18 @@
     flex: 1;
     min-height: 0;
     background: var(--bg-panel, #1e1e1e);
+    position: relative;
   }
 
   .terminal-wrapper :global(.xterm) {
+    position: absolute;
+    inset: 0;
     height: 100%;
+    width: 100%;
+  }
+
+  .terminal-wrapper :global(.xterm-screen) {
+    height: 100% !important;
+    width: 100% !important;
   }
 </style>

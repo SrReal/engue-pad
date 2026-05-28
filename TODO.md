@@ -2,6 +2,9 @@
 
 - poder cerrar pestaña con boton de rueda de raton
 - testear bien posibles bugs
+- los toogle de config,mascotas y demas, que se muestre iluminado o no.
+- he instalado lint y no lo aplica
+- La miniatura que se llame como el proyecto, no que ponga enguepad
 
 - en panel de ficheros habilitar click derecho con copiar, cortar, pegar, formatear
   
@@ -15,6 +18,7 @@
 ## Mascota
 - testear eventos que concuerden
 - frases dinamicas por CLI
+- poder deshabilitar funcion de mascota, eligiendo "vacio"
 
 ## Ficheros
 - Click derecho mismas opciones que terax
@@ -24,4 +28,3 @@
 
 ## Terminal
 - tienen una fila en negro al final del terminal
-- no funcinoa copiar y pegar con click
