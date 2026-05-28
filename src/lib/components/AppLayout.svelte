@@ -2,6 +2,7 @@
   import { onMount, onDestroy } from "svelte";
   import { listen } from "@tauri-apps/api/event";
   import { invoke } from "@tauri-apps/api/core";
+  import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
   import { layoutState, findAllDirtyTabs, resetLayout, activateNextTab, activatePrevTab, closeActiveTab, addPreview } from "$lib/layout/store.svelte";
   import { workspaceInfo, loadWorkspace, scheduleSaveWorkspace } from "$lib/workspace/store.svelte";
   import { setTodoPath, ensureTodoFile, loadTodoFile } from "$lib/todo/store.svelte";
@@ -26,6 +27,11 @@ import type { SemanticEvent } from "$lib/mascot/types";
   import { SidebarSimple, FolderOpen, ArrowClockwise, NotePencil, PawPrint, Gear, AppWindow } from "phosphor-svelte";
   import { setLocale, t } from "$lib/i18n";
   const projectName = $derived(workspaceInfo.rootPath ? workspaceInfo.rootPath.split(/[\\/]/).pop() ?? "EnguePad" : "EnguePad");
+
+  $effect(() => {
+    const title = projectName || "EnguePad";
+    getCurrentWebviewWindow().setTitle(title).catch(() => {});
+  });
 
   let sidebarWidth = $state(240);
   let isResizingSidebar = $state(false);
