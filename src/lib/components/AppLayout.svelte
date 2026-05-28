@@ -30,6 +30,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
 
   $effect(() => {
     const title = projectName || "EnguePad";
+    document.title = title;
     getCurrentWebviewWindow().setTitle(title).catch(() => {});
   });
 
