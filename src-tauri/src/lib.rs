@@ -396,7 +396,7 @@ fn get_cli_args() -> Vec<String> {
 #[tauri::command]
 #[cfg(target_os = "macos")]
 fn set_dock_badge(label: String) {
-    use objc::{msg_send, sel};
+    use objc::*;
     use objc::runtime::Object;
     use std::ffi::CString;
     unsafe {
