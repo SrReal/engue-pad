@@ -403,7 +403,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
       <span class="app-name">EnguePad</span>
     </div>
     <div class="header-actions">
-      <button class="icon-btn" class:active={!sidebarCollapsed} onclick={toggleSidebar} title={t("headerToggleSidebar")}><SidebarSimple size={18} /></button>
+      <button class="icon-btn" onclick={toggleSidebar} title={t("headerToggleSidebar")}><SidebarSimple size={18} /></button>
       <button class="icon-btn" onclick={openFolder} title={t("headerOpenFolder")}><FolderOpen size={18} /></button>
       <button class="icon-btn" onclick={triggerRefresh} title={t("headerRefreshTree")}><ArrowClockwise size={18} /></button>
       <button class="icon-btn" class:active={!rightSidebarCollapsed} onclick={toggleRightSidebar} title={t("headerToggleTasksSidebar")}><NotePencil size={18} /></button>
