@@ -394,27 +394,6 @@ fn get_cli_args() -> Vec<String> {
 }
 
 #[tauri::command]
-#[cfg(target_os = "macos")]
-fn set_dock_badge(label: String) {
-    use objc::*;
-    use objc::runtime::Object;
-    use std::ffi::CString;
-    unsafe {
-        let app_cls = objc::runtime::Class::get("NSApplication").unwrap();
-        let ns_app: *mut Object = msg_send![app_cls, sharedApplication];
-        let dock_tile: *mut Object = msg_send![ns_app, dockTile];
-        let nsstring_cls = objc::runtime::Class::get("NSString").unwrap();
-        let cstring = CString::new(label).unwrap();
-        let ns_string: *mut Object = msg_send![nsstring_cls, stringWithUTF8String: cstring.as_ptr()];
-        let _: () = msg_send![dock_tile, setBadgeLabel: ns_string];
-    }
-}
-
-#[tauri::command]
-#[cfg(not(target_os = "macos"))]
-fn set_dock_badge(_label: String) {}
-
-#[tauri::command]
 fn spawn_new_instance() -> Result<(), String> {
     let exe = std::env::current_exe().map_err(|e| format!("Failed to get current exe: {}", e))?;
     std::process::Command::new(&exe)
@@ -434,7 +413,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .manage(Arc::clone(&terminal_manager))
-        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, read_file_bytes, write_file, write_file_bytes, ensure_dir, dir_exists, read_file_meta, get_app_data_dir, exit_app, rename_file, remove_dir_all, run_command, git_status, terminal::create_terminal, terminal::write_terminal, terminal::resize_terminal, terminal::get_terminal_cwd, terminal::kill_terminal, terminal::get_terminal_processes, get_app_stats, create_new_window, spawn_new_instance, get_cli_args, set_dock_badge, instance::get_instance_info, instance::list_instances, instance::set_instance_workspace, instance::send_event_to_instance, instance::respond_approval])
+        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, read_file_bytes, write_file, write_file_bytes, ensure_dir, dir_exists, read_file_meta, get_app_data_dir, exit_app, rename_file, remove_dir_all, run_command, git_status, terminal::create_terminal, terminal::write_terminal, terminal::resize_terminal, terminal::get_terminal_cwd, terminal::kill_terminal, terminal::get_terminal_processes, get_app_stats, create_new_window, spawn_new_instance, get_cli_args, instance::get_instance_info, instance::list_instances, instance::set_instance_workspace, instance::send_event_to_instance, instance::respond_approval])
         .setup(|app| {
             let handle = app.handle().clone();
             let instance_manager = Arc::new(instance::InstanceManager::new(handle));

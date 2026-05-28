@@ -32,7 +32,6 @@ import type { SemanticEvent } from "$lib/mascot/types";
     const title = projectName || "EnguePad";
     document.title = title;
     getCurrentWebviewWindow().setTitle(title).catch(() => {});
-    invoke("set_dock_badge", { label: title }).catch(() => {});
   });
 
   let sidebarWidth = $state(240);
