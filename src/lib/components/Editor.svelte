@@ -97,11 +97,11 @@
     }
   }
 
-  export function format() {
+  export async function format() {
     if (!view) return;
     const content = view.state.doc.toString();
     const lineEnding = view.state.lineBreak;
-    const formatted = formatContent(content, lineEnding === "\r\n" ? "CRLF" : "LF");
+    const formatted = await formatContent(content, lineEnding === "\r\n" ? "CRLF" : "LF", language);
     if (formatted === content) {
       console.log("[Editor] already formatted, nothing to do");
       return;
@@ -261,7 +261,7 @@
   $effect(() => {
     if (formatRequest.tabId === tabId) {
       console.log("[Editor] format triggered for tab", tabId);
-      format();
+      format().catch((e) => console.error("[Editor] format failed:", e));
       formatRequest.tabId = null;
     }
   });
