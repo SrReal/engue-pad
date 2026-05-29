@@ -22,11 +22,23 @@
   let newSectionValue = $state("");
   let addingSection = $state(false);
   let dragOverSectionEnd = $state<number | null>(null);
-  let draggedTaskLine = $state<number | null>(null);
+  let draggingTaskLine = $state<number | null>(null);
 
   function progressPercent(doc: TodoDocument): number {
     if (doc.total === 0) return 0;
     return Math.round((doc.completed / doc.total) * 100);
+  }
+
+  function handleDragStart(task: TodoTask) {
+    draggingTaskLine = task.lineIndex;
+  }
+
+  function handleMouseUp() {
+    if (draggingTaskLine !== null && dragOverSectionEnd !== null) {
+      moveTodoTask(draggingTaskLine, dragOverSectionEnd);
+    }
+    draggingTaskLine = null;
+    dragOverSectionEnd = null;
   }
 
   function startEditTask(task: TodoTask) {
@@ -121,18 +133,8 @@
         <div
           class="section"
           class:drag-over={dragOverSectionEnd === section.endLine}
-          ondragenter={() => dragOverSectionEnd = section.endLine}
-          ondragleave={() => dragOverSectionEnd = null}
-          ondragover={(e) => { e.preventDefault(); }}
-          ondrop={(e) => {
-            e.preventDefault();
-            dragOverSectionEnd = null;
-            const lineIndex = draggedTaskLine;
-            draggedTaskLine = null;
-            if (lineIndex !== null) {
-              moveTodoTask(lineIndex, section.endLine);
-            }
-          }}
+          onmouseenter={() => { if (draggingTaskLine !== null) dragOverSectionEnd = section.endLine; }}
+          onmouseleave={() => dragOverSectionEnd = null}
         >
           <div class="section-header">
             {#if editingSectionStart === section.startLine}
@@ -186,8 +188,7 @@
               <div class="task-row">
                 <span
                   class="drag-handle"
-                  draggable="true"
-                  ondragstart={(e) => { e.stopPropagation(); draggedTaskLine = task.lineIndex; }}
+                  onmousedown={() => handleDragStart(task)}
                 >⋮⋮</span>
                 <label class="task" class:checked={task.checked}>
                   <input
@@ -238,6 +239,8 @@
     </div>
   {/if}
 </div>
+
+<svelte:window onmouseup={handleMouseUp} />
 
 <style>
   .todo-panel {
