@@ -17,6 +17,7 @@
   import { updateTabContent, markTabSaved, setTabLineEnding } from "$lib/layout/store.svelte";
   import { urlLinksFor } from "$lib/editor/urlLinks";
   import { formatContent } from "$lib/editor/formatter";
+  import { formatRequest } from "$lib/editor/formatRequest.svelte";
   import { type EditorSettings } from "$lib/workspace/settings";
   import { appSettings } from "$lib/workspace/settingsStore.svelte";
   import { triggerMascotEvent } from "$lib/mascot/store.svelte";
@@ -36,7 +37,6 @@
   let isLoading = $state(false);
   let currentContent = $state("");
   let isSettingContent = $state(false);
-  let contextMenu = $state<{ x: number; y: number } | null>(null);
 
   $effect(() => {
     currentContent = initialContent;
@@ -108,21 +108,6 @@
     });
     updateTabContent(nodeId, tabId, formatted);
     triggerMascotEvent("task_done");
-  }
-
-  function openContextMenu(e: MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    contextMenu = { x: e.clientX, y: e.clientY };
-  }
-
-  function closeContextMenu() {
-    contextMenu = null;
-  }
-
-  function handleFormat() {
-    closeContextMenu();
-    format();
   }
 
   function buildEditor() {
@@ -247,25 +232,15 @@
     });
   }
 
-  function onDocContextMenu(event: MouseEvent) {
-    if (!containerRef || !containerRef.contains(event.target as Node)) return;
-    if (!view || !view.dom.contains(event.target as Node)) return;
-    event.preventDefault();
-    event.stopPropagation();
-    openContextMenu(event);
-  }
-
   onMount(() => {
     buildEditor();
     if (path && !dirty) {
       loadFile();
     }
-    document.addEventListener("contextmenu", onDocContextMenu, true);
   });
 
   onDestroy(() => {
     view?.destroy();
-    document.removeEventListener("contextmenu", onDocContextMenu, true);
   });
 
   let lastEditorJson = "";
@@ -280,6 +255,13 @@
     }
   });
 
+  $effect(() => {
+    if (formatRequest.tabId === tabId) {
+      format();
+      formatRequest.tabId = null;
+    }
+  });
+
 
 </script>
 
@@ -287,12 +269,7 @@
   {#if isLoading}
     <div class="loading">Loading...</div>
   {/if}
-  <div class="editor-container" bind:this={containerRef} onclick={closeContextMenu}></div>
-  {#if contextMenu}
-    <div class="context-menu" style:left="{contextMenu.x}px" style:top="{contextMenu.y}px">
-      <button onclick={handleFormat}>{t("editorFormat")}</button>
-    </div>
-  {/if}
+  <div class="editor-container" bind:this={containerRef}></div>
 </div>
 
 <style>
@@ -342,31 +319,5 @@
     color: var(--text-muted, #888);
     font-size: 12px;
     z-index: 10;
-  }
-
-  .context-menu {
-    position: fixed;
-    background: var(--bg-surface, #252526);
-    border: 1px solid var(--border-color, #333);
-    border-radius: 7px;
-    padding: 4px 0;
-    z-index: 1000;
-    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.44);
-  }
-
-  .context-menu button {
-    display: block;
-    width: 100%;
-    text-align: left;
-    padding: 6px 16px;
-    background: none;
-    border: none;
-    color: var(--text-color, #ccc);
-    cursor: pointer;
-    font-size: 13px;
-  }
-
-  .context-menu button:hover {
-    background: var(--bg-tab-hover, #3d3d3d);
   }
 </style>

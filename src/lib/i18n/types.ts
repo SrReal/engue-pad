@@ -87,6 +87,7 @@ export type Dictionary = {
   // Status Bar
   statusCopyPath: string;
   statusPathCopied: string;
+  statusFormat: string;
   statusCpu: string;
   statusRam: string;
   statusUtf8: string;

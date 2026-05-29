@@ -82,6 +82,7 @@ export const es: Dictionary = {
 
   statusCopyPath: "Copiar ruta",
   statusPathCopied: "Ruta copiada",
+  statusFormat: "Formatear archivo",
   statusCpu: "CPU",
   statusRam: "RAM",
   statusUtf8: "UTF-8",

@@ -5,7 +5,8 @@
   import { todoStore } from "$lib/todo/store.svelte";
   import type { LayoutNode, Tab } from "$lib/layout/types";
   import { t } from "$lib/i18n";
-  import { NotePencil } from "phosphor-svelte";
+  import { formatRequest } from "$lib/editor/formatRequest.svelte";
+  import { NotePencil, MagicWand } from "phosphor-svelte";
 
 
   function findActiveTab(root: LayoutNode, activeNodeId: string | null): Tab | null {
@@ -43,6 +44,12 @@
     }
   }
 
+  function handleFormat() {
+    if (activeTab?.type === "editor" || activeTab?.type === "preview") {
+      formatRequest.tabId = activeTab.id;
+    }
+  }
+
   onMount(() => {
     const interval = setInterval(async () => {
       try {
@@ -59,6 +66,9 @@
 
 <div class="status-bar" onselectstart={(e) => e.preventDefault()}>
   <span class="info path" onclick={() => copyPath(activeTab?.path)} title={t("statusCopyPath")}>{activeTab?.path ?? ""}</span>
+  {#if activeTab?.type === "editor" || activeTab?.type === "preview"}
+    <button class="info format-btn" onclick={handleFormat} title={t("statusFormat")}><MagicWand size={12} /></button>
+  {/if}
   {#if todoStore.parsed.total > 0}
     <span class="info todo-count"><NotePencil size={12} /> {todoStore.parsed.completed}/{todoStore.parsed.total}</span>
   {/if}
@@ -114,6 +124,23 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
+  }
+
+  .format-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted, #888);
+    cursor: pointer;
+    padding: 2px 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+  }
+
+  .format-btn:hover {
+    color: var(--accent-color, #4a9eff);
+    background: var(--bg-tab-hover, #3d3d3d);
   }
 
   .toast {
