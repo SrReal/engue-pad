@@ -66,7 +66,7 @@
 
 <div class="status-bar" onselectstart={(e) => e.preventDefault()}>
   <span class="info path" onclick={() => copyPath(activeTab?.path)} title={t("statusCopyPath")}>{activeTab?.path ?? ""}</span>
-  {#if activeTab?.type === "editor" || activeTab?.type === "preview"}
+  {#if activeTab?.path && activeTab?.type !== "terminal" && activeTab?.type !== "todo"}
     <button class="info format-btn" onclick={handleFormat} title={t("statusFormat")}><MagicWand size={12} /></button>
   {/if}
   {#if todoStore.parsed.total > 0}
