@@ -149,13 +149,6 @@
       },
     ]);
 
-    const contextMenuHandler = EditorView.domEventHandlers({
-      contextmenu(event) {
-        openContextMenu(event);
-        return true;
-      },
-    });
-
     const updateListener = EditorView.updateListener.of((update) => {
       if (update.docChanged && !isSettingContent) {
         const content = update.state.doc.toString();
@@ -185,7 +178,6 @@
       syntaxHighlighting(defaultHighlightStyle),
       saveKeymap,
       formatKeymap,
-      contextMenuHandler,
       updateListener,
       ...urlLinksFor(nodeId),
       EditorState.tabSize.of(editorSettings.tabSize),
@@ -252,6 +244,11 @@
     view = new EditorView({
       state,
       parent: containerRef,
+    });
+    view.dom.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      openContextMenu(event);
     });
 
   }
