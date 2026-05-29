@@ -5,7 +5,7 @@
   import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
   import { layoutState, findAllDirtyTabs, resetLayout, activateNextTab, activatePrevTab, closeActiveTab, addPreview } from "$lib/layout/store.svelte";
   import { workspaceInfo, loadWorkspace, scheduleSaveWorkspace } from "$lib/workspace/store.svelte";
-  import { setTodoPath, ensureTodoFile, loadTodoFile } from "$lib/todo/store.svelte";
+  import { todoStore, setTodoPath, ensureTodoFile, loadTodoFile } from "$lib/todo/store.svelte";
   import { loadSettings, saveSettings } from "$lib/workspace/settings";
   import { appSettings, updateAppSettings } from "$lib/workspace/settingsStore.svelte";
   import LayoutNode from "./LayoutNode.svelte";
@@ -331,7 +331,14 @@ import type { SemanticEvent } from "$lib/mascot/types";
         const confirmed = await confirm(t("dialogSwitchProjectBody", names), { title: t("dialogSwitchProjectTitle"), kind: "warning" });
         if (!confirmed) return;
       }
+      // Full reset before switching
       resetLayout();
+      todoStore.path = null;
+      todoStore.content = "";
+      todoStore.parsed = { sections: [], total: 0, completed: 0 };
+      todoStore.loading = false;
+      workspaceInfo.workspaceId = null;
+      refreshSignal++;
       workspaceInfo.rootPath = selected;
       await saveSettings({ ...appSettings, lastProjectPath: selected });
     }
