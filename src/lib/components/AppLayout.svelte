@@ -61,7 +61,6 @@ import type { SemanticEvent } from "$lib/mascot/types";
   let isLoading = $state(true);
 
   let searchQuery = $state("");
-  let searchGlobal = $state(false);
 
   onMount(async () => {
     const args = await invoke<string[]>("get_cli_args");
@@ -371,18 +370,10 @@ import type { SemanticEvent } from "$lib/mascot/types";
 
   async function runSearch() {
     const q = searchQuery.trim();
-    if (!q) return;
-    const activeTab = findActiveEditorTab();
-    const isGlobal = searchGlobal || !activeTab?.path;
-    let results: unknown[] = [];
-    if (isGlobal && workspaceInfo.rootPath) {
-      results = await invoke<{ path: string; line: number; text: string }[]>("find_in_project", { path: workspaceInfo.rootPath, query: q });
-    } else if (activeTab?.path) {
-      results = await invoke<{ path: string; line: number; text: string }[]>("find_in_file", { path: activeTab.path, query: q });
-    }
+    if (!q || !workspaceInfo.rootPath) return;
+    const results = await invoke<{ path: string; line: number; text: string }[]>("find_in_project", { path: workspaceInfo.rootPath, query: q });
     const nodeId = layoutState.activeNodeId ?? layoutState.root.id;
-    addSearchTab(nodeId, q, isGlobal, results);
-    showSearch = false;
+    addSearchTab(nodeId, q, true, results);
     searchQuery = "";
   }
 
@@ -463,15 +454,11 @@ import type { SemanticEvent } from "$lib/mascot/types";
         <input
           type="text"
           bind:value={searchQuery}
-          placeholder={searchGlobal ? "Search project..." : "Search file..."}
+          placeholder="Search project..."
           onkeydown={(e) => {
             if (e.key === "Enter") { e.preventDefault(); runSearch(); }
           }}
         />
-        <label class="search-scope">
-          <input type="checkbox" bind:checked={searchGlobal} />
-          Global
-        </label>
         <button class="search-go" onclick={runSearch}>Go</button>
       </div>
     {/if}
@@ -797,20 +784,6 @@ import type { SemanticEvent } from "$lib/mascot/types";
     border-color: var(--accent-color, #4a9eff);
   }
 
-  .search-scope {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 12px;
-    color: var(--text-muted, #888);
-    white-space: nowrap;
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .search-scope input {
-    accent-color: var(--accent-color, #4a9eff);
-  }
 
   .search-go {
     display: inline-flex;
