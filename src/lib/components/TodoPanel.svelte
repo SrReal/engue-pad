@@ -22,6 +22,7 @@
   let newSectionValue = $state("");
   let addingSection = $state(false);
   let dragOverSectionEnd = $state<number | null>(null);
+  let draggedTaskLine = $state<number | null>(null);
 
   function progressPercent(doc: TodoDocument): number {
     if (doc.total === 0) return 0;
@@ -122,12 +123,13 @@
           class:drag-over={dragOverSectionEnd === section.endLine}
           ondragenter={() => dragOverSectionEnd = section.endLine}
           ondragleave={() => dragOverSectionEnd = null}
-          ondragover={(e) => { e.preventDefault(); e.dataTransfer!.dropEffect = "move"; }}
+          ondragover={(e) => { e.preventDefault(); }}
           ondrop={(e) => {
             e.preventDefault();
             dragOverSectionEnd = null;
-            const lineIndex = Number(e.dataTransfer?.getData("text/plain"));
-            if (!isNaN(lineIndex)) {
+            const lineIndex = draggedTaskLine;
+            draggedTaskLine = null;
+            if (lineIndex !== null) {
               moveTodoTask(lineIndex, section.endLine);
             }
           }}
@@ -184,7 +186,7 @@
               <div
                 class="task-row"
                 draggable="true"
-                ondragstart={(e) => { e.dataTransfer?.setData("text/plain", task.lineIndex.toString()); e.dataTransfer!.effectAllowed = "move"; }}
+                ondragstart={() => { draggedTaskLine = task.lineIndex; }}
               >
                 <label class="task" class:checked={task.checked}>
                   <input
