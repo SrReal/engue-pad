@@ -195,6 +195,52 @@
         ".cm-lineNumbers .cm-gutterElement": {
           fontSize: `${editorSettings.fontSize - 1}px`,
         },
+        ".cm-panel.cm-search": {
+          background: "var(--bg-surface, #111827)",
+          border: "1px solid var(--border-color, #333)",
+          borderRadius: "6px",
+          padding: "8px 12px",
+          margin: "6px 8px",
+          boxShadow: "0 10px 24px rgba(0,0,0,0.28)",
+          color: "var(--text-color, #ccc)",
+          fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+          fontSize: "13px",
+        },
+        ".cm-panel.cm-search input": {
+          background: "var(--bg-panel, #0b1422)",
+          border: "1px solid var(--border-color, #333)",
+          color: "var(--text-color, #ccc)",
+          borderRadius: "4px",
+          padding: "4px 8px",
+          fontSize: "13px",
+          outline: "none",
+        },
+        ".cm-panel.cm-search input:focus": {
+          borderColor: "var(--accent-color, #4a9eff)",
+        },
+        ".cm-panel.cm-search button": {
+          background: "var(--bg-surface, #252526)",
+          border: "1px solid var(--border-color, #333)",
+          color: "var(--text-color, #ccc)",
+          borderRadius: "4px",
+          padding: "3px 10px",
+          fontSize: "12px",
+          cursor: "pointer",
+          marginLeft: "4px",
+        },
+        ".cm-panel.cm-search button:hover": {
+          background: "var(--bg-tab-hover, #3d3d3d)",
+          borderColor: "var(--accent-color, #4a9eff)",
+          color: "var(--accent-color, #4a9eff)",
+        },
+        ".cm-searchMatch": {
+          background: "rgba(240, 167, 50, 0.25)",
+          borderRadius: "2px",
+        },
+        ".cm-searchMatch-selected": {
+          background: "rgba(240, 167, 50, 0.55)",
+          borderRadius: "2px",
+        },
       }),
     ];
 

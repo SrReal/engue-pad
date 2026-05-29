@@ -416,9 +416,9 @@ import type { SemanticEvent } from "$lib/mascot/types";
       else activateNextTab();
       return;
     }
-    if (e.key === "f") {
+    if (e.key === "F" && e.shiftKey) {
       e.preventDefault();
-      openSearch(e.shiftKey);
+      openSearch(true);
       return;
     }
   }
