@@ -458,7 +458,6 @@ import type { SemanticEvent } from "$lib/mascot/types";
               if (e.key === "Enter") { e.preventDefault(); runSearch(); }
             }}
           />
-          <button class="search-go" onclick={runSearch}>{t("headerSearchGo")}</button>
         </div>
       {/if}
     </div>
@@ -779,7 +778,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
     line-height: 1;
     outline: none;
     min-width: 0;
-    height: 28px;
+    height: 34px;
     box-sizing: border-box;
   }
 
@@ -788,26 +787,5 @@ import type { SemanticEvent } from "$lib/mascot/types";
   }
 
 
-  .search-go {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 28px;
-    padding: 0 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 12px;
-    line-height: 1;
-    font-weight: 500;
-    border: none;
-    flex-shrink: 0;
-    background: var(--accent-color, #4a9eff);
-    color: white;
-    box-sizing: border-box;
-  }
-
-  .search-go:hover {
-    background: var(--accent-hover, #0d8cff);
-  }
 
 </style>

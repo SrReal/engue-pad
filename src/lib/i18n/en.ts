@@ -12,8 +12,7 @@ export const en: Dictionary = {
   headerMascot: "Mascot",
   headerSettings: "Settings",
   headerNewInstance: "New instance",
-  headerSearchPlaceholder: "Search project...",
-  headerSearchGo: "Search",
+  headerSearchPlaceholder: "Search project... (Press Enter)",
 
   treeOpen: "Open",
   treeCollapse: "Collapse",
