@@ -2,12 +2,11 @@
   import ProcessFooter from "./ProcessFooter.svelte";
   import StatusBar from "./StatusBar.svelte";
 
-  let { toggleProblems, showProblems }: { toggleProblems: () => void; showProblems: boolean } = $props();
 </script>
 
 <div class="app-footer">
   <ProcessFooter />
-  <StatusBar {toggleProblems} {showProblems} />
+  <StatusBar />
 </div>
 
 <style>

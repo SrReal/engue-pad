@@ -2,14 +2,11 @@
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { layoutState } from "$lib/layout/store.svelte";
-  import { problemsStore } from "$lib/editor/problems.svelte";
-  import { updateLinterAvailability, linterAvailability } from "$lib/editor/linterAvailability.svelte";
   import { todoStore } from "$lib/todo/store.svelte";
   import type { LayoutNode, Tab } from "$lib/layout/types";
   import { t } from "$lib/i18n";
-  import { Check, NotePencil } from "phosphor-svelte";
+  import { NotePencil } from "phosphor-svelte";
 
-  let { toggleProblems, showProblems }: { toggleProblems: () => void; showProblems: boolean } = $props();
 
   function findActiveTab(root: LayoutNode, activeNodeId: string | null): Tab | null {
     if (!activeNodeId) return null;
@@ -24,9 +21,6 @@
 
   const activeTab = $derived(findActiveTab(layoutState.root, layoutState.activeNodeId));
 
-  $effect(() => {
-    updateLinterAvailability(activeTab?.language ?? null);
-  });
 
   let cpu = $state(0);
   let memory = $state(0);
@@ -65,22 +59,6 @@
 
 <div class="status-bar" onselectstart={(e) => e.preventDefault()}>
   <span class="info path" onclick={() => copyPath(activeTab?.path)} title={t("statusCopyPath")}>{activeTab?.path ?? ""}</span>
-  <button class="info problems-btn" class:active={showProblems} onclick={toggleProblems}>
-    {#if problemsStore.items.length > 0}
-      {#if problemsStore.items.some((p) => p.severity === "error")}
-        <span class="problem-dot error">●</span>
-      {:else if problemsStore.items.some((p) => p.severity === "warning")}
-        <span class="problem-dot warning">●</span>
-      {:else}
-        <span class="problem-dot info">●</span>
-      {/if}
-      {problemsStore.items.length}
-    {:else if linterAvailability.available === false}
-      <span class="problem-dot warning">!</span>
-    {:else}
-      <Check size={12} />
-    {/if}
-  </button>
   {#if todoStore.parsed.total > 0}
     <span class="info todo-count"><NotePencil size={12} /> {todoStore.parsed.completed}/{todoStore.parsed.total}</span>
   {/if}
@@ -130,40 +108,6 @@
     border-left: none;
   }
 
-  .problems-btn {
-    background: none;
-    border: none;
-    color: var(--text-muted, #888);
-    cursor: pointer;
-    padding: 3px 8px;
-    border-radius: 5px;
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    font-size: 12px;
-  }
-
-  .problems-btn:hover,
-  .problems-btn.active {
-    background: var(--bg-tab-hover, #3d3d3d);
-    color: var(--text-color, #ccc);
-  }
-
-  .problem-dot {
-    font-size: 10px;
-  }
-
-  .problem-dot.error {
-    color: var(--error-color, #f14c4c);
-  }
-
-  .problem-dot.warning {
-    color: var(--warning-color, #f0a732);
-  }
-
-  .problem-dot.info {
-    color: #4a9eff;
-  }
 
   .todo-count {
     color: var(--accent-color, #4a9eff);

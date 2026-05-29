@@ -13,7 +13,6 @@
   import TodoPanel from "./TodoPanel.svelte";
   import SidebarFooter from "./SidebarFooter.svelte";
   import AppFooter from "./AppFooter.svelte";
-  import ProblemsPanel from "./ProblemsPanel.svelte";
   import UrlToast from "./UrlToast.svelte";
   import SettingsModal from "./SettingsModal.svelte";
   import ApprovalModal from "./ApprovalModal.svelte";
@@ -39,7 +38,6 @@ import type { SemanticEvent } from "$lib/mascot/types";
   let sidebarCollapsed = $state(false);
   let refreshSignal = $state(0);
   let lastSidebarWidth = $state(240);
-  let showProblems = $state(false);
   let showSettings = $state(false);
 
   let rightSidebarWidth = $state(260);
@@ -454,12 +452,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
       <div class="editor-area">
         <LayoutNode node={layoutState.root} />
       </div>
-      {#if showProblems}
-        <div class="problems-area">
-          <ProblemsPanel onClose={() => showProblems = false} />
-        </div>
-      {/if}
-      <AppFooter toggleProblems={() => showProblems = !showProblems} {showProblems} />
+      <AppFooter />
     </main>
     {#if !mascotSidebarCollapsed}
       <div
@@ -712,14 +705,6 @@ import type { SemanticEvent } from "$lib/mascot/types";
     flex-direction: column;
   }
 
-  .problems-area {
-    height: 180px;
-    flex-shrink: 0;
-    border-top: 1px solid var(--border-color, #333);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
 
   .sidebar.collapsed {
     overflow: hidden;

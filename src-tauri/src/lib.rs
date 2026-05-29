@@ -183,7 +183,7 @@ fn run_command(input: RunCommandInput) -> Result<RunCommandOutput, String> {
         }).collect();
         let shell_cmd = format!("{} {}", &input.command, escaped_args.join(" "));
         let mut c = Command::new("zsh");
-        c.args(["-lc", &shell_cmd]);
+        c.args(["-ilc", &shell_cmd]);
         c
     };
     #[cfg(not(target_os = "macos"))]

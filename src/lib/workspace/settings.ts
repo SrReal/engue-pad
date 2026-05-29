@@ -1,13 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { MascotSettings } from "$lib/mascot/types";
 
-export type LinterSettings = {
-  enabled: boolean;
-  runOnSave: boolean;
-  runOnType: boolean;
-  languages?: Record<string, string>;
-};
-
 export type EditorSettings = {
   fontSize: number;
   lineHeight: number;
@@ -44,7 +37,6 @@ export type AppSettings = {
   locale?: "en" | "es";
   editor?: EditorSettings;
   terminal?: TerminalSettings;
-  lint?: LinterSettings;
   git?: GitSettings;
   mascot?: MascotSettings;
   mascotScope?: "global" | "project";
@@ -68,12 +60,6 @@ const DEFAULT_TERMINAL: TerminalSettings = {
   fontSize: 14,
   scrollback: 1000,
   copyOnSelect: false,
-};
-
-const DEFAULT_LINT: LinterSettings = {
-  enabled: true,
-  runOnSave: false,
-  runOnType: true,
 };
 
 const DEFAULT_GIT: GitSettings = {
@@ -109,7 +95,6 @@ export function getDefaultSettings(): Required<Omit<AppSettings, "lastProjectPat
     locale: "en",
     editor: { ...DEFAULT_EDITOR },
     terminal: { ...DEFAULT_TERMINAL },
-    lint: { ...DEFAULT_LINT },
     git: { ...DEFAULT_GIT },
     mascot: { ...DEFAULT_MASCOT },
     mascotScope: "global",

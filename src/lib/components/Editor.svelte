@@ -16,11 +16,6 @@
   import { highlightSelectionMatches, searchKeymap, search } from "@codemirror/search";
   import { updateTabContent, markTabSaved, setTabLineEnding } from "$lib/layout/store.svelte";
   import { urlLinksFor } from "$lib/editor/urlLinks";
-  import { linterFor, forceLint } from "$lib/editor/linter";
-  import { clearProblemsForPath } from "$lib/editor/problems.svelte";
-  import { linterConfig } from "$lib/workspace/store.svelte";
-  import { editorNavigation } from "$lib/editor/navigation";
-  import { get } from "svelte/store";
   import { type EditorSettings } from "$lib/workspace/settings";
   import { appSettings } from "$lib/workspace/settingsStore.svelte";
   import { triggerMascotEvent } from "$lib/mascot/store.svelte";
@@ -94,9 +89,6 @@
       await invoke("write_file", { path, contents: content });
       markTabSaved(nodeId, tabId);
       triggerMascotEvent("task_done");
-      if (linterConfig.enabled && linterConfig.runOnSave && language) {
-        forceLint(view, path, language);
-      }
     } catch (e) {
       console.error("Failed to save file:", e);
       triggerMascotEvent("error");
@@ -199,9 +191,6 @@
     if (language) {
       extensions.push(getLanguageExtension(language));
     }
-    if (path && language && linterConfig.enabled && linterConfig.runOnType) {
-      extensions.push(linterFor(path, language));
-    }
 
     const doc = view?.state.doc.toString() ?? currentContent;
 
@@ -216,14 +205,6 @@
       parent: containerRef,
     });
 
-    const nav = get(editorNavigation);
-    if (nav && nav.path === path && view) {
-      view.dispatch({
-        selection: { anchor: nav.offset, head: nav.offset },
-        scrollIntoView: true,
-      });
-      editorNavigation.set(null);
-    }
   }
 
   onMount(() => {
@@ -235,7 +216,6 @@
 
   onDestroy(() => {
     view?.destroy();
-    if (path) clearProblemsForPath(path);
   });
 
   let lastEditorJson = "";
@@ -250,30 +230,7 @@
     }
   });
 
-  let lastLintJson = "";
 
-  $effect(() => {
-    const lint = { enabled: linterConfig.enabled, runOnType: linterConfig.runOnType, runOnSave: linterConfig.runOnSave };
-    const json = JSON.stringify(lint);
-    if (json === lastLintJson) return;
-    lastLintJson = json;
-    if (view && containerRef) {
-      buildEditor();
-    }
-  });
-
-  $effect(() => {
-    const unsub = editorNavigation.subscribe((nav) => {
-      if (nav && nav.path === path && view) {
-        view.dispatch({
-          selection: { anchor: nav.offset, head: nav.offset },
-          scrollIntoView: true,
-        });
-        editorNavigation.set(null);
-      }
-    });
-    return unsub;
-  });
 </script>
 
 <div class="editor-wrapper">
@@ -311,56 +268,6 @@
     color: var(--accent-color, #4a9eff);
   }
 
-  .editor-container :global(.cm-diagnostic) {
-    background: var(--bg-panel, #1e1e1e);
-    color: var(--text-color, #ccc);
-    border-left: 3px solid var(--text-muted, #888);
-    padding: 4px 8px;
-    font-size: 13px;
-  }
-
-  .editor-container :global(.cm-diagnostic-error) {
-    border-left-color: var(--error-color, #f14c4c);
-  }
-
-  .editor-container :global(.cm-diagnostic-warning) {
-    border-left-color: var(--warning-color, #f0a732);
-  }
-
-  .editor-container :global(.cm-diagnostic-info) {
-    border-left-color: #4a9eff;
-  }
-
-  .editor-container :global(.cm-tooltip-lint) {
-    background: var(--bg-panel, #1e1e1e);
-    border: 1px solid var(--border-color, #333);
-    border-radius: 6px;
-    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
-    max-width: 400px;
-  }
-
-  .editor-container :global(.cm-lintRange-error) {
-    text-decoration: underline wavy var(--error-color, #f14c4c);
-  }
-
-  .editor-container :global(.cm-lintRange-warning) {
-    text-decoration: underline wavy var(--warning-color, #f0a732);
-  }
-
-  .editor-container :global(.cm-lintRange-info) {
-    text-decoration: underline wavy #4a9eff;
-  }
-
-  .editor-container :global(.cm-panel.cm-panel-lint) {
-    background: var(--bg-panel, #1e1e1e);
-    border-top: 1px solid var(--border-color, #333);
-  }
-
-  .editor-container :global(.cm-panel.cm-panel-lint ul) {
-    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
-    font-size: 12px;
-    color: var(--text-color, #ccc);
-  }
 
   .editor-container :global(.cm-lineNumbers) {
     user-select: none;
@@ -372,9 +279,6 @@
     -webkit-user-select: none;
   }
 
-  .editor-container :global(.cm-panel.cm-panel-lint li[aria-selected]) {
-    background: var(--bg-tab-hover, #3d3d3d);
-  }
 
   .loading {
     position: absolute;

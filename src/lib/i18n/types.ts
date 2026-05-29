@@ -50,7 +50,6 @@ export type Dictionary = {
   settingsTabGeneral: string;
   settingsTabEditor: string;
   settingsTabTerminal: string;
-  settingsTabLint: string;
   settingsTabGit: string;
   settingsUiFontSize: string;
   settingsZoom: string;
@@ -77,9 +76,6 @@ export type Dictionary = {
   settingsTerminalShellPlaceholder: string;
   settingsTerminalScrollback: string;
   settingsTerminalCopyOnSelect: string;
-  settingsLintEnable: string;
-  settingsLintRunOnSave: string;
-  settingsLintRunOnType: string;
   settingsGitRefreshInterval: string;
   settingsGitShowIndicators: string;
   settingsCancel: string;
@@ -93,20 +89,6 @@ export type Dictionary = {
   statusUtf8: string;
   statusLf: string;
   statusCrlf: string;
-
-  // Problems Panel
-  problemsTitle: string;
-  problemsErrors: string;
-  problemsWarnings: string;
-  problemsInfo: string;
-  problemsNoProblems: string;
-  problemsClose: string;
-  problemsNoLinter: string;
-  problemsNoLinterHint: string;
-  problemsJsLinter: string;
-  problemsPythonLinter: string;
-  problemsPowershellLinter: string;
-  problemsConfigNote: string;
 
   // Approval Modal
   approvalTitle: string;

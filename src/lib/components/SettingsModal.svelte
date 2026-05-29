@@ -3,10 +3,9 @@
   import { appSettings, updateAppSettings } from "$lib/workspace/settingsStore.svelte";
   import { X } from "phosphor-svelte";
   import { t, setLocale } from "$lib/i18n";
-  import { linterConfig } from "$lib/workspace/store.svelte";
 
   let { show = $bindable(false) }: { show?: boolean } = $props();
-  let activeTab = $state<"general" | "editor" | "terminal" | "lint" | "git">("general");
+  let activeTab = $state<"general" | "editor" | "terminal" | "git">("general");
   let draft = $state<AppSettings>(getDefaultSettings());
 
   $effect(() => {
@@ -29,14 +28,6 @@
     if (draft.locale) setLocale(draft.locale);
     updateAppSettings(draft);
     saveSettings(draft);
-    if (draft.lint) {
-      linterConfig.enabled = draft.lint.enabled;
-      linterConfig.runOnSave = draft.lint.runOnSave;
-      linterConfig.runOnType = draft.lint.runOnType;
-      if (draft.lint.languages) {
-        linterConfig.languages = draft.lint.languages;
-      }
-    }
     show = false;
   }
 
@@ -61,7 +52,6 @@
           <button class="tab-btn" class:active={activeTab === "general"} onclick={() => activeTab = "general"}>{t("settingsTabGeneral")}</button>
           <button class="tab-btn" class:active={activeTab === "editor"} onclick={() => activeTab = "editor"}>{t("settingsTabEditor")}</button>
           <button class="tab-btn" class:active={activeTab === "terminal"} onclick={() => activeTab = "terminal"}>{t("settingsTabTerminal")}</button>
-          <button class="tab-btn" class:active={activeTab === "lint"} onclick={() => activeTab = "lint"}>{t("settingsTabLint")}</button>
           <button class="tab-btn" class:active={activeTab === "git"} onclick={() => activeTab = "git"}>{t("settingsTabGit")}</button>
         </div>
         <div class="tab-content">
@@ -147,21 +137,6 @@
               <label class="field checkbox">
                 <input type="checkbox" checked={draft.terminal?.copyOnSelect ?? false} onchange={(e) => updateNested("terminal", "copyOnSelect", e.currentTarget.checked)} />
                 <span>{t("settingsTerminalCopyOnSelect")}</span>
-              </label>
-            </div>
-          {:else if activeTab === "lint"}
-            <div class="section">
-              <label class="field checkbox">
-                <input type="checkbox" checked={draft.lint?.enabled ?? true} onchange={(e) => updateNested("lint", "enabled", e.currentTarget.checked)} />
-                <span>{t("settingsLintEnable")}</span>
-              </label>
-              <label class="field checkbox">
-                <input type="checkbox" checked={draft.lint?.runOnSave ?? false} onchange={(e) => updateNested("lint", "runOnSave", e.currentTarget.checked)} />
-                <span>{t("settingsLintRunOnSave")}</span>
-              </label>
-              <label class="field checkbox">
-                <input type="checkbox" checked={draft.lint?.runOnType ?? true} onchange={(e) => updateNested("lint", "runOnType", e.currentTarget.checked)} />
-                <span>{t("settingsLintRunOnType")}</span>
               </label>
             </div>
           {:else if activeTab === "git"}
