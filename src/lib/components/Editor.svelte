@@ -11,7 +11,7 @@
   import { markdown } from "@codemirror/lang-markdown";
   import { python } from "@codemirror/lang-python";
   import { lineNumbers, highlightActiveLineGutter, EditorView as CMEditorView } from "@codemirror/view";
-  import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
+  import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
   import { bracketMatching, syntaxHighlighting, defaultHighlightStyle, foldGutter, foldKeymap, indentUnit } from "@codemirror/language";
   import { highlightSelectionMatches, searchKeymap, search } from "@codemirror/search";
   import { updateTabContent, markTabSaved, setTabLineEnding } from "$lib/layout/store.svelte";
@@ -158,7 +158,7 @@
     const extensions: Extension[] = [
       oneDark,
       history(),
-      keymap.of([...defaultKeymap, ...historyKeymap, ...foldKeymap, ...searchKeymap]),
+      keymap.of([...defaultKeymap, ...historyKeymap, ...foldKeymap, ...searchKeymap, indentWithTab]),
       search({ top: true }),
       bracketMatching(),
       foldGutter(),
