@@ -23,6 +23,10 @@ export const es: Dictionary = {
   treeFailedRename: "Error al renombrar",
   treeFormat: "Formatear",
   editorFormat: "Formatear",
+  treeSearch: "Buscar archivos...",
+  treeNewFile: "Nuevo archivo",
+  treeNewFolder: "Nueva carpeta",
+  treeRefresh: "Refrescar",
 
   tabNewTerminal: "Nueva terminal",
   tabClose: "Cerrar",

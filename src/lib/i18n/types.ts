@@ -24,6 +24,10 @@ export type Dictionary = {
   treeFailedRename: string;
   treeFormat: string;
   editorFormat: string;
+  treeSearch: string;
+  treeNewFile: string;
+  treeNewFolder: string;
+  treeRefresh: string;
 
   // Tab Panel
   tabNewTerminal: string;

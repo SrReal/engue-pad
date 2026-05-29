@@ -5,6 +5,8 @@
   import { fileDrag } from "$lib/tree/fileDragStore";
   import { refreshGitStatus } from "$lib/git/store.svelte";
   import { appSettings } from "$lib/workspace/settingsStore.svelte";
+  import { t } from "$lib/i18n";
+  import { MagnifyingGlass, Plus, FolderPlus, ArrowClockwise, X } from "phosphor-svelte";
 
   type FileEntry = {
     name: string;
@@ -25,6 +27,11 @@
   let stopWatch = $state<(() => void) | null>(null);
   let isReloading = $state(false);
   let showGitIndicators = $state(true);
+  let searchQuery = $state("");
+  let newFileName = $state("");
+  let newFolderName = $state("");
+  let showNewFileInput = $state(false);
+  let showNewFolderInput = $state(false);
 
   let rootNode = $state<TreeNode>({
     entry: { name: "Root", path: "", is_dir: true, is_file: false },
@@ -35,10 +42,85 @@
 
   let rootName = $derived(rootPath.split(/[\\/]/).pop() || "Root");
 
+  function filterNodes(nodes: TreeNode[], query: string): TreeNode[] {
+    if (!query) return nodes;
+    const q = query.toLowerCase();
+    return nodes.reduce<TreeNode[]>((acc, node) => {
+      const nameMatch = node.entry.name.toLowerCase().includes(q);
+      if (node.entry.is_dir) {
+        const filteredChildren = node.children ? filterNodes(node.children, query) : [];
+        if (filteredChildren.length > 0 || nameMatch) {
+          acc.push({ ...node, children: filteredChildren.length > 0 ? filteredChildren : node.children, expanded: filteredChildren.length > 0 });
+        }
+      } else if (nameMatch) {
+        acc.push(node);
+      }
+      return acc;
+    }, []);
+  }
+
+  let filteredTree = $derived(searchQuery ? filterNodes(tree, searchQuery) : tree);
+
   $effect(() => {
     rootNode.entry = { name: rootName, path: rootPath, is_dir: true, is_file: false };
-    rootNode.children = tree;
+    rootNode.children = filteredTree;
   });
+
+  function getSep(): string {
+    return rootPath.includes("/") ? "/" : "\\";
+  }
+
+  function startNewFile() {
+    showNewFileInput = true;
+    showNewFolderInput = false;
+    newFileName = "";
+  }
+
+  function startNewFolder() {
+    showNewFolderInput = true;
+    showNewFileInput = false;
+    newFolderName = "";
+  }
+
+  async function createNewFile() {
+    const name = newFileName.trim();
+    if (!name) return;
+    const sep = getSep();
+    const path = rootPath.endsWith(sep) ? rootPath + name : rootPath + sep + name;
+    try {
+      await invoke("write_file", { path, contents: "" });
+      newFileName = "";
+      showNewFileInput = false;
+      reloadTree();
+    } catch (e) {
+      alert(`Error creating file: ${e}`);
+    }
+  }
+
+  async function createNewFolder() {
+    const name = newFolderName.trim();
+    if (!name) return;
+    const sep = getSep();
+    const path = rootPath.endsWith(sep) ? rootPath + name : rootPath + sep + name;
+    try {
+      await invoke("ensure_dir", { path });
+      newFolderName = "";
+      showNewFolderInput = false;
+      reloadTree();
+    } catch (e) {
+      alert(`Error creating folder: ${e}`);
+    }
+  }
+
+  function handleNewFileKey(e: KeyboardEvent) {
+    if (e.key === "Enter") { e.preventDefault(); createNewFile(); }
+    if (e.key === "Escape") { e.preventDefault(); showNewFileInput = false; }
+  }
+
+  function handleNewFolderKey(e: KeyboardEvent) {
+    if (e.key === "Enter") { e.preventDefault(); createNewFolder(); }
+    if (e.key === "Escape") { e.preventDefault(); showNewFolderInput = false; }
+  }
 
   async function loadDirectory(path: string): Promise<TreeNode[]> {
     const result = await invoke<{ entries: FileEntry[]; path: string }>("list_directory", { path });
@@ -187,6 +269,38 @@
   tabindex="-1"
 >
   {#if rootPath}
+    <div class="tree-toolbar">
+      <div class="toolbar-row">
+        <div class="search-box">
+          <MagnifyingGlass size={14} />
+          <input
+            type="text"
+            bind:value={searchQuery}
+            placeholder={t("treeSearch")}
+          />
+          {#if searchQuery}
+            <button class="clear-search" onclick={() => searchQuery = ""}><X size={12} /></button>
+          {/if}
+        </div>
+        <button class="toolbar-btn" title={t("treeNewFile")} onclick={startNewFile}><Plus size={16} /></button>
+        <button class="toolbar-btn" title={t("treeNewFolder")} onclick={startNewFolder}><FolderPlus size={16} /></button>
+        <button class="toolbar-btn" title={t("treeRefresh")} onclick={reloadTree}><ArrowClockwise size={16} /></button>
+      </div>
+      {#if showNewFileInput}
+        <div class="toolbar-input-row">
+          <input type="text" bind:value={newFileName} onkeydown={handleNewFileKey} placeholder="filename.ext" />
+          <button class="toolbar-ok" onclick={createNewFile}>OK</button>
+          <button class="toolbar-cancel" onclick={() => showNewFileInput = false}>X</button>
+        </div>
+      {/if}
+      {#if showNewFolderInput}
+        <div class="toolbar-input-row">
+          <input type="text" bind:value={newFolderName} onkeydown={handleNewFolderKey} placeholder="foldername" />
+          <button class="toolbar-ok" onclick={createNewFolder}>OK</button>
+          <button class="toolbar-cancel" onclick={() => showNewFolderInput = false}>X</button>
+        </div>
+      {/if}
+    </div>
     <TreeItem node={rootNode} onRefresh={reloadTree} {rootPath} {showGitIndicators} />
   {/if}
 </div>
@@ -195,6 +309,139 @@
   .file-tree {
     font-size: 13px;
     user-select: none;
+    color: var(--text-color, #ccc);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .tree-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 4px 6px;
+  }
+
+  .toolbar-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    background: var(--bg-surface, #111827);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 6px;
+    padding: 4px 8px;
+    min-width: 0;
+  }
+
+  .search-box input {
+    background: transparent;
+    border: none;
+    color: var(--text-color, #ccc);
+    font-size: 12px;
+    outline: none;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .search-box input::placeholder {
+    color: var(--text-muted, #888);
+  }
+
+  .clear-search {
+    background: none;
+    border: none;
+    color: var(--text-muted, #888);
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .clear-search:hover {
+    color: var(--text-color, #ccc);
+  }
+
+  .toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: var(--bg-surface, #111827);
+    border: 1px solid var(--border-color, #333);
+    color: var(--text-muted, #888);
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 0;
+    font-size: 14px;
+    flex-shrink: 0;
+    transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  }
+
+  .toolbar-btn:hover {
+    background: var(--bg-tab-hover, #3d3d3d);
+    border-color: var(--accent-color, #4a9eff);
+    color: var(--accent-color, #4a9eff);
+  }
+
+  .toolbar-input-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .toolbar-input-row input {
+    flex: 1;
+    background: var(--bg-surface, #111827);
+    border: 1px solid var(--accent-color, #4a9eff);
+    color: var(--text-color, #ccc);
+    padding: 5px 9px;
+    border-radius: 6px;
+    font-size: 12px;
+    outline: none;
+    min-width: 0;
+  }
+
+  .toolbar-ok,
+  .toolbar-cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    border: none;
+    flex-shrink: 0;
+  }
+
+  .toolbar-ok {
+    background: var(--accent-color, #4a9eff);
+    color: white;
+  }
+
+  .toolbar-ok:hover {
+    background: var(--accent-hover, #0d8cff);
+  }
+
+  .toolbar-cancel {
+    background: var(--bg-surface, #2d2d2d);
+    border: 1px solid var(--border-color, #333);
+    color: var(--text-muted, #888);
+  }
+
+  .toolbar-cancel:hover {
+    background: var(--bg-tab-hover, #3d3d3d);
     color: var(--text-color, #ccc);
   }
 

@@ -23,7 +23,7 @@
   import { triggerMascotEvent, updateMascotSettings, applyMascotConfig, loadMascot } from "$lib/mascot/store.svelte";
 import { loadProjectMascotConfig } from "$lib/mascot/projectStore.svelte";
 import type { SemanticEvent } from "$lib/mascot/types";
-  import { SidebarSimple, FolderOpen, ArrowClockwise, NotePencil, PawPrint, Gear, AppWindow } from "phosphor-svelte";
+  import { SidebarSimple, FolderOpen, NotePencil, PawPrint, Gear, AppWindow } from "phosphor-svelte";
   import { setLocale, t } from "$lib/i18n";
   const projectName = $derived(workspaceInfo.rootPath ? workspaceInfo.rootPath.split(/[\\/]/).pop() ?? "EnguePad" : "EnguePad");
 
@@ -36,7 +36,6 @@ import type { SemanticEvent } from "$lib/mascot/types";
   let sidebarWidth = $state(240);
   let isResizingSidebar = $state(false);
   let sidebarCollapsed = $state(false);
-  let refreshSignal = $state(0);
   let lastSidebarWidth = $state(240);
   let showSettings = $state(false);
 
@@ -374,10 +373,6 @@ import type { SemanticEvent } from "$lib/mascot/types";
     }
   }
 
-  function triggerRefresh() {
-    refreshSignal++;
-  }
-
   $effect(() => {
     const root = workspaceInfo.rootPath;
     if (!root) return;
@@ -421,7 +416,6 @@ import type { SemanticEvent } from "$lib/mascot/types";
     <div class="header-actions">
       <button class="icon-btn" onclick={toggleSidebar} title={t("headerToggleSidebar")}><SidebarSimple size={18} /></button>
       <button class="icon-btn" onclick={openFolder} title={t("headerOpenFolder")}><FolderOpen size={18} /></button>
-      <button class="icon-btn" onclick={triggerRefresh} title={t("headerRefreshTree")}><ArrowClockwise size={18} /></button>
       <button class="icon-btn" class:active={!rightSidebarCollapsed} onclick={toggleRightSidebar} title={t("headerToggleTasksSidebar")}><NotePencil size={18} /></button>
       <button class="icon-btn" class:active={!mascotSidebarCollapsed} onclick={toggleMascotSidebar} title={t("headerMascot")}><PawPrint size={18} /></button>
       <button class="icon-btn" onclick={() => showSettings = true} title={t("headerSettings")}><Gear size={18} /></button>
@@ -437,7 +431,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
             <button class="open-btn" onclick={openFolder}>{t("headerOpenFolder")}</button>
           </div>
         {:else}
-          <FileTree rootPath={workspaceInfo.rootPath} {refreshSignal} />
+          <FileTree rootPath={workspaceInfo.rootPath} />
         {/if}
       </div>
       <SidebarFooter />
