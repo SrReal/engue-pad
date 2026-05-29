@@ -172,8 +172,27 @@ fn run_command(input: RunCommandInput) -> Result<RunCommandOutput, String> {
     use std::process::{Command, Stdio};
     use std::io::Write;
 
-    let mut cmd = Command::new(&input.command);
-    cmd.args(&input.args);
+    #[cfg(target_os = "macos")]
+    let mut cmd = {
+        let escaped_args: Vec<String> = input.args.iter().map(|a| {
+            if a.contains(' ') || a.contains('\'') || a.contains('"') {
+                format!("'{}'", a.replace('\'', "'\"'\"'"))
+            } else {
+                a.clone()
+            }
+        }).collect();
+        let shell_cmd = format!("{} {}", &input.command, escaped_args.join(" "));
+        let mut c = Command::new("zsh");
+        c.args(["-lc", &shell_cmd]);
+        c
+    };
+    #[cfg(not(target_os = "macos"))]
+    let mut cmd = {
+        let mut c = Command::new(&input.command);
+        c.args(&input.args);
+        c
+    };
+
     if let Some(cwd) = &input.cwd {
         cmd.current_dir(cwd);
     }
