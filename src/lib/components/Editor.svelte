@@ -110,8 +110,9 @@
     triggerMascotEvent("task_done");
   }
 
-  function handleContextMenu(e: MouseEvent) {
+  function openContextMenu(e: MouseEvent) {
     e.preventDefault();
+    e.stopPropagation();
     contextMenu = { x: e.clientX, y: e.clientY };
   }
 
@@ -148,6 +149,13 @@
       },
     ]);
 
+    const contextMenuHandler = EditorView.domEventHandlers({
+      contextmenu(event) {
+        openContextMenu(event);
+        return true;
+      },
+    });
+
     const updateListener = EditorView.updateListener.of((update) => {
       if (update.docChanged && !isSettingContent) {
         const content = update.state.doc.toString();
@@ -177,6 +185,7 @@
       syntaxHighlighting(defaultHighlightStyle),
       saveKeymap,
       formatKeymap,
+      contextMenuHandler,
       updateListener,
       ...urlLinksFor(nodeId),
       EditorState.tabSize.of(editorSettings.tabSize),
@@ -273,13 +282,11 @@
 
 </script>
 
-<svelte:window onclick={closeContextMenu} />
-
 <div class="editor-wrapper">
   {#if isLoading}
     <div class="loading">Loading...</div>
   {/if}
-  <div class="editor-container" bind:this={containerRef} oncontextmenu={handleContextMenu}></div>
+  <div class="editor-container" bind:this={containerRef} onclick={closeContextMenu}></div>
   {#if contextMenu}
     <div class="context-menu" style:left="{contextMenu.x}px" style:top="{contextMenu.y}px">
       <button onclick={handleFormat}>{t("editorFormat")}</button>
