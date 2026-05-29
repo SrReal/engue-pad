@@ -776,6 +776,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
     padding: 0 10px;
     border-radius: 6px;
     font-size: 13px;
+    line-height: 1;
     outline: none;
     min-width: 0;
     height: 28px;
@@ -796,11 +797,13 @@ import type { SemanticEvent } from "$lib/mascot/types";
     border-radius: 6px;
     cursor: pointer;
     font-size: 12px;
+    line-height: 1;
     font-weight: 500;
     border: none;
     flex-shrink: 0;
     background: var(--accent-color, #4a9eff);
     color: white;
+    box-sizing: border-box;
   }
 
   .search-go:hover {
