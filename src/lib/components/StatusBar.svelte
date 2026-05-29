@@ -45,7 +45,7 @@
   }
 
   function handleFormat() {
-    if (activeTab?.type === "editor" || activeTab?.type === "preview") {
+    if (activeTab?.path && activeTab?.type !== "terminal" && activeTab?.type !== "todo") {
       formatRequest.tabId = activeTab.id;
     }
   }
