@@ -9,6 +9,7 @@
   import { triggerMascotEvent } from "$lib/mascot/store.svelte";
   import FileIcon from "./FileIcon.svelte";
   import { t } from "$lib/i18n";
+  import { formatFile } from "$lib/editor/formatter";
 
   type FileEntry = {
     name: string;
@@ -217,6 +218,18 @@
     closeContextMenu();
   }
 
+  async function handleFormat() {
+    closeContextMenu();
+    if (!node.entry.is_file) return;
+    try {
+      await formatFile(node.entry.path);
+      triggerMascotEvent("task_done");
+    } catch (e) {
+      alert(`${t("treeFailedRename")}: ${e}`);
+      triggerMascotEvent("error");
+    }
+  }
+
   function startRename() {
     closeContextMenu();
     isRenaming = true;
@@ -314,6 +327,7 @@
     <div class="context-menu" style:left="{contextMenu.x}px" style:top="{contextMenu.y}px">
       {#if node.entry.is_file}
         <button onclick={handleFileClick}>{t("treeOpen")}</button>
+        <button onclick={handleFormat}>{t("treeFormat")}</button>
       {:else}
         <button onclick={expandNode}>{node.expanded ? t("treeCollapse") : t("treeExpand")}</button>
       {/if}

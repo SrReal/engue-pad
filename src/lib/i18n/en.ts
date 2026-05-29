@@ -21,6 +21,7 @@ export const en: Dictionary = {
   treeMoveHere: "move here",
   treeFailedMove: "Failed to move",
   treeFailedRename: "Failed to rename",
+  treeFormat: "Format",
 
   tabNewTerminal: "New terminal",
   tabClose: "Close",
