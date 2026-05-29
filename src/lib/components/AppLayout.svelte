@@ -454,12 +454,12 @@ import type { SemanticEvent } from "$lib/mascot/types";
         <input
           type="text"
           bind:value={searchQuery}
-          placeholder="Search project..."
+          placeholder={t("headerSearchPlaceholder")}
           onkeydown={(e) => {
             if (e.key === "Enter") { e.preventDefault(); runSearch(); }
           }}
         />
-        <button class="search-go" onclick={runSearch}>Go</button>
+        <button class="search-go" onclick={runSearch}>{t("headerSearchGo")}</button>
       </div>
     {/if}
     <span class="logo">{projectName}</span>
@@ -773,11 +773,13 @@ import type { SemanticEvent } from "$lib/mascot/types";
     background: var(--bg-surface, #111827);
     border: 1px solid var(--border-color, #333);
     color: var(--text-color, #ccc);
-    padding: 5px 10px;
+    padding: 0 10px;
     border-radius: 6px;
     font-size: 13px;
     outline: none;
     min-width: 0;
+    height: 28px;
+    box-sizing: border-box;
   }
 
   .header-search input:focus {

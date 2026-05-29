@@ -12,6 +12,8 @@ export type Dictionary = {
   headerMascot: string;
   headerSettings: string;
   headerNewInstance: string;
+  headerSearchPlaceholder: string;
+  headerSearchGo: string;
 
   // Tree Item context menu
   treeOpen: string;
