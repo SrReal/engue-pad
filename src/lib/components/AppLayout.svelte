@@ -60,10 +60,8 @@ import type { SemanticEvent } from "$lib/mascot/types";
 
   let isLoading = $state(true);
 
-  let showSearch = $state(false);
   let searchQuery = $state("");
   let searchGlobal = $state(false);
-  let searchInputRef = $state<HTMLInputElement | null>(null);
 
   onMount(async () => {
     const args = await invoke<string[]>("get_cli_args");
@@ -388,12 +386,6 @@ import type { SemanticEvent } from "$lib/mascot/types";
     searchQuery = "";
   }
 
-  function openSearch(global: boolean) {
-    searchGlobal = global;
-    showSearch = true;
-    setTimeout(() => searchInputRef?.focus(), 50);
-  }
-
   function handleGlobalKeydown(e: KeyboardEvent) {
     // Skip if typing in an input or editor
     const target = e.target as HTMLElement;
@@ -414,11 +406,6 @@ import type { SemanticEvent } from "$lib/mascot/types";
       e.preventDefault();
       if (e.shiftKey) activatePrevTab();
       else activateNextTab();
-      return;
-    }
-    if (e.key === "F" && e.shiftKey) {
-      e.preventDefault();
-      openSearch(true);
       return;
     }
   }
@@ -471,16 +458,14 @@ import type { SemanticEvent } from "$lib/mascot/types";
       <button class="icon-btn" onclick={() => showSettings = true} title={t("headerSettings")}><Gear size={18} /></button>
       <button class="icon-btn" onclick={openNewWindow} title={t("headerNewInstance")}><AppWindow size={18} /></button>
     </div>
-    {#if showSearch}
+    {#if workspaceInfo.rootPath}
       <div class="header-search">
         <input
-          bind:this={searchInputRef}
           type="text"
           bind:value={searchQuery}
           placeholder={searchGlobal ? "Search project..." : "Search file..."}
           onkeydown={(e) => {
             if (e.key === "Enter") { e.preventDefault(); runSearch(); }
-            if (e.key === "Escape") { e.preventDefault(); showSearch = false; searchQuery = ""; }
           }}
         />
         <label class="search-scope">
@@ -488,7 +473,6 @@ import type { SemanticEvent } from "$lib/mascot/types";
           Global
         </label>
         <button class="search-go" onclick={runSearch}>Go</button>
-        <button class="search-close" onclick={() => { showSearch = false; searchQuery = ""; }}>X</button>
       </div>
     {/if}
     <span class="logo">{projectName}</span>
@@ -828,8 +812,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
     accent-color: var(--accent-color, #4a9eff);
   }
 
-  .search-go,
-  .search-close {
+  .search-go {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -841,26 +824,12 @@ import type { SemanticEvent } from "$lib/mascot/types";
     font-weight: 500;
     border: none;
     flex-shrink: 0;
-  }
-
-  .search-go {
     background: var(--accent-color, #4a9eff);
     color: white;
   }
 
   .search-go:hover {
     background: var(--accent-hover, #0d8cff);
-  }
-
-  .search-close {
-    background: var(--bg-surface, #2d2d2d);
-    border: 1px solid var(--border-color, #333);
-    color: var(--text-muted, #888);
-  }
-
-  .search-close:hover {
-    background: var(--bg-tab-hover, #3d3d3d);
-    color: var(--text-color, #ccc);
   }
 
 </style>
