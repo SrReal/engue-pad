@@ -250,6 +250,18 @@
     }
   });
 
+  let lastLintJson = "";
+
+  $effect(() => {
+    const lint = { enabled: linterConfig.enabled, runOnType: linterConfig.runOnType, runOnSave: linterConfig.runOnSave };
+    const json = JSON.stringify(lint);
+    if (json === lastLintJson) return;
+    lastLintJson = json;
+    if (view && containerRef) {
+      buildEditor();
+    }
+  });
+
   $effect(() => {
     const unsub = editorNavigation.subscribe((nav) => {
       if (nav && nav.path === path && view) {
