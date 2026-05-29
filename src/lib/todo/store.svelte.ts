@@ -8,6 +8,7 @@ import {
   addSectionInMarkdown,
   editSectionTitleInMarkdown,
   deleteSectionInMarkdown,
+  moveTaskToSectionInMarkdown,
   getDefaultTodoTemplate,
   type TodoDocument,
 } from "./parser";
@@ -97,6 +98,12 @@ export async function editTodoTask(lineIndex: number, newText: string): Promise<
 
 export async function deleteTodoTask(lineIndex: number): Promise<void> {
   const updated = deleteTaskInMarkdown(todoStore.content, lineIndex);
+  updateStore(updated);
+  await persist(updated);
+}
+
+export async function moveTodoTask(taskLineIndex: number, targetSectionEndLine: number): Promise<void> {
+  const updated = moveTaskToSectionInMarkdown(todoStore.content, taskLineIndex, targetSectionEndLine);
   updateStore(updated);
   await persist(updated);
 }

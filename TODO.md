@@ -1,9 +1,10 @@
 # TODO
 
+- La miniatura que se llame como el proyecto, no que ponga enguepad/ windows <-
+  
 - poder cerrar pestaña con boton de rueda de raton
 - testear bien posibles bugs
 - he instalado lint y no lo aplica
-- La miniatura que se llame como el proyecto, no que ponga enguepad/ windows <-
 - en todo poder mover lineas entre categorias
 
 - en panel de ficheros habilitar click derecho con copiar, cortar, pegar, formatear

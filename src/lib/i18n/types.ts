@@ -163,6 +163,7 @@ export type Dictionary = {
   todoRenameSection: string;
   todoDeleteSection: string;
   todoDeleteTask: string;
+  todoMoveTo: string;
   todoAddTaskPlaceholder: string;
   todoSectionPlaceholder: string;
   todoNewSection: string;

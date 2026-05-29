@@ -99,6 +99,19 @@ export function editTaskInMarkdown(source: string, lineIndex: number, newText: s
   return lines.join("\n");
 }
 
+export function moveTaskToSectionInMarkdown(source: string, taskLineIndex: number, targetSectionEndLine: number): string {
+  const lines = source.split(/\r?\n/);
+  if (taskLineIndex < 0 || taskLineIndex >= lines.length) return source;
+  const taskLine = lines[taskLineIndex];
+  // Remove task from current location
+  lines.splice(taskLineIndex, 1);
+  // Adjust target index if task was before target section
+  const insertIndex = taskLineIndex < targetSectionEndLine ? targetSectionEndLine : targetSectionEndLine + 1;
+  const clampedIndex = Math.min(insertIndex, lines.length);
+  lines.splice(clampedIndex, 0, taskLine);
+  return lines.join("\n");
+}
+
 export function deleteTaskInMarkdown(source: string, lineIndex: number): string {
   const lines = source.split(/\r?\n/);
   if (lineIndex < 0 || lineIndex >= lines.length) return source;

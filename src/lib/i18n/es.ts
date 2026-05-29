@@ -147,6 +147,7 @@ export const es: Dictionary = {
   todoRenameSection: "Renombrar",
   todoDeleteSection: "Eliminar sección",
   todoDeleteTask: "Eliminar",
+  todoMoveTo: "Mover a",
   todoAddTaskPlaceholder: "Añadir tarea...",
   todoSectionPlaceholder: "Nombre de sección...",
   todoNewSection: "+ Nueva sección",

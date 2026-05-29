@@ -5,6 +5,7 @@
     addTodoTask,
     editTodoTask,
     deleteTodoTask,
+    moveTodoTask,
     addTodoSection,
     editTodoSectionTitle,
     deleteTodoSection,
@@ -178,6 +179,14 @@
                   >{task.text}</span>
                 </label>
                 <div class="task-actions">
+                  <select class="move-select" title={t("todoMoveTo")} onchange={(e) => { const val = Number((e.target as HTMLSelectElement).value); if (!isNaN(val)) { moveTodoTask(task.lineIndex, val); (e.target as HTMLSelectElement).value = ""; } }}>
+                    <option value="">{t("todoMoveTo")}...</option>
+                    {#each todoStore.parsed.sections as sec}
+                      {#if sec.endLine !== task.lineIndex && sec.endLine !== task.lineIndex - 1}
+                        <option value={sec.endLine}>{sec.title}</option>
+                      {/if}
+                    {/each}
+                  </select>
                   <button class="action-btn danger" title="Delete" onclick={() => deleteTodoTask(task.lineIndex)}><X size={14} /></button>
                 </div>
               </div>
@@ -442,6 +451,28 @@
   .action-btn.danger:hover {
     background: var(--error-color, #c44);
     color: white;
+  }
+
+  .move-select {
+    appearance: none;
+    background: var(--bg-surface, #111827);
+    border: 1px solid var(--border-color, #333);
+    color: var(--text-muted, #888);
+    font-size: 11px;
+    border-radius: 4px;
+    padding: 1px 4px;
+    cursor: pointer;
+    outline: none;
+    max-width: 90px;
+  }
+
+  .move-select:hover {
+    border-color: var(--accent-color, #4a9eff);
+    color: var(--text-color, #ccc);
+  }
+
+  .move-select:focus {
+    border-color: var(--accent-color, #4a9eff);
   }
 
   .new-task-row {
