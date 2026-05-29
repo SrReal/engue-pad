@@ -189,8 +189,12 @@ import type { SemanticEvent } from "$lib/mascot/types";
                 loadMascot(s.mascot.currentMascot);
               }
             }
-          } else if (s.mascot?.enabled && s.mascot?.currentMascot) {
-            triggerMascotEvent("starting_task");
+          } else if (s.mascot) {
+            applyMascotConfig(s.mascot);
+            if (s.mascot.enabled && s.mascot.currentMascot) {
+              loadMascot(s.mascot.currentMascot);
+              triggerMascotEvent("starting_task");
+            }
           }
         }),
       ]).finally(() => {
@@ -465,7 +469,9 @@ import type { SemanticEvent } from "$lib/mascot/types";
       ></div>
     {/if}
     <aside class="mascot-sidebar" class:collapsed={mascotSidebarCollapsed} style:width="{mascotSidebarCollapsed ? 0 : mascotSidebarWidth}px">
-      <MascotSidebar />
+      {#if !mascotSidebarCollapsed}
+        <MascotSidebar />
+      {/if}
     </aside>
     {#if !rightSidebarCollapsed}
       <div
