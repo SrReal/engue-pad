@@ -6,6 +6,7 @@
   import type { Tab } from "$lib/layout/types";
   import TreeItem from "./TreeItem.svelte";
   import { fileDrag } from "$lib/tree/fileDragStore";
+  import { selectedTreePath } from "$lib/tree/selectedStore";
   import { triggerMascotEvent } from "$lib/mascot/store.svelte";
   import FileIcon from "./FileIcon.svelte";
   import { t } from "$lib/i18n";
@@ -109,6 +110,7 @@
   function handleClick() {
     if (isRenaming) return;
     if (didDrag) { didDrag = false; return; }
+    selectedTreePath.set(node.entry.path);
     if (clickTimeout) {
       clearTimeout(clickTimeout);
       clickTimeout = null;
@@ -256,6 +258,7 @@
     class="item-row"
     class:directory={node.entry.is_dir}
     class:file={node.entry.is_file}
+    class:selected={$selectedTreePath === node.entry.path}
     class:drop-target={$fileDrag.target === node.entry.path && node.entry.is_dir}
     class:is-dragging={$fileDrag.path === node.entry.path}
     onclick={handleClick}
@@ -377,6 +380,12 @@
 
   .item-row:hover {
     background: var(--bg-tab-hover, #3d3d3d);
+  }
+
+  .item-row.selected {
+    background: var(--accent-soft, rgba(74, 158, 255, 0.18));
+    outline: 1px solid var(--accent-color, #4a9eff);
+    outline-offset: -1px;
   }
 
   .item-row.directory {

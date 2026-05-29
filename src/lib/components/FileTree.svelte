@@ -3,10 +3,12 @@
   import { get } from "svelte/store";
   import TreeItem from "./TreeItem.svelte";
   import { fileDrag } from "$lib/tree/fileDragStore";
+  import { selectedTreePath } from "$lib/tree/selectedStore";
   import { refreshGitStatus } from "$lib/git/store.svelte";
   import { appSettings } from "$lib/workspace/settingsStore.svelte";
   import { t } from "$lib/i18n";
   import { MagnifyingGlass, Plus, FolderPlus, ArrowClockwise, X } from "phosphor-svelte";
+  import { get } from "svelte/store";
 
   type FileEntry = {
     name: string;
@@ -82,15 +84,30 @@
     newFolderName = "";
   }
 
+  function resolveTargetDir(): string {
+    const sel = get(selectedTreePath);
+    if (!sel || sel === rootPath) return rootPath;
+    const sep = getSep();
+    const lastSep = Math.max(sel.lastIndexOf("/"), sel.lastIndexOf("\\"));
+    const parent = lastSep >= 0 ? sel.slice(0, lastSep) : rootPath;
+    // If selected is a directory, create inside it; otherwise create in its parent
+    if (sel.endsWith(sep)) return sel.slice(0, -1);
+    const isDir = tree.some((n) => n.entry.path === sel && n.entry.is_dir);
+    if (isDir) return sel;
+    return parent || rootPath;
+  }
+
   async function createNewFile() {
     const name = newFileName.trim();
     if (!name) return;
     const sep = getSep();
-    const path = rootPath.endsWith(sep) ? rootPath + name : rootPath + sep + name;
+    const targetDir = resolveTargetDir();
+    const path = targetDir.endsWith(sep) ? targetDir + name : targetDir + sep + name;
     try {
       await invoke("write_file", { path, contents: "" });
       newFileName = "";
       showNewFileInput = false;
+      selectedTreePath.set(path);
       reloadTree();
     } catch (e) {
       alert(`Error creating file: ${e}`);
@@ -101,11 +118,13 @@
     const name = newFolderName.trim();
     if (!name) return;
     const sep = getSep();
-    const path = rootPath.endsWith(sep) ? rootPath + name : rootPath + sep + name;
+    const targetDir = resolveTargetDir();
+    const path = targetDir.endsWith(sep) ? targetDir + name : targetDir + sep + name;
     try {
       await invoke("ensure_dir", { path });
       newFolderName = "";
       showNewFolderInput = false;
+      selectedTreePath.set(path);
       reloadTree();
     } catch (e) {
       alert(`Error creating folder: ${e}`);
@@ -345,9 +364,12 @@
     border: none;
     color: var(--text-color, #ccc);
     font-size: 12px;
+    line-height: 1;
     outline: none;
     flex: 1;
     min-width: 0;
+    min-height: 22px;
+    padding: 0;
   }
 
   .search-box input::placeholder {
