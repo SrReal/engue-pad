@@ -148,6 +148,68 @@ fn search_files(path: String, query: String) -> Result<Vec<String>, String> {
     Ok(results)
 }
 
+#[derive(Debug, Serialize)]
+pub struct SearchMatch {
+    path: String,
+    line: usize,
+    text: String,
+}
+
+#[tauri::command]
+fn find_in_file(path: String, query: String) -> Result<Vec<SearchMatch>, String> {
+    let content = fs::read_to_string(&path).map_err(|e| format!("Failed to read file: {}", e))?;
+    let q = query.to_lowercase();
+    let mut matches = Vec::new();
+    for (i, line) in content.lines().enumerate() {
+        if line.to_lowercase().contains(&q) {
+            matches.push(SearchMatch {
+                path: path.clone(),
+                line: i + 1,
+                text: line.to_string(),
+            });
+        }
+    }
+    Ok(matches)
+}
+
+#[tauri::command]
+fn find_in_project(path: String, query: String) -> Result<Vec<SearchMatch>, String> {
+    let root = Path::new(&path);
+    if !root.is_dir() {
+        return Err(format!("Path is not a directory: {}", path));
+    }
+    let q = query.to_lowercase();
+    let mut matches = Vec::new();
+    fn walk(dir: &Path, q: &str, matches: &mut Vec<SearchMatch>) -> Result<(), std::io::Error> {
+        for entry in fs::read_dir(dir)? {
+            let entry = entry?;
+            let name = entry.file_name().to_string_lossy().to_string();
+            if should_ignore(&name) {
+                continue;
+            }
+            let path_str = entry.path().to_string_lossy().to_string();
+            if entry.path().is_dir() {
+                walk(&entry.path(), q, matches)?;
+            } else if entry.path().is_file() {
+                if let Ok(content) = fs::read_to_string(&entry.path()) {
+                    for (i, line) in content.lines().enumerate() {
+                        if line.to_lowercase().contains(q) {
+                            matches.push(SearchMatch {
+                                path: path_str.clone(),
+                                line: i + 1,
+                                text: line.to_string(),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+    walk(root, &q, &mut matches).map_err(|e| e.to_string())?;
+    Ok(matches)
+}
+
 #[tauri::command]
 fn dir_exists(path: String) -> Result<bool, String> {
     Ok(Path::new(&path).is_dir())
@@ -467,7 +529,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .manage(Arc::clone(&terminal_manager))
-        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, read_file_bytes, write_file, write_file_bytes, remove_file, ensure_dir, dir_exists, read_file_meta, get_app_data_dir, exit_app, rename_file, remove_dir_all, run_command, git_status, search_files, terminal::create_terminal, terminal::write_terminal, terminal::resize_terminal, terminal::get_terminal_cwd, terminal::kill_terminal, terminal::get_terminal_processes, get_app_stats, create_new_window, spawn_new_instance, get_cli_args, instance::get_instance_info, instance::list_instances, instance::set_instance_workspace, instance::send_event_to_instance, instance::respond_approval])
+        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, read_file_bytes, write_file, write_file_bytes, remove_file, ensure_dir, dir_exists, read_file_meta, get_app_data_dir, exit_app, rename_file, remove_dir_all, run_command, git_status, search_files, find_in_file, find_in_project, terminal::create_terminal, terminal::write_terminal, terminal::resize_terminal, terminal::get_terminal_cwd, terminal::kill_terminal, terminal::get_terminal_processes, get_app_stats, create_new_window, spawn_new_instance, get_cli_args, instance::get_instance_info, instance::list_instances, instance::set_instance_workspace, instance::send_event_to_instance, instance::respond_approval])
         .setup(|app| {
             let handle = app.handle().clone();
             let instance_manager = Arc::new(instance::InstanceManager::new(handle));

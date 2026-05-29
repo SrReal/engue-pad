@@ -3,7 +3,7 @@
   import { listen } from "@tauri-apps/api/event";
   import { invoke } from "@tauri-apps/api/core";
   import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
-  import { layoutState, findAllDirtyTabs, resetLayout, activateNextTab, activatePrevTab, closeActiveTab, addPreview } from "$lib/layout/store.svelte";
+  import { layoutState, findAllDirtyTabs, resetLayout, activateNextTab, activatePrevTab, closeActiveTab, addPreview, addSearchTab } from "$lib/layout/store.svelte";
   import { workspaceInfo, loadWorkspace, scheduleSaveWorkspace } from "$lib/workspace/store.svelte";
   import { todoStore, setTodoPath, ensureTodoFile, loadTodoFile } from "$lib/todo/store.svelte";
   import { loadSettings, saveSettings } from "$lib/workspace/settings";
@@ -59,6 +59,11 @@ import type { SemanticEvent } from "$lib/mascot/types";
   let approvalMessage = $state("");
 
   let isLoading = $state(true);
+
+  let showSearch = $state(false);
+  let searchQuery = $state("");
+  let searchGlobal = $state(false);
+  let searchInputRef = $state<HTMLInputElement | null>(null);
 
   onMount(async () => {
     const args = await invoke<string[]>("get_cli_args");
@@ -350,6 +355,45 @@ import type { SemanticEvent } from "$lib/mascot/types";
     await invoke("spawn_new_instance");
   }
 
+  function findActiveEditorTab(): { path?: string } | null {
+    const nodeId = layoutState.activeNodeId;
+    if (!nodeId) return null;
+    function find(node: any): any {
+      if (node.kind === "tab-group" && node.id === nodeId) {
+        const tab = node.tabs.find((t: any) => t.id === node.activeTabId);
+        return tab ?? null;
+      }
+      if (node.kind === "split") {
+        return find(node.first) ?? find(node.second);
+      }
+      return null;
+    }
+    return find(layoutState.root);
+  }
+
+  async function runSearch() {
+    const q = searchQuery.trim();
+    if (!q) return;
+    const activeTab = findActiveEditorTab();
+    const isGlobal = searchGlobal || !activeTab?.path;
+    let results: unknown[] = [];
+    if (isGlobal && workspaceInfo.rootPath) {
+      results = await invoke<{ path: string; line: number; text: string }[]>("find_in_project", { path: workspaceInfo.rootPath, query: q });
+    } else if (activeTab?.path) {
+      results = await invoke<{ path: string; line: number; text: string }[]>("find_in_file", { path: activeTab.path, query: q });
+    }
+    const nodeId = layoutState.activeNodeId ?? layoutState.root.id;
+    addSearchTab(nodeId, q, isGlobal, results);
+    showSearch = false;
+    searchQuery = "";
+  }
+
+  function openSearch(global: boolean) {
+    searchGlobal = global;
+    showSearch = true;
+    setTimeout(() => searchInputRef?.focus(), 50);
+  }
+
   function handleGlobalKeydown(e: KeyboardEvent) {
     // Skip if typing in an input or editor
     const target = e.target as HTMLElement;
@@ -370,6 +414,11 @@ import type { SemanticEvent } from "$lib/mascot/types";
       e.preventDefault();
       if (e.shiftKey) activatePrevTab();
       else activateNextTab();
+      return;
+    }
+    if (e.key === "f") {
+      e.preventDefault();
+      openSearch(e.shiftKey);
       return;
     }
   }
@@ -422,6 +471,26 @@ import type { SemanticEvent } from "$lib/mascot/types";
       <button class="icon-btn" onclick={() => showSettings = true} title={t("headerSettings")}><Gear size={18} /></button>
       <button class="icon-btn" onclick={openNewWindow} title={t("headerNewInstance")}><AppWindow size={18} /></button>
     </div>
+    {#if showSearch}
+      <div class="header-search">
+        <input
+          bind:this={searchInputRef}
+          type="text"
+          bind:value={searchQuery}
+          placeholder={searchGlobal ? "Search project..." : "Search file..."}
+          onkeydown={(e) => {
+            if (e.key === "Enter") { e.preventDefault(); runSearch(); }
+            if (e.key === "Escape") { e.preventDefault(); showSearch = false; searchQuery = ""; }
+          }}
+        />
+        <label class="search-scope">
+          <input type="checkbox" bind:checked={searchGlobal} />
+          Global
+        </label>
+        <button class="search-go" onclick={runSearch}>Go</button>
+        <button class="search-close" onclick={() => { showSearch = false; searchQuery = ""; }}>X</button>
+      </div>
+    {/if}
     <span class="logo">{projectName}</span>
   </header>
   <div class="body">
@@ -717,6 +786,81 @@ import type { SemanticEvent } from "$lib/mascot/types";
 
   .sidebar.collapsed .sidebar-content {
     display: none;
+  }
+
+  .header-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    max-width: 480px;
+    min-width: 0;
+  }
+
+  .header-search input {
+    flex: 1;
+    background: var(--bg-surface, #111827);
+    border: 1px solid var(--border-color, #333);
+    color: var(--text-color, #ccc);
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+    min-width: 0;
+  }
+
+  .header-search input:focus {
+    border-color: var(--accent-color, #4a9eff);
+  }
+
+  .search-scope {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-muted, #888);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .search-scope input {
+    accent-color: var(--accent-color, #4a9eff);
+  }
+
+  .search-go,
+  .search-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    border: none;
+    flex-shrink: 0;
+  }
+
+  .search-go {
+    background: var(--accent-color, #4a9eff);
+    color: white;
+  }
+
+  .search-go:hover {
+    background: var(--accent-hover, #0d8cff);
+  }
+
+  .search-close {
+    background: var(--bg-surface, #2d2d2d);
+    border: 1px solid var(--border-color, #333);
+    color: var(--text-muted, #888);
+  }
+
+  .search-close:hover {
+    background: var(--bg-tab-hover, #3d3d3d);
+    color: var(--text-color, #ccc);
   }
 
 </style>

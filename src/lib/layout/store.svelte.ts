@@ -97,6 +97,15 @@ function findTabByPath(root: LayoutNode, path: string): { nodeId: string; tabId:
   return findTabByPath(root.first, path) ?? findTabByPath(root.second, path);
 }
 
+function findTabById(root: LayoutNode, id: string): { nodeId: string; tabId: string } | null {
+  if (root.kind === "tab-group") {
+    const tab = root.tabs.find((t) => t.id === id);
+    if (tab) return { nodeId: root.id, tabId: tab.id };
+    return null;
+  }
+  return findTabById(root.first, id) ?? findTabById(root.second, id);
+}
+
 export function addTerminal(nodeId: string, title = "Terminal", cwd?: string, shell?: string): void {
   const tab: Tab = {
     id: crypto.randomUUID(),
@@ -129,6 +138,23 @@ export function addPreview(nodeId: string, url: string): void {
     title: url,
     type: "preview",
     url,
+  };
+  addTab(nodeId, tab);
+}
+
+export function addSearchTab(nodeId: string, query: string, global: boolean, results: unknown): void {
+  const id = `search:${query}:${global ? "global" : "file"}`;
+  const existing = findTabById(layoutState.root, id);
+  if (existing) {
+    setActiveTab(existing.nodeId, existing.tabId);
+    setActiveNode(existing.nodeId);
+    return;
+  }
+  const tab: Tab = {
+    id,
+    title: global ? `🔍 ${query}` : `🔍 ${query} (file)`,
+    type: "search",
+    content: JSON.stringify({ query, global, results }),
   };
   addTab(nodeId, tab);
 }

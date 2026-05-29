@@ -16,6 +16,7 @@
   import WebPreview from "./WebPreview.svelte";
   import ImageViewer from "./ImageViewer.svelte";
   import AudioPlayer from "./AudioPlayer.svelte";
+  import SearchResults from "./SearchResults.svelte";
 
   let { node }: { node: TabGroup } = $props();
   let isActive = $derived(layoutState.activeNodeId === node.id);
@@ -332,6 +333,10 @@
       {:else if tab.type === "preview"}
         <div class="preview-tab-content" class:hidden={tab.id !== node.activeTabId}>
           <WebPreview url={tab.url ?? ""} />
+        </div>
+      {:else if tab.type === "search"}
+        <div class="search-tab-content" class:hidden={tab.id !== node.activeTabId}>
+          <SearchResults content={tab.content ?? ""} />
         </div>
       {:else if tab.id === node.activeTabId}
         {#if tab.path}
@@ -685,6 +690,17 @@
   }
 
   .preview-tab-content.hidden {
+    display: none;
+  }
+
+  .search-tab-content {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+  }
+
+  .search-tab-content.hidden {
     display: none;
   }
 

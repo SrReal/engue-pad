@@ -1,4 +1,4 @@
-export type TabType = "editor" | "terminal" | "preview" | "todo";
+export type TabType = "editor" | "terminal" | "preview" | "todo" | "search";
 
 export type Tab = {
   id: string;
