@@ -23,6 +23,7 @@ export type Dictionary = {
   treeFailedMove: string;
   treeFailedRename: string;
   treeFormat: string;
+  editorFormat: string;
 
   // Tab Panel
   tabNewTerminal: string;

@@ -36,6 +36,7 @@
   let isLoading = $state(false);
   let currentContent = $state("");
   let isSettingContent = $state(false);
+  let contextMenu = $state<{ x: number; y: number } | null>(null);
 
   $effect(() => {
     currentContent = initialContent;
@@ -107,6 +108,20 @@
     });
     updateTabContent(nodeId, tabId, formatted);
     triggerMascotEvent("task_done");
+  }
+
+  function handleContextMenu(e: MouseEvent) {
+    e.preventDefault();
+    contextMenu = { x: e.clientX, y: e.clientY };
+  }
+
+  function closeContextMenu() {
+    contextMenu = null;
+  }
+
+  function handleFormat() {
+    closeContextMenu();
+    format();
   }
 
   function buildEditor() {
@@ -258,11 +273,18 @@
 
 </script>
 
+<svelte:window onclick={closeContextMenu} />
+
 <div class="editor-wrapper">
   {#if isLoading}
     <div class="loading">Loading...</div>
   {/if}
-  <div class="editor-container" bind:this={containerRef}></div>
+  <div class="editor-container" bind:this={containerRef} oncontextmenu={handleContextMenu}></div>
+  {#if contextMenu}
+    <div class="context-menu" style:left="{contextMenu.x}px" style:top="{contextMenu.y}px">
+      <button onclick={handleFormat}>{t("editorFormat")}</button>
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -312,5 +334,31 @@
     color: var(--text-muted, #888);
     font-size: 12px;
     z-index: 10;
+  }
+
+  .context-menu {
+    position: fixed;
+    background: var(--bg-surface, #252526);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 7px;
+    padding: 4px 0;
+    z-index: 1000;
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.44);
+  }
+
+  .context-menu button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 6px 16px;
+    background: none;
+    border: none;
+    color: var(--text-color, #ccc);
+    cursor: pointer;
+    font-size: 13px;
+  }
+
+  .context-menu button:hover {
+    background: var(--bg-tab-hover, #3d3d3d);
   }
 </style>
