@@ -448,20 +448,20 @@ import type { SemanticEvent } from "$lib/mascot/types";
       <button class="icon-btn" class:active={!mascotSidebarCollapsed} onclick={toggleMascotSidebar} title={t("headerMascot")}><PawPrint size={18} /></button>
       <button class="icon-btn" onclick={() => showSettings = true} title={t("headerSettings")}><Gear size={18} /></button>
       <button class="icon-btn" onclick={openNewWindow} title={t("headerNewInstance")}><AppWindow size={18} /></button>
+      {#if workspaceInfo.rootPath}
+        <div class="header-search">
+          <input
+            type="text"
+            bind:value={searchQuery}
+            placeholder={t("headerSearchPlaceholder")}
+            onkeydown={(e) => {
+              if (e.key === "Enter") { e.preventDefault(); runSearch(); }
+            }}
+          />
+          <button class="search-go" onclick={runSearch}>{t("headerSearchGo")}</button>
+        </div>
+      {/if}
     </div>
-    {#if workspaceInfo.rootPath}
-      <div class="header-search">
-        <input
-          type="text"
-          bind:value={searchQuery}
-          placeholder={t("headerSearchPlaceholder")}
-          onkeydown={(e) => {
-            if (e.key === "Enter") { e.preventDefault(); runSearch(); }
-          }}
-        />
-        <button class="search-go" onclick={runSearch}>{t("headerSearchGo")}</button>
-      </div>
-    {/if}
     <span class="logo">{projectName}</span>
   </header>
   <div class="body">
