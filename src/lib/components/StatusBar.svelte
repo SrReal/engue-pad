@@ -45,7 +45,8 @@
   }
 
   function handleFormat() {
-    if (activeTab?.path && activeTab?.type !== "terminal" && activeTab?.type !== "todo") {
+    if (activeTab?.language) {
+      console.log("[StatusBar] requesting format for tab", activeTab.id);
       formatRequest.tabId = activeTab.id;
     }
   }
@@ -66,7 +67,7 @@
 
 <div class="status-bar" onselectstart={(e) => e.preventDefault()}>
   <span class="info path" onclick={() => copyPath(activeTab?.path)} title={t("statusCopyPath")}>{activeTab?.path ?? ""}</span>
-  {#if activeTab?.path && activeTab?.type !== "terminal" && activeTab?.type !== "todo"}
+  {#if activeTab?.language}
     <button class="info format-btn" onclick={handleFormat} title={t("statusFormat")}><MagicWand size={12} /></button>
   {/if}
   {#if todoStore.parsed.total > 0}

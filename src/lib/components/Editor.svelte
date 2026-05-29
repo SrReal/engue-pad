@@ -102,7 +102,10 @@
     const content = view.state.doc.toString();
     const lineEnding = view.state.lineBreak;
     const formatted = formatContent(content, lineEnding === "\r\n" ? "CRLF" : "LF");
-    if (formatted === content) return;
+    if (formatted === content) {
+      console.log("[Editor] already formatted, nothing to do");
+      return;
+    }
     view.dispatch({
       changes: { from: 0, to: view.state.doc.length, insert: formatted },
     });
@@ -257,6 +260,7 @@
 
   $effect(() => {
     if (formatRequest.tabId === tabId) {
+      console.log("[Editor] format triggered for tab", tabId);
       format();
       formatRequest.tabId = null;
     }
