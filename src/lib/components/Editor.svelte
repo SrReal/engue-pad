@@ -245,11 +245,12 @@
       state,
       parent: containerRef,
     });
-    view.dom.addEventListener("contextmenu", (event) => {
+    containerRef?.addEventListener("contextmenu", (event) => {
+      if (!view || !view.dom.contains(event.target as Node)) return;
       event.preventDefault();
       event.stopPropagation();
       openContextMenu(event);
-    });
+    }, true);
 
   }
 
