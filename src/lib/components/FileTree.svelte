@@ -6,9 +6,9 @@
   import { selectedTreePath } from "$lib/tree/selectedStore";
   import { refreshGitStatus } from "$lib/git/store.svelte";
   import { appSettings } from "$lib/workspace/settingsStore.svelte";
+  import { layoutState, addTab } from "$lib/layout/store.svelte";
   import { t } from "$lib/i18n";
   import { MagnifyingGlass, Plus, FolderPlus, ArrowClockwise, X } from "phosphor-svelte";
-  import { get } from "svelte/store";
 
   type FileEntry = {
     name: string;
@@ -30,6 +30,8 @@
   let isReloading = $state(false);
   let showGitIndicators = $state(true);
   let searchQuery = $state("");
+  let searchResults = $state<string[]>([]);
+  let isSearching = $state(false);
   let newFileName = $state("");
   let newFolderName = $state("");
   let showNewFileInput = $state(false);
@@ -61,12 +63,37 @@
     }, []);
   }
 
-  let filteredTree = $derived(searchQuery ? filterNodes(tree, searchQuery) : tree);
-
   $effect(() => {
     rootNode.entry = { name: rootName, path: rootPath, is_dir: true, is_file: false };
-    rootNode.children = filteredTree;
+    rootNode.children = tree;
   });
+
+  $effect(() => {
+    const q = searchQuery.trim();
+    if (!q) {
+      searchResults = [];
+      isSearching = false;
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      isSearching = true;
+      try {
+        const results = await invoke<string[]>("search_files", { path: rootPath, query: q });
+        searchResults = results;
+      } catch {
+        searchResults = [];
+      } finally {
+        isSearching = false;
+      }
+    }, 200);
+    return () => clearTimeout(timeout);
+  });
+
+  function openResult(path: string) {
+    const activeNodeId = layoutState.activeNodeId ?? layoutState.root.id;
+    const name = path.split(/[\\/]/).pop() ?? path;
+    addTab(activeNodeId, { id: path, title: name, path });
+  }
 
   function getSep(): string {
     return rootPath.includes("/") ? "/" : "\\";
@@ -320,7 +347,23 @@
         </div>
       {/if}
     </div>
-    <TreeItem node={rootNode} onRefresh={reloadTree} {rootPath} {showGitIndicators} />
+    {#if searchQuery.trim()}
+      <div class="search-results">
+        {#if isSearching}
+          <div class="search-info">Searching...</div>
+        {:else if searchResults.length === 0}
+          <div class="search-info">No results</div>
+        {:else}
+          {#each searchResults as path}
+            <button class="search-result" onclick={() => openResult(path)}>
+              {path.split(/[\\/]/).pop() ?? path}
+            </button>
+          {/each}
+        {/if}
+      </div>
+    {:else}
+      <TreeItem node={rootNode} onRefresh={reloadTree} {rootPath} {showGitIndicators} />
+    {/if}
   {/if}
 </div>
 
@@ -355,8 +398,9 @@
     background: var(--bg-surface, #111827);
     border: 1px solid var(--border-color, #333);
     border-radius: 6px;
-    padding: 4px 8px;
+    padding: 0 8px;
     min-width: 0;
+    height: 28px;
   }
 
   .search-box input {
@@ -368,7 +412,8 @@
     outline: none;
     flex: 1;
     min-width: 0;
-    min-height: 22px;
+    min-height: 0;
+    height: 100%;
     padding: 0;
   }
 
@@ -481,5 +526,42 @@
     font-size: 10px;
     color: var(--accent-color, #4a9eff);
     opacity: 0.8;
+  }
+
+  .search-results {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0 6px;
+    overflow: auto;
+    flex: 1;
+  }
+
+  .search-info {
+    padding: 8px;
+    font-size: 12px;
+    color: var(--text-muted, #888);
+    text-align: center;
+  }
+
+  .search-result {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    background: none;
+    border: none;
+    color: var(--text-color, #ccc);
+    font-size: 13px;
+    cursor: pointer;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .search-result:hover {
+    background: var(--bg-tab-hover, #3d3d3d);
   }
 </style>
