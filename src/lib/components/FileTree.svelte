@@ -355,7 +355,7 @@
           <div class="search-info">No results</div>
         {:else}
           {#each searchResults as path}
-            <button class="search-result" onclick={() => openResult(path)}>
+            <button class="search-result" title={path} onclick={() => openResult(path)}>
               {path.split(/[\\/]/).pop() ?? path}
             </button>
           {/each}
@@ -388,6 +388,22 @@
     display: flex;
     align-items: center;
     gap: 6px;
+  }
+
+  .toolbar-row:has(.search-box:focus-within) .toolbar-btn {
+    max-width: 0;
+    min-width: 0;
+    width: 0;
+    padding: 0;
+    border: none;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-width 0.2s ease, opacity 0.15s ease;
+  }
+
+  .toolbar-btn {
+    transition: max-width 0.2s ease, opacity 0.15s ease, background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+    max-width: 100px;
   }
 
   .search-box {
