@@ -8,6 +8,27 @@ function getEditorSettings() {
   };
 }
 
+function countIndentLevel(line: string, tabSize: number): { level: number; rest: string } {
+  let spaces = 0;
+  let tabs = 0;
+  let i = 0;
+  while (i < line.length) {
+    const ch = line.charAt(i);
+    if (ch === " ") {
+      spaces++;
+      i++;
+    } else if (ch === "\t") {
+      tabs++;
+      i++;
+    } else {
+      break;
+    }
+  }
+  // Cada tab = 1 nivel. Los espacios se dividen por tabSize y se redondean.
+  const spaceLevels = Math.round(spaces / tabSize);
+  return { level: tabs + spaceLevels, rest: line.slice(i) };
+}
+
 export function formatContent(content: string, lineEnding: string): string {
   const settings = getEditorSettings();
   const eol = lineEnding === "CRLF" ? "\r\n" : "\n";
@@ -16,18 +37,10 @@ export function formatContent(content: string, lineEnding: string): string {
   const indentUnit = settings.insertSpaces ? " ".repeat(settings.tabSize) : "\t";
 
   const formatted = lines.map((line) => {
-    let trimmed = line.trimEnd();
-    if (settings.insertSpaces) {
-      // Convert leading tabs to spaces
-      let leadingTabs = 0;
-      while (leadingTabs < trimmed.length && trimmed.charAt(leadingTabs) === "\t") {
-        leadingTabs++;
-      }
-      if (leadingTabs > 0) {
-        trimmed = indentUnit.repeat(leadingTabs) + trimmed.slice(leadingTabs);
-      }
-    }
-    return trimmed;
+    const { level, rest } = countIndentLevel(line, settings.tabSize);
+    const trimmed = rest.trimEnd();
+    if (level === 0) return trimmed;
+    return indentUnit.repeat(level) + trimmed;
   });
 
   // Remove trailing empty lines but ensure single trailing newline
