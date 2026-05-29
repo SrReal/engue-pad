@@ -8,6 +8,7 @@
   import { triggerMascotEvent } from "$lib/mascot/store.svelte";
   import { X, ArrowsOutLineVertical, ArrowsOutLineHorizontal, TerminalWindow, Globe } from "phosphor-svelte";
   import { t } from "$lib/i18n";
+  import { formatFile } from "$lib/editor/formatter";
   import FileIcon from "./FileIcon.svelte";
   import Editor from "./Editor.svelte";
   import MarkdownViewer from "./MarkdownViewer.svelte";
@@ -20,6 +21,7 @@
   let isActive = $derived(layoutState.activeNodeId === node.id);
   let tabContextMenu = $state<{ x: number; y: number; tabId: string } | null>(null);
   let terminalRefs = $state<Record<string, Terminal>>({});
+  let editorRefs = $state<Record<string, Editor>>({});
   let dragOverIndex = $state<number | null>(null);
   let dragOffsetX = $state(0);
   let dragPosX = $state(0);
@@ -193,6 +195,19 @@
     closeTabContextMenu();
   }
 
+  async function handleFormatTab() {
+    if (!tabContextMenu) return;
+    const tab = node.tabs.find((t) => t.id === tabContextMenu!.tabId);
+    if (!tab || tab.type !== "editor") { closeTabContextMenu(); return; }
+    const editor = editorRefs[tabContextMenu.tabId];
+    if (editor && typeof editor.format === "function") {
+      editor.format();
+    } else if (tab.path) {
+      try { await formatFile(tab.path); } catch (e) { console.error("Format failed:", e); }
+    }
+    closeTabContextMenu();
+  }
+
   function submitRename(tabId: string) {
     if (renamingTabId === tabId) {
       renameTab(node.id, tabId, renameValue.trim() || t("tabUntitled"));
@@ -336,6 +351,7 @@
                 />
               {:else}
                 <Editor
+                  bind:this={editorRefs[tab.id]}
                   nodeId={node.id}
                   tabId={tab.id}
                   path={tab.path}
@@ -375,6 +391,9 @@
 
 {#if tabContextMenu}
   <div class="context-menu" style:left="{tabContextMenu.x}px" style:top="{tabContextMenu.y}px">
+    {#if node.tabs.find((t) => t.id === tabContextMenu!.tabId)?.type === "editor"}
+      <button onclick={handleFormatTab}>{t("tabFormat")}</button>
+    {/if}
     <button onclick={handleRenameTab}>{t("tabRename")}</button>
   </div>
 {/if}

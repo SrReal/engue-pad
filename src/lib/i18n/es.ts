@@ -30,6 +30,7 @@ export const es: Dictionary = {
   tabClosePanel: "Cerrar panel",
   tabCloseTab: "Cerrar pestaña",
   tabRename: "Renombrar",
+  tabFormat: "Formatear",
   tabPin: "Fijar",
   tabUntitled: "Sin título",
   tabHintOpenFile: "Haz clic en un archivo del sidebar para abrirlo",

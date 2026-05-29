@@ -16,6 +16,7 @@
   import { highlightSelectionMatches, searchKeymap, search } from "@codemirror/search";
   import { updateTabContent, markTabSaved, setTabLineEnding } from "$lib/layout/store.svelte";
   import { urlLinksFor } from "$lib/editor/urlLinks";
+  import { formatContent } from "$lib/editor/formatter";
   import { type EditorSettings } from "$lib/workspace/settings";
   import { appSettings } from "$lib/workspace/settingsStore.svelte";
   import { triggerMascotEvent } from "$lib/mascot/store.svelte";
@@ -95,6 +96,19 @@
     }
   }
 
+  export function format() {
+    if (!view) return;
+    const content = view.state.doc.toString();
+    const lineEnding = view.state.lineBreak;
+    const formatted = formatContent(content, lineEnding === "\r\n" ? "CRLF" : "LF");
+    if (formatted === content) return;
+    view.dispatch({
+      changes: { from: 0, to: view.state.doc.length, insert: formatted },
+    });
+    updateTabContent(nodeId, tabId, formatted);
+    triggerMascotEvent("task_done");
+  }
+
   function buildEditor() {
     if (!containerRef) return;
 
@@ -127,6 +141,16 @@
       }
     });
 
+    const formatKeymap = keymap.of([
+      {
+        key: "Mod-Shift-i",
+        run: () => {
+          format();
+          return true;
+        },
+      },
+    ]);
+
     const extensions: Extension[] = [
       oneDark,
       history(),
@@ -137,6 +161,7 @@
       highlightSelectionMatches(),
       syntaxHighlighting(defaultHighlightStyle),
       saveKeymap,
+      formatKeymap,
       updateListener,
       ...urlLinksFor(nodeId),
       EditorState.tabSize.of(editorSettings.tabSize),

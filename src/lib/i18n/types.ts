@@ -32,6 +32,7 @@ export type Dictionary = {
   tabClosePanel: string;
   tabCloseTab: string;
   tabRename: string;
+  tabFormat: string;
   tabPin: string;
   tabUntitled: string;
   tabHintOpenFile: string;
