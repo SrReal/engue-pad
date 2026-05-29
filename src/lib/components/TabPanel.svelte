@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { TabGroup, Tab } from "$lib/layout/types";
-  import { layoutState, closeTab, setActiveTab, setActiveNode, splitNode, pinTab, addTerminal, removeNode, moveTab, moveTabToPanel, renameTab } from "$lib/layout/store.svelte";
+  import { layoutState, closeTab, setActiveTab, setActiveNode, splitNode, addTerminal, removeNode, moveTab, moveTabToPanel, renameTab } from "$lib/layout/store.svelte";
   import { tabDrag } from "$lib/layout/tabDragStore";
   import { workspaceInfo } from "$lib/workspace/store.svelte";
   import { confirm } from "@tauri-apps/plugin-dialog";
@@ -176,28 +176,6 @@
 
   function closeTabContextMenu() {
     tabContextMenu = null;
-  }
-
-  function handlePinTab() {
-    if (tabContextMenu) {
-      pinTab(node.id, tabContextMenu.tabId);
-    }
-    closeTabContextMenu();
-  }
-
-  async function handleCloseFromMenu() {
-    if (tabContextMenu) {
-      const tab = node.tabs.find((t) => t.id === tabContextMenu!.tabId);
-      if (tab?.dirty) {
-        const confirmed = await confirm(t("tabUnsavedChangesBody", tab.title), { title: t("tabUnsavedChangesTitle"), kind: "warning" });
-        if (!confirmed) {
-          closeTabContextMenu();
-          return;
-        }
-      }
-      closeTab(node.id, tabContextMenu.tabId);
-    }
-    closeTabContextMenu();
   }
 
   function startTabRename(tabId: string) {
@@ -397,9 +375,7 @@
 
 {#if tabContextMenu}
   <div class="context-menu" style:left="{tabContextMenu.x}px" style:top="{tabContextMenu.y}px">
-    <button onclick={handleCloseFromMenu}>{t("tabCloseTab")}</button>
     <button onclick={handleRenameTab}>{t("tabRename")}</button>
-    <button onclick={handlePinTab}>{t("tabPin")}</button>
   </div>
 {/if}
 

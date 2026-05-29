@@ -5,7 +5,6 @@
 - poder cerrar pestaña con boton de rueda de raton
 - testear bien posibles bugs
 - he instalado lint y no lo aplica
-- en todo poder mover lineas entre categorias
 
 - en panel de ficheros habilitar click derecho con copiar, cortar, pegar, formatear
   
