@@ -183,11 +183,12 @@
                 />
               </div>
             {:else}
-              <div
-                class="task-row"
-                draggable="true"
-                ondragstart={() => { draggedTaskLine = task.lineIndex; }}
-              >
+              <div class="task-row">
+                <span
+                  class="drag-handle"
+                  draggable="true"
+                  ondragstart={(e) => { e.stopPropagation(); draggedTaskLine = task.lineIndex; }}
+                >⋮⋮</span>
                 <label class="task" class:checked={task.checked}>
                   <input
                     type="checkbox"
@@ -378,6 +379,20 @@
 
   .task-row:hover {
     background: var(--bg-tab-hover, #3d3d3d);
+  }
+
+  .drag-handle {
+    cursor: grab;
+    color: var(--text-muted, #888);
+    font-size: 11px;
+    padding: 2px 4px;
+    user-select: none;
+    -webkit-user-select: none;
+    line-height: 1;
+  }
+
+  .drag-handle:active {
+    cursor: grabbing;
   }
 
   .task {
