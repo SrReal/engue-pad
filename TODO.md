@@ -12,10 +12,8 @@
 ## Mascota
 - testear eventos que concuerden
 - frases dinamicas por CLI
-- poder deshabilitar funcion de mascota, eligiendo "vacio"
 
 ## Ficheros
-- Click derecho mismas opciones que terax
 
 ## Skills
 - Definirlas bien en sus rutas correctas

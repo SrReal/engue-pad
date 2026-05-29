@@ -37,6 +37,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
   let isResizingSidebar = $state(false);
   let sidebarCollapsed = $state(false);
   let lastSidebarWidth = $state(240);
+  let refreshSignal = $state(0);
   let showSettings = $state(false);
 
   let rightSidebarWidth = $state(260);
@@ -431,7 +432,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
             <button class="open-btn" onclick={openFolder}>{t("headerOpenFolder")}</button>
           </div>
         {:else}
-          <FileTree rootPath={workspaceInfo.rootPath} />
+          <FileTree rootPath={workspaceInfo.rootPath} {refreshSignal} />
         {/if}
       </div>
       <SidebarFooter />

@@ -1,9 +1,10 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
+  import { confirm } from "@tauri-apps/plugin-dialog";
+  import { revealItemInDir } from "@tauri-apps/plugin-opener";
   import { get } from "svelte/store";
-  import { addTab, layoutState, pinTab } from "$lib/layout/store.svelte";
+  import { addTab, addTerminal, layoutState } from "$lib/layout/store.svelte";
   import { gitStore } from "$lib/git/store.svelte";
-  import type { Tab } from "$lib/layout/types";
   import TreeItem from "./TreeItem.svelte";
   import { fileDrag } from "$lib/tree/fileDragStore";
   import { selectedTreePath } from "$lib/tree/selectedStore";
@@ -31,6 +32,24 @@
     const sep = fullPath.includes("/") ? "/" : "\\";
     const root = rootPath.endsWith(sep) ? rootPath : rootPath + sep;
     return fullPath.startsWith(root) ? fullPath.slice(root.length) : fullPath;
+  }
+
+  function getPathSeparator(path: string = node.entry.path): string {
+    return path.includes("\\") ? "\\" : "/";
+  }
+
+  function getParentPath(path: string = node.entry.path): string {
+    const lastSep = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
+    return lastSep >= 0 ? path.slice(0, lastSep) : rootPath;
+  }
+
+  function getTargetDirectory(): string {
+    return node.entry.is_dir ? node.entry.path : getParentPath();
+  }
+
+  function joinPath(dir: string, name: string): string {
+    const sep = getPathSeparator(dir || rootPath);
+    return dir.endsWith("/") || dir.endsWith("\\") ? dir + name : dir + sep + name;
   }
 
   const gitStatus = $derived.by(() => {
@@ -219,6 +238,75 @@
     closeContextMenu();
   }
 
+  async function copyRelativePath() {
+    await navigator.clipboard.writeText(getRelativePath(node.entry.path));
+    closeContextMenu();
+  }
+
+  function openInTerminal() {
+    const activeNodeId = layoutState.activeNodeId ?? layoutState.root.id;
+    addTerminal(activeNodeId, t("terminalDefaultTitle"), getTargetDirectory());
+    closeContextMenu();
+    triggerMascotEvent("terminal_created");
+  }
+
+  async function revealInFinder() {
+    try {
+      await revealItemInDir(node.entry.path);
+    } catch (e) {
+      alert(`${t("treeFailedReveal")}: ${e}`);
+    } finally {
+      closeContextMenu();
+    }
+  }
+
+  async function createFileFromMenu() {
+    closeContextMenu();
+    const name = window.prompt(t("treeNewFilePrompt"));
+    const cleanName = name?.trim();
+    if (!cleanName) return;
+    try {
+      const path = joinPath(getTargetDirectory(), cleanName);
+      await invoke("write_file", { path, contents: "" });
+      onRefresh();
+    } catch (e) {
+      alert(`${t("treeFailedCreateFile")}: ${e}`);
+    }
+  }
+
+  async function createFolderFromMenu() {
+    closeContextMenu();
+    const name = window.prompt(t("treeNewFolderPrompt"));
+    const cleanName = name?.trim();
+    if (!cleanName) return;
+    try {
+      const path = joinPath(getTargetDirectory(), cleanName);
+      await invoke("ensure_dir", { path });
+      onRefresh();
+    } catch (e) {
+      alert(`${t("treeFailedCreateFolder")}: ${e}`);
+    }
+  }
+
+  async function deleteItem() {
+    closeContextMenu();
+    const ok = await confirm(t("treeDeleteConfirm", node.entry.name), {
+      title: t("treeDelete"),
+      kind: "warning",
+    });
+    if (!ok) return;
+    try {
+      if (node.entry.is_dir) {
+        await invoke("remove_dir_all", { path: node.entry.path });
+      } else {
+        await invoke("remove_file", { path: node.entry.path });
+      }
+      onRefresh();
+    } catch (e) {
+      alert(`${t("treeFailedDelete")}: ${e}`);
+    }
+  }
+
   function startRename() {
     closeContextMenu();
     isRenaming = true;
@@ -315,13 +403,17 @@
   {/if}
   {#if contextMenu}
     <div class="context-menu" style:left="{contextMenu.x}px" style:top="{contextMenu.y}px">
-      {#if node.entry.is_file}
-        <button onclick={handleFileClick}>{t("treeOpen")}</button>
-      {:else}
-        <button onclick={expandNode}>{node.expanded ? t("treeCollapse") : t("treeExpand")}</button>
-      {/if}
-      <button onclick={startRename}>{t("treeRename")}</button>
+      <button onclick={openInTerminal}>{t("treeOpenInTerminal")}</button>
+      <button onclick={revealInFinder}>{t("treeRevealInFinder")}</button>
+      <div class="context-separator"></div>
+      <button onclick={createFileFromMenu}>{t("treeNewFile")}</button>
+      <button onclick={createFolderFromMenu}>{t("treeNewFolder")}</button>
+      <div class="context-separator"></div>
       <button onclick={copyPath}>{t("treeCopyPath")}</button>
+      <button onclick={copyRelativePath}>{t("treeCopyRelativePath")}</button>
+      <div class="context-separator"></div>
+      <button onclick={startRename}>{t("treeRename")}</button>
+      <button class="danger" onclick={deleteItem}>{t("treeDelete")}</button>
     </div>
   {/if}
 </div>
@@ -499,6 +591,7 @@
     padding: 4px 0;
     z-index: 1000;
     box-shadow: 0 16px 34px rgba(0, 0, 0, 0.44);
+    min-width: 210px;
   }
 
   .context-menu button {
@@ -515,5 +608,15 @@
 
   .context-menu button:hover {
     background: var(--bg-tab-hover, #3d3d3d);
+  }
+
+  .context-menu button.danger {
+    color: var(--error-color, #f14c4c);
+  }
+
+  .context-separator {
+    height: 1px;
+    background: var(--border-color, #333);
+    margin: 4px 0;
   }
 </style>
