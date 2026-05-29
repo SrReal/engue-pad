@@ -21,6 +21,7 @@
   let newTaskInputs = $state<Record<number, string>>({});
   let newSectionValue = $state("");
   let addingSection = $state(false);
+  let dragOverSectionEnd = $state<number | null>(null);
 
   function progressPercent(doc: TodoDocument): number {
     if (doc.total === 0) return 0;
@@ -116,7 +117,21 @@
 
     <div class="sections">
       {#each todoStore.parsed.sections as section}
-        <div class="section">
+        <div
+          class="section"
+          class:drag-over={dragOverSectionEnd === section.endLine}
+          ondragenter={() => dragOverSectionEnd = section.endLine}
+          ondragleave={() => dragOverSectionEnd = null}
+          ondragover={(e) => { e.preventDefault(); e.dataTransfer!.dropEffect = "move"; }}
+          ondrop={(e) => {
+            e.preventDefault();
+            dragOverSectionEnd = null;
+            const lineIndex = Number(e.dataTransfer?.getData("text/plain"));
+            if (!isNaN(lineIndex)) {
+              moveTodoTask(lineIndex, section.endLine);
+            }
+          }}
+        >
           <div class="section-header">
             {#if editingSectionStart === section.startLine}
               <input
@@ -166,7 +181,11 @@
                 />
               </div>
             {:else}
-              <div class="task-row">
+              <div
+                class="task-row"
+                draggable="true"
+                ondragstart={(e) => { e.dataTransfer?.setData("text/plain", task.lineIndex.toString()); e.dataTransfer!.effectAllowed = "move"; }}
+              >
                 <label class="task" class:checked={task.checked}>
                   <input
                     type="checkbox"
@@ -179,14 +198,6 @@
                   >{task.text}</span>
                 </label>
                 <div class="task-actions">
-                  <select class="move-select" title={t("todoMoveTo")} onchange={(e) => { const val = Number((e.target as HTMLSelectElement).value); if (!isNaN(val)) { moveTodoTask(task.lineIndex, val); (e.target as HTMLSelectElement).value = ""; } }}>
-                    <option value="">{t("todoMoveTo")}...</option>
-                    {#each todoStore.parsed.sections as sec}
-                      {#if sec.endLine !== task.lineIndex && sec.endLine !== task.lineIndex - 1}
-                        <option value={sec.endLine}>{sec.title}</option>
-                      {/if}
-                    {/each}
-                  </select>
                   <button class="action-btn danger" title="Delete" onclick={() => deleteTodoTask(task.lineIndex)}><X size={14} /></button>
                 </div>
               </div>
@@ -453,26 +464,11 @@
     color: white;
   }
 
-  .move-select {
-    appearance: none;
-    background: var(--bg-surface, #111827);
-    border: 1px solid var(--border-color, #333);
-    color: var(--text-muted, #888);
-    font-size: 11px;
-    border-radius: 4px;
-    padding: 1px 4px;
-    cursor: pointer;
-    outline: none;
-    max-width: 90px;
-  }
-
-  .move-select:hover {
-    border-color: var(--accent-color, #4a9eff);
-    color: var(--text-color, #ccc);
-  }
-
-  .move-select:focus {
-    border-color: var(--accent-color, #4a9eff);
+  .section.drag-over {
+    outline: 1px dashed var(--accent-color, #4a9eff);
+    outline-offset: 2px;
+    border-radius: 6px;
+    background: var(--accent-soft, rgba(14, 165, 255, 0.14));
   }
 
   .new-task-row {
