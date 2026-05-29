@@ -245,13 +245,14 @@
       state,
       parent: containerRef,
     });
-    containerRef?.addEventListener("contextmenu", (event) => {
-      if (!view || !view.dom.contains(event.target as Node)) return;
-      event.preventDefault();
-      event.stopPropagation();
-      openContextMenu(event);
-    }, true);
+  }
 
+  function onDocContextMenu(event: MouseEvent) {
+    if (!containerRef || !containerRef.contains(event.target as Node)) return;
+    if (!view || !view.dom.contains(event.target as Node)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    openContextMenu(event);
   }
 
   onMount(() => {
@@ -259,10 +260,12 @@
     if (path && !dirty) {
       loadFile();
     }
+    document.addEventListener("contextmenu", onDocContextMenu, true);
   });
 
   onDestroy(() => {
     view?.destroy();
+    document.removeEventListener("contextmenu", onDocContextMenu, true);
   });
 
   let lastEditorJson = "";
