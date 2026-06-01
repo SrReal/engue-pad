@@ -26,6 +26,7 @@ export type GitSettings = {
 
 export type AppSettings = {
   lastProjectPath: string | null;
+  recentFolders?: string[];
   rightSidebarCollapsed?: boolean;
   rightSidebarWidth?: number;
   mascotSidebarCollapsed?: boolean;
@@ -81,9 +82,10 @@ const DEFAULT_MASCOT: MascotSettings = {
   eventPhrases: {},
 };
 
-export function getDefaultSettings(): Required<Omit<AppSettings, "lastProjectPath">> & { lastProjectPath: string | null } {
+export function getDefaultSettings(): Required<Omit<AppSettings, "lastProjectPath" | "recentFolders">> & { lastProjectPath: string | null; recentFolders: string[] } {
   return {
     lastProjectPath: null,
+    recentFolders: [],
     rightSidebarCollapsed: false,
     rightSidebarWidth: 260,
     mascotSidebarCollapsed: true,
@@ -128,4 +130,11 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
   } catch (e) {
     console.error("Failed to save settings:", e);
   }
+}
+
+export function addRecentFolder(settings: AppSettings, path: string): AppSettings {
+  const existing = settings.recentFolders ?? [];
+  const filtered = existing.filter((p) => p !== path);
+  const updated = [path, ...filtered].slice(0, 10);
+  return { ...settings, recentFolders: updated };
 }

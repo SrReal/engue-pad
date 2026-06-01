@@ -294,4 +294,10 @@ export type Dictionary = {
   // Mascot debug panel
   mascotMode: string;
   mascotSize: string;
+
+  // Welcome screen
+  welcomeOpenFolder: string;
+  welcomeRecentFolders: string;
+  welcomeNoRecent: string;
+  welcomeRemoveRecent: string;
 };

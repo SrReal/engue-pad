@@ -6,7 +6,7 @@
   import { layoutState, findAllDirtyTabs, resetLayout, activateNextTab, activatePrevTab, closeActiveTab, addPreview, addSearchTab } from "$lib/layout/store.svelte";
   import { workspaceInfo, loadWorkspace, scheduleSaveWorkspace } from "$lib/workspace/store.svelte";
   import { todoStore, setTodoPath, ensureTodoFile, loadTodoFile } from "$lib/todo/store.svelte";
-  import { loadSettings, saveSettings } from "$lib/workspace/settings";
+  import { loadSettings, saveSettings, addRecentFolder } from "$lib/workspace/settings";
   import { appSettings, updateAppSettings } from "$lib/workspace/settingsStore.svelte";
   import LayoutNode from "./LayoutNode.svelte";
   import FileTree from "./FileTree.svelte";
@@ -17,6 +17,7 @@
   import SettingsModal from "./SettingsModal.svelte";
   import ApprovalModal from "./ApprovalModal.svelte";
   import LoadingScreen from "./LoadingScreen.svelte";
+  import WelcomeScreen from "./WelcomeScreen.svelte";
   import MascotPanel from "./MascotPanel.svelte";
   import MascotSidebar from "./MascotSidebar.svelte";
   import { open, confirm } from "@tauri-apps/plugin-dialog";
@@ -59,6 +60,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
   let approvalMessage = $state("");
 
   let isLoading = $state(true);
+  let recentFolders = $state<string[]>([]);
 
   let searchQuery = $state("");
 
@@ -68,6 +70,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
 
     const settings = await loadSettings();
     updateAppSettings(settings);
+    recentFolders = settings.recentFolders ?? [];
     if (settings.locale) {
       setLocale(settings.locale);
     }
@@ -344,8 +347,43 @@ import type { SemanticEvent } from "$lib/mascot/types";
       workspaceInfo.workspaceId = null;
       refreshSignal++;
       workspaceInfo.rootPath = selected;
-      await saveSettings({ ...appSettings, lastProjectPath: selected });
+      const updated = addRecentFolder(appSettings, selected);
+      recentFolders = updated.recentFolders ?? [];
+      await saveSettings({ ...updated, lastProjectPath: selected });
     }
+  }
+
+  async function openRecentFolder(path: string) {
+    const dirtyTabs = findAllDirtyTabs(layoutState.root);
+    if (dirtyTabs.length > 0) {
+      const names = dirtyTabs.map((t) => `"${t.title}"`).join(", ");
+      const confirmed = await confirm(t("dialogSwitchProjectBody", names), { title: t("dialogSwitchProjectTitle"), kind: "warning" });
+      if (!confirmed) return;
+    }
+    const exists = await invoke<boolean>("dir_exists", { path });
+    if (!exists) {
+      const filtered = recentFolders.filter((p) => p !== path);
+      recentFolders = filtered;
+      await saveSettings({ ...appSettings, recentFolders: filtered });
+      return;
+    }
+    resetLayout();
+    todoStore.path = null;
+    todoStore.content = "";
+    todoStore.parsed = { sections: [], total: 0, completed: 0 };
+    todoStore.loading = false;
+    workspaceInfo.workspaceId = null;
+    refreshSignal++;
+    workspaceInfo.rootPath = path;
+    const updated = addRecentFolder(appSettings, path);
+    recentFolders = updated.recentFolders ?? [];
+    await saveSettings({ ...updated, lastProjectPath: path });
+  }
+
+  async function removeRecentFolder(path: string) {
+    const filtered = recentFolders.filter((p) => p !== path);
+    recentFolders = filtered;
+    await saveSettings({ ...appSettings, recentFolders: filtered });
   }
 
   async function openNewWindow() {
@@ -466,11 +504,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
   <div class="body">
     <aside class="sidebar" class:collapsed={sidebarCollapsed} style:width="{sidebarCollapsed ? 0 : sidebarWidth}px">
       <div class="sidebar-content">
-        {#if !workspaceInfo.rootPath}
-          <div class="placeholder">
-            <button class="open-btn" onclick={openFolder}>{t("headerOpenFolder")}</button>
-          </div>
-        {:else}
+        {#if workspaceInfo.rootPath}
           <FileTree rootPath={workspaceInfo.rootPath} {refreshSignal} />
         {/if}
       </div>
@@ -487,10 +521,14 @@ import type { SemanticEvent } from "$lib/mascot/types";
       ></div>
     {/if}
     <main class="main-area">
-      <div class="editor-area">
-        <LayoutNode node={layoutState.root} />
-      </div>
-      <AppFooter />
+      {#if !workspaceInfo.rootPath}
+        <WelcomeScreen {recentFolders} onOpenFolder={openFolder} onOpenRecent={openRecentFolder} onRemoveRecent={removeRecentFolder} />
+      {:else}
+        <div class="editor-area">
+          <LayoutNode node={layoutState.root} />
+        </div>
+        <AppFooter />
+      {/if}
     </main>
     {#if !mascotSidebarCollapsed}
       <div

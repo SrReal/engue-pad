@@ -271,4 +271,9 @@ export const en: Dictionary = {
 
   mascotMode: "Mode",
   mascotSize: "Size",
+
+  welcomeOpenFolder: "Open Folder",
+  welcomeRecentFolders: "Recent Projects",
+  welcomeNoRecent: "No recent projects",
+  welcomeRemoveRecent: "Remove from recent",
 };
