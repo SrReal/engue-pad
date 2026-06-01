@@ -322,9 +322,9 @@
       parent: containerRef,
     });
 
-    // Auto-save on focus change: listen blur on CodeMirror's DOM element
-    view.dom.addEventListener("blur", () => {
-      console.log("[Editor] cm-editor blur fired");
+    // Auto-save on focus change: listen blur on CodeMirror's contenteditable element
+    view.contentDOM.addEventListener("blur", () => {
+      console.log("[Editor] contentDOM blur fired");
       handleFocusOut();
     });
   }
@@ -338,6 +338,15 @@
 
   onDestroy(() => {
     if (debounceTimer) clearTimeout(debounceTimer);
+    // Auto-save onFocusChange when editor component is unmounted (tab switch)
+    const mode = appSettings.editor?.autoSave ?? "off";
+    if (mode === "onFocusChange" && view) {
+      const content = view.state.doc.toString();
+      if (content !== savedContent) {
+        console.log("[Editor] onDestroy: saving before unmount");
+        saveFile();
+      }
+    }
     view?.destroy();
   });
 
