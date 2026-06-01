@@ -5,7 +5,7 @@
 - poder cerrar pestaña con boton de rueda de raton
 - testear bien posibles bugs
 
-- sftp
+- cuando abro un md esta en preview, lo pongo en raw, cambio de pestaña y vuelvo y se pone preview otra vez, deberia mantener la ultima opcion.
 
 ## Mascota
 - testear eventos que concuerden
