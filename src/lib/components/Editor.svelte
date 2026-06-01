@@ -170,6 +170,9 @@
         updateTabContent(nodeId, tabId, content);
         scheduleAutoSave();
       }
+      if (update.focusChanged && !update.view.hasFocus) {
+        handleFocusOut();
+      }
     });
 
     const formatKeymap = keymap.of([
@@ -343,7 +346,7 @@
 
 </script>
 
-<div class="editor-wrapper" onfocusout={handleFocusOut}>
+<div class="editor-wrapper">
   {#if isLoading}
     <div class="loading">{t("mediaLoading")}</div>
   {/if}
