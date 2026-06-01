@@ -275,7 +275,10 @@
       stopWatch = await watch(rootPath, () => {
         if (isReloading) return;
         if (timeout) clearTimeout(timeout);
-        timeout = setTimeout(() => shallowReload(), 500);
+        timeout = setTimeout(() => {
+          console.log("[FileTree] file watcher triggered, reloading tree");
+          reloadTree();
+        }, 500);
       }, { recursive: true, delayMs: 500 });
     }
 
