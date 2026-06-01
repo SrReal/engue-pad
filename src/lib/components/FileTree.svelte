@@ -271,20 +271,33 @@
     let timeout: ReturnType<typeof setTimeout> | null = null;
 
     async function startWatch() {
-      const { watch } = await import("@tauri-apps/plugin-fs");
-      stopWatch = await watch(rootPath, () => {
-        if (isReloading) return;
-        if (timeout) clearTimeout(timeout);
-        timeout = setTimeout(() => {
-          console.log("[FileTree] file watcher triggered, reloading tree");
-          reloadTree();
-        }, 500);
-      }, { recursive: true, delayMs: 500 });
+      console.log("[FileTree] starting watch for", rootPath);
+      try {
+        const { watch } = await import("@tauri-apps/plugin-fs");
+        console.log("[FileTree] watch imported successfully");
+        stopWatch = await watch(
+          rootPath,
+          (event) => {
+            console.log("[FileTree] watch event received:", event);
+            if (isReloading) return;
+            if (timeout) clearTimeout(timeout);
+            timeout = setTimeout(() => {
+              console.log("[FileTree] debounce elapsed, reloading tree");
+              reloadTree();
+            }, 500);
+          },
+          { recursive: true, delayMs: 500 }
+        );
+        console.log("[FileTree] watch registered, stopWatch =", typeof stopWatch);
+      } catch (e) {
+        console.error("[FileTree] failed to start watch:", e);
+      }
     }
 
     startWatch();
 
     return () => {
+      console.log("[FileTree] cleaning up watch");
       if (timeout) clearTimeout(timeout);
       stopWatch?.();
       stopWatch = null;
