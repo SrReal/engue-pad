@@ -68,8 +68,18 @@
     }
   }
 
+  let scrollSaveTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function saveScroll() {
+    if (!view) return;
+    const top = view.scrollDOM.scrollTop;
+    console.log("[Editor] saveScroll", top);
+    setEditorScroll(tabId, top);
+  }
+
   function restoreScroll() {
     const savedScroll = getEditorScroll(tabId);
+    console.log("[Editor] restoreScroll target", savedScroll, "current", view?.scrollDOM.scrollTop);
     if (savedScroll > 0 && view) {
       view.scrollDOM.scrollTop = savedScroll;
     }
@@ -337,6 +347,12 @@
       console.log("[Editor] contentDOM blur fired");
       handleFocusOut();
     });
+
+    // Save scroll position while scrolling (throttled)
+    view.scrollDOM.addEventListener("scroll", () => {
+      if (scrollSaveTimer) clearTimeout(scrollSaveTimer);
+      scrollSaveTimer = setTimeout(saveScroll, 150);
+    });
   }
 
   onMount(() => {
@@ -352,7 +368,8 @@
 
   onDestroy(() => {
     if (debounceTimer) clearTimeout(debounceTimer);
-    // Save scroll position
+    if (scrollSaveTimer) clearTimeout(scrollSaveTimer);
+    // Final scroll backup in case throttle didn't fire yet
     if (view) {
       setEditorScroll(tabId, view.scrollDOM.scrollTop);
     }

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
+  import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { addPreview } from "$lib/layout/store.svelte";
   import { triggerMascotEvent } from "$lib/mascot/store.svelte";
@@ -20,6 +20,27 @@
   let renderedHtml = $state("");
   let isLoading = $state(false);
   let renderedRef = $state<HTMLDivElement | null>(null);
+  let scrollSaveTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function saveScroll() {
+    if (!renderedRef) return;
+    const top = renderedRef.scrollTop;
+    console.log("[MarkdownViewer] saveScroll", top);
+    setMarkdownView(tabId, { scrollTop: top });
+  }
+
+  function handleScroll() {
+    if (scrollSaveTimer) clearTimeout(scrollSaveTimer);
+    scrollSaveTimer = setTimeout(saveScroll, 150);
+  }
+
+  function restoreScroll() {
+    const savedTop = getMarkdownView(tabId).scrollTop;
+    console.log("[MarkdownViewer] restoreScroll target", savedTop, "current", renderedRef?.scrollTop);
+    if (savedTop > 0 && renderedRef) {
+      renderedRef.scrollTop = savedTop;
+    }
+  }
 
   async function loadAndRender() {
     if (!path) return;
@@ -27,19 +48,12 @@
     try {
       const content = await invoke<string>("read_file", { path });
       renderedHtml = renderMarkdown(content);
-      // Wait for {@html} to inject and DOM to measure before restoring scroll
-      requestAnimationFrame(() => requestAnimationFrame(restoreScroll));
     } catch (e) {
       console.error("Failed to read markdown:", e);
     } finally {
       isLoading = false;
-    }
-  }
-
-  function restoreScroll() {
-    const savedTop = getMarkdownView(tabId).scrollTop;
-    if (savedTop > 0 && renderedRef) {
-      renderedRef.scrollTop = savedTop;
+      // Wait for {@html} to inject and DOM to measure before restoring scroll
+      requestAnimationFrame(() => requestAnimationFrame(restoreScroll));
     }
   }
 
@@ -88,12 +102,6 @@
       requestAnimationFrame(() => requestAnimationFrame(restoreScroll));
     }
   });
-
-  onDestroy(() => {
-    if (renderedRef) {
-      setMarkdownView(tabId, { scrollTop: renderedRef.scrollTop });
-    }
-  });
 </script>
 
 <div class="markdown-viewer">
@@ -102,7 +110,7 @@
     <button class="toggle-btn" class:active={showRendered} onclick={() => setRendered(true)}>{t("markdownPreview")}</button>
   </div>
   {#if showRendered}
-    <div class="rendered" bind:this={renderedRef} onclick={handleRenderedClick}>
+    <div class="rendered" bind:this={renderedRef} onscroll={handleScroll} onclick={handleRenderedClick}>
       {#if isLoading}
         <div class="loading">{t("mediaLoading")}</div>
       {:else}
