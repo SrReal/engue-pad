@@ -172,12 +172,7 @@
       }
     });
 
-    const blurHandler = EditorView.domEventHandlers({
-      blur: () => {
-        handleFocusOut();
-      },
-    });
-
+  
     const formatKeymap = keymap.of([
       {
         key: "Mod-Shift-i",
@@ -200,7 +195,6 @@
       saveKeymap,
       formatKeymap,
       updateListener,
-      blurHandler,
       ...urlLinksFor(nodeId),
       EditorState.tabSize.of(editorSettings.tabSize),
       indentUnit.of(editorSettings.insertSpaces ? " ".repeat(editorSettings.tabSize) : "\t"),
@@ -320,6 +314,10 @@
     if (path && !dirty) {
       loadFile();
     }
+    containerRef?.addEventListener("focusout", handleFocusOut, true);
+    return () => {
+      containerRef?.removeEventListener("focusout", handleFocusOut, true);
+    };
   });
 
   onDestroy(() => {
