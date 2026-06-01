@@ -480,10 +480,14 @@ import type { SemanticEvent } from "$lib/mascot/types";
       <span class="app-name">{t("appName")}</span>
     </div>
     <div class="header-actions">
-      <button class="icon-btn" onclick={toggleSidebar} title={t("headerToggleSidebar")}><SidebarSimple size={18} /></button>
+      {#if workspaceInfo.rootPath}
+        <button class="icon-btn" onclick={toggleSidebar} title={t("headerToggleSidebar")}><SidebarSimple size={18} /></button>
+      {/if}
       <button class="icon-btn" onclick={openFolder} title={t("headerOpenFolder")}><FolderOpen size={18} /></button>
-      <button class="icon-btn" class:active={!rightSidebarCollapsed} onclick={toggleRightSidebar} title={t("headerToggleTasksSidebar")}><NotePencil size={18} /></button>
-      <button class="icon-btn" class:active={!mascotSidebarCollapsed} onclick={toggleMascotSidebar} title={t("headerMascot")}><PawPrint size={18} /></button>
+      {#if workspaceInfo.rootPath}
+        <button class="icon-btn" class:active={!rightSidebarCollapsed} onclick={toggleRightSidebar} title={t("headerToggleTasksSidebar")}><NotePencil size={18} /></button>
+        <button class="icon-btn" class:active={!mascotSidebarCollapsed} onclick={toggleMascotSidebar} title={t("headerMascot")}><PawPrint size={18} /></button>
+      {/if}
       <button class="icon-btn" onclick={() => showSettings = true} title={t("headerSettings")}><Gear size={18} /></button>
       <button class="icon-btn" onclick={openNewWindow} title={t("headerNewInstance")}><AppWindow size={18} /></button>
       {#if workspaceInfo.rootPath}
@@ -502,23 +506,23 @@ import type { SemanticEvent } from "$lib/mascot/types";
     <span class="logo">{projectName}</span>
   </header>
   <div class="body">
-    <aside class="sidebar" class:collapsed={sidebarCollapsed} style:width="{sidebarCollapsed ? 0 : sidebarWidth}px">
-      <div class="sidebar-content">
-        {#if workspaceInfo.rootPath}
+    {#if workspaceInfo.rootPath}
+      <aside class="sidebar" class:collapsed={sidebarCollapsed} style:width="{sidebarCollapsed ? 0 : sidebarWidth}px">
+        <div class="sidebar-content">
           <FileTree rootPath={workspaceInfo.rootPath} {refreshSignal} />
-        {/if}
-      </div>
-      <SidebarFooter />
-    </aside>
-    {#if !sidebarCollapsed}
-      <div
-        class="sidebar-divider"
-        onpointerdown={onSidebarPointerDown}
-        onpointermove={onSidebarPointerMove}
-        onpointerup={onSidebarPointerUp}
-        role="separator"
-        aria-orientation="vertical"
-      ></div>
+        </div>
+        <SidebarFooter />
+      </aside>
+      {#if !sidebarCollapsed}
+        <div
+          class="sidebar-divider"
+          onpointerdown={onSidebarPointerDown}
+          onpointermove={onSidebarPointerMove}
+          onpointerup={onSidebarPointerUp}
+          role="separator"
+          aria-orientation="vertical"
+        ></div>
+      {/if}
     {/if}
     <main class="main-area">
       {#if !workspaceInfo.rootPath}
@@ -530,41 +534,45 @@ import type { SemanticEvent } from "$lib/mascot/types";
         <AppFooter />
       {/if}
     </main>
-    {#if !mascotSidebarCollapsed}
-      <div
-        class="sidebar-divider"
-        onpointerdown={onMascotSidebarPointerDown}
-        onpointermove={onMascotSidebarPointerMove}
-        onpointerup={onMascotSidebarPointerUp}
-        role="separator"
-        aria-orientation="vertical"
-      ></div>
-    {/if}
-    <aside class="mascot-sidebar" class:collapsed={mascotSidebarCollapsed} style:width="{mascotSidebarCollapsed ? 0 : mascotSidebarWidth}px">
+    {#if workspaceInfo.rootPath}
       {#if !mascotSidebarCollapsed}
-        <MascotSidebar />
+        <div
+          class="sidebar-divider"
+          onpointerdown={onMascotSidebarPointerDown}
+          onpointermove={onMascotSidebarPointerMove}
+          onpointerup={onMascotSidebarPointerUp}
+          role="separator"
+          aria-orientation="vertical"
+        ></div>
       {/if}
-    </aside>
-    {#if !rightSidebarCollapsed}
-      <div
-        class="sidebar-divider"
-        onpointerdown={onRightSidebarPointerDown}
-        onpointermove={onRightSidebarPointerMove}
-        onpointerup={onRightSidebarPointerUp}
-        role="separator"
-        aria-orientation="vertical"
-      ></div>
+      <aside class="mascot-sidebar" class:collapsed={mascotSidebarCollapsed} style:width="{mascotSidebarCollapsed ? 0 : mascotSidebarWidth}px">
+        {#if !mascotSidebarCollapsed}
+          <MascotSidebar />
+        {/if}
+      </aside>
+      {#if !rightSidebarCollapsed}
+        <div
+          class="sidebar-divider"
+          onpointerdown={onRightSidebarPointerDown}
+          onpointermove={onRightSidebarPointerMove}
+          onpointerup={onRightSidebarPointerUp}
+          role="separator"
+          aria-orientation="vertical"
+        ></div>
+      {/if}
+      <aside class="right-sidebar" class:collapsed={rightSidebarCollapsed} style:width="{rightSidebarCollapsed ? 0 : rightSidebarWidth}px">
+        <TodoPanel />
+      </aside>
     {/if}
-    <aside class="right-sidebar" class:collapsed={rightSidebarCollapsed} style:width="{rightSidebarCollapsed ? 0 : rightSidebarWidth}px">
-      <TodoPanel />
-    </aside>
   </div>
   <UrlToast />
   <SettingsModal bind:show={showSettings} />
   {#if showApproval}
     <ApprovalModal requestId={approvalRequestId} message={approvalMessage} onClose={() => showApproval = false} />
   {/if}
-  <MascotPanel />
+  {#if workspaceInfo.rootPath}
+    <MascotPanel />
+  {/if}
   {#if isLoading}
     <LoadingScreen />
   {/if}
