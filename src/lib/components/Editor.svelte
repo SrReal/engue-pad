@@ -335,13 +335,13 @@
     if (path && !dirty) {
       loadFile();
     }
-    // Restore previous scroll position after a short delay so CM renders
-    requestAnimationFrame(() => {
+    // Restore previous scroll position after CM has rendered content
+    setTimeout(() => {
       const savedScroll = getEditorScroll(tabId);
       if (savedScroll > 0 && view) {
         view.scrollDOM.scrollTop = savedScroll;
       }
-    });
+    }, 120);
   });
 
   onDestroy(() => {

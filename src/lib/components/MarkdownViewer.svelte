@@ -73,11 +73,20 @@
   });
 
   // Restore scroll when preview renders and content is ready
+  let scrollRestored = $state(false);
   $effect(() => {
-    if (showRendered && renderedRef && !isLoading) {
+    if (showRendered && renderedRef && !isLoading && !scrollRestored) {
       const savedTop = getMarkdownView(tabId).scrollTop;
       if (savedTop > 0) {
-        renderedRef.scrollTop = savedTop;
+        // Wait for DOM to have height after {@html} injects content
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (renderedRef) {
+              renderedRef.scrollTop = savedTop;
+              scrollRestored = true;
+            }
+          });
+        });
       }
     }
   });
