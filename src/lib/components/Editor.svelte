@@ -89,16 +89,22 @@
     }
   }
 
-  async function saveFile() {
+  export async function saveFile() {
     if (!path || !view) return;
     const content = view.state.doc.toString();
+    if (content === savedContent) {
+      console.log("[Editor] saveFile: content unchanged, skipping");
+      return;
+    }
+    console.log("[Editor] saveFile: saving", path);
     try {
       await invoke("write_file", { path, contents: content });
       savedContent = content;
       markTabSaved(nodeId, tabId);
       triggerMascotEvent("task_done");
+      console.log("[Editor] saveFile: success");
     } catch (e) {
-      console.error("Failed to save file:", e);
+      console.error("[Editor] saveFile: failed", e);
       triggerMascotEvent("error");
     }
   }
@@ -115,12 +121,19 @@
     }, 1000);
   }
 
-  function handleFocusOut() {
+  export function handleFocusOut() {
+    console.log("[Editor] handleFocusOut called");
     const mode = appSettings.editor?.autoSave ?? "off";
-    if (mode !== "onFocusChange") return;
+    if (mode !== "onFocusChange") {
+      console.log("[Editor] handleFocusOut: autoSave mode is", mode, ", skipping");
+      return;
+    }
     const content = view?.state.doc.toString() ?? "";
     if (content !== savedContent) {
+      console.log("[Editor] handleFocusOut: content changed, saving");
       saveFile();
+    } else {
+      console.log("[Editor] handleFocusOut: content unchanged, skipping");
     }
   }
 
@@ -308,6 +321,12 @@
       state,
       parent: containerRef,
     });
+
+    // Auto-save on focus change: listen blur on CodeMirror's DOM element
+    view.dom.addEventListener("blur", () => {
+      console.log("[Editor] cm-editor blur fired");
+      handleFocusOut();
+    });
   }
 
   onMount(() => {
@@ -315,29 +334,6 @@
     if (path && !dirty) {
       loadFile();
     }
-    // Global focus tracking: save when focus moves away from this editor
-    function onFocusIn(e: FocusEvent) {
-      const target = e.target as HTMLElement | null;
-      const stillInside = target && containerRef?.contains(target);
-      if (editorHadFocus && !stillInside) {
-        handleFocusOut();
-      }
-      editorHadFocus = stillInside ?? false;
-    }
-    document.addEventListener("focusin", onFocusIn);
-
-    // Save when window loses focus (alt-tab, click other app)
-    function onWindowBlur() {
-      if (editorHadFocus) {
-        handleFocusOut();
-      }
-    }
-    window.addEventListener("blur", onWindowBlur);
-
-    return () => {
-      document.removeEventListener("focusin", onFocusIn);
-      window.removeEventListener("blur", onWindowBlur);
-    };
   });
 
   onDestroy(() => {

@@ -140,6 +140,36 @@
     }
   }
 
+  // Auto-save onFocusChange when switching away from an editor tab
+  let lastActiveTabId = $state(node.activeTabId);
+  $effect(() => {
+    const prev = lastActiveTabId;
+    const curr = node.activeTabId;
+    if (prev && prev !== curr) {
+      const prevTab = node.tabs.find((t) => t.id === prev);
+      if (prevTab?.type === "editor" && prevTab.dirty && editorRefs[prev]) {
+        console.log("[TabPanel] tab switched, saving previous editor tab", prevTab.title);
+        editorRefs[prev].saveFile();
+      }
+    }
+    lastActiveTabId = curr;
+  });
+
+  // Auto-save onFocusChange when panel loses activation
+  let lastIsActive = $state(isActive);
+  $effect(() => {
+    const wasActive = lastIsActive;
+    const nowActive = isActive;
+    if (wasActive && !nowActive) {
+      const activeTab = node.tabs.find((t) => t.id === node.activeTabId);
+      if (activeTab?.type === "editor" && activeTab.dirty && editorRefs[activeTab.id]) {
+        console.log("[TabPanel] panel lost focus, saving active editor tab", activeTab.title);
+        editorRefs[activeTab.id].saveFile();
+      }
+    }
+    lastIsActive = nowActive;
+  });
+
   $effect(() => {
     const activeTab = node.tabs.find((t) => t.id === node.activeTabId);
     if (activeTab?.type === "terminal" && isActive) {
