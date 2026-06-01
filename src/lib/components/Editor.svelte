@@ -170,9 +170,12 @@
         updateTabContent(nodeId, tabId, content);
         scheduleAutoSave();
       }
-      if (update.focusChanged && !update.view.hasFocus) {
+    });
+
+    const blurHandler = EditorView.domEventHandlers({
+      blur: () => {
         handleFocusOut();
-      }
+      },
     });
 
     const formatKeymap = keymap.of([
@@ -197,6 +200,7 @@
       saveKeymap,
       formatKeymap,
       updateListener,
+      blurHandler,
       ...urlLinksFor(nodeId),
       EditorState.tabSize.of(editorSettings.tabSize),
       indentUnit.of(editorSettings.insertSpaces ? " ".repeat(editorSettings.tabSize) : "\t"),
