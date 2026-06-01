@@ -1,6 +1,7 @@
 <script lang="ts">
   import { openUrl } from "@tauri-apps/plugin-opener";
   import { Desktop, DeviceMobile } from "phosphor-svelte";
+  import { t } from "$lib/i18n";
 
   let { url }: { url: string } = $props();
   let iframeRef = $state<HTMLIFrameElement | null>(null);
@@ -28,15 +29,15 @@
 <div class="web-preview">
   <div class="toolbar">
     <span class="url" title={url}>{url}</span>
-    <button class="tool-btn" onclick={() => isMobile = !isMobile} title={isMobile ? "Desktop view" : "Mobile view"}>
+    <button class="tool-btn" onclick={() => isMobile = !isMobile} title={isMobile ? t("previewDesktop") : t("previewMobile")}>
       {#if isMobile}<Desktop size={16} />{:else}<DeviceMobile size={16} />{/if}
     </button>
-    <button class="tool-btn" onclick={refresh} title="Refresh">&#x21bb;</button>
-    <button class="tool-btn" onclick={openExternal} title="Open in browser">&#x2197;</button>
+    <button class="tool-btn" onclick={refresh} title={t("previewRefresh")}>&#x21bb;</button>
+    <button class="tool-btn" onclick={openExternal} title={t("previewOpenBrowser")}>&#x2197;</button>
   </div>
   <div class="viewport" class:mobile={isMobile}>
     {#if isLoading}
-      <div class="loading">Loading preview...</div>
+      <div class="loading">{t("previewLoading")}</div>
     {/if}
     <iframe
       bind:this={iframeRef}

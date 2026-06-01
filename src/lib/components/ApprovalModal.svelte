@@ -1,6 +1,7 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
   import { onMount } from "svelte";
+  import { t } from "$lib/i18n";
 
   let { requestId, message, onClose }: { requestId: string; message: string; onClose: () => void } = $props();
   let remaining = $state(30);
@@ -25,15 +26,15 @@
 <div class="modal-backdrop">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title">Solicitud de aprobación</span>
+      <span class="modal-title">{t("approvalTitle")}</span>
       <span class="timeout">{remaining}s</span>
     </div>
     <div class="modal-body">
       <p>{message}</p>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick={() => respond(false)} type="button">No</button>
-      <button class="btn btn-primary" onclick={() => respond(true)} type="button">Sí</button>
+      <button class="btn btn-secondary" onclick={() => respond(false)} type="button">{t("approvalNo")}</button>
+      <button class="btn btn-primary" onclick={() => respond(true)} type="button">{t("approvalYes")}</button>
     </div>
   </div>
 </div>

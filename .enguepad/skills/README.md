@@ -4,102 +4,49 @@ Estas skills permiten que agentes de IA (Claude Code, Codex, OpenCode) se comuni
 
 ## Requisito previo
 
-`enguepad_cli` debe estar compilado y disponible en PATH:
+Asegurate de que `enguepad_cli` esté en PATH. La forma más fácil es instalarlo desde la app:
+
+1. Abrí EnguePad
+2. Andá a **Settings → CLI**
+3. Clic en **Install CLI to PATH**
+
+Alternativamente, si tenés el repo y Rust instalado:
 
 ```bash
 cd <proyecto-enguepad>
 cargo build --bin enguepad_cli
 ```
 
-Asegurate de que el binario esté en PATH o copialo a `~/.cargo/bin/`:
-
-```bash
-cp target/debug/enguepad_cli ~/.cargo/bin/
-```
+Asegurate de que el binario esté en PATH o copialo a `~/.cargo/bin/`.
 
 ---
 
 ## Claude Code
 
-### Instalación global (todos los proyectos)
+Claude Code usa un sistema de skills basado en directorios. Cada skill es una carpeta con un archivo `SKILL.md`:
 
 ```bash
-mkdir -p ~/.claude/skills
-cp claude-code.md ~/.claude/skills/enguepad.md
+mkdir -p ~/.claude/skills/engue
+cp claude-code.md ~/.claude/skills/engue/SKILL.md
 ```
-
-### Instalación por proyecto
-
-```bash
-mkdir -p .claude/skills
-cp claude-code.md .claude/skills/enguepad.md
-```
-
-Claude Code carga automáticamente todos los `.md` de `~/.claude/skills/` y `.claude/skills/` al arrancar.
-
-### Verificación
-
-```bash
-enguepad_cli instances
-```
-
-Si ves una instancia activa, la skill está funcionando.
-
----
 
 ## Codex (OpenAI)
 
-### Instalación global
+Codex usa skills como archivos `.md` planos:
 
 ```bash
 mkdir -p ~/.codex/skills
 cp codex.md ~/.codex/skills/enguepad.md
 ```
 
-### Instalación por proyecto
-
-```bash
-mkdir -p .codex/skills
-cp codex.md .codex/skills/enguepad.md
-```
-
-### Uso manual (si el directorio de skills no funciona)
-
-```bash
-codex --system-prompt codex.md
-```
-
-### Verificación
-
-```bash
-enguepad_cli instances
-```
-
----
-
 ## OpenCode
 
-### Instalación global
+OpenCode usa skills como archivos `.md` planos:
 
 ```bash
 mkdir -p ~/.opencode/skills
 cp opencode.md ~/.opencode/skills/enguepad.md
 ```
-
-### Instalación por proyecto
-
-```bash
-mkdir -p .opencode/skills
-cp opencode.md .opencode/skills/enguepad.md
-```
-
-### Verificación
-
-```bash
-enguepad_cli instances
-```
-
----
 
 ## Flujo de trabajo recomendado
 
@@ -122,11 +69,4 @@ enguepad_cli instances
 ## Resolución de destino
 
 Si no especificás destino, usa la instancia más reciente.
-
 Prioridad explícita: `--instance` > `--workspace` > `--project` > `--active`
-
-## Notas
-
-- Las aprobaciones tienen timeout de 30s por defecto (`--timeout 60` para cambiar)
-- Exit codes: `0` = aprobado, `1` = rechazado o timeout
-- La mascota reacciona automáticamente a eventos semánticos de la app (guardar archivo, abrir terminal, etc.)

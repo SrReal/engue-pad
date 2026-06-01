@@ -2,6 +2,7 @@
   import { invoke } from "@tauri-apps/api/core";
   import { addTab } from "$lib/layout/store.svelte";
   import { layoutState } from "$lib/layout/store.svelte";
+  import { t } from "$lib/i18n";
 
   type SearchMatch = {
     path: string;
@@ -42,13 +43,13 @@
 
 <div class="search-panel">
   {#if data().results.length === 0}
-    <div class="empty">No results</div>
+    <div class="empty">{t("searchNoResults")}</div>
   {:else}
     <div class="results">
       {#each data().results as match}
         <button class="result-row" onclick={() => openFile(match.path, match.line)}>
           <div class="result-path">{match.path}</div>
-          <div class="result-line">Line {match.line}: {@html highlight(match.text, data().query)}</div>
+          <div class="result-line">{t("searchResultLine")} {match.line}: {@html highlight(match.text, data().query)}</div>
         </button>
       {/each}
     </div>

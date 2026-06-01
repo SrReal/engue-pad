@@ -1,6 +1,7 @@
 <script lang="ts">
   import { gitStore } from "$lib/git/store.svelte";
   import { workspaceInfo } from "$lib/workspace/store.svelte";
+  import { t } from "$lib/i18n";
   import { TreeView, Circle } from "phosphor-svelte";
 
   const changedCount = $derived.by(() => {
@@ -12,12 +13,12 @@
 {#if workspaceInfo.rootPath}
   <div class="sidebar-footer">
     {#if gitStore.isRepo}
-      <span class="branch" title="Git branch"><TreeView size={12} /> {gitStore.branch}</span>
+      <span class="branch" title={t("sidebarGitBranch")}><TreeView size={12} /> {gitStore.branch}</span>
       {#if changedCount > 0}
-        <span class="changes" title="{changedCount} changed file{changedCount === 1 ? '' : 's'}"><Circle size={8} weight="fill" /> {changedCount}</span>
+        <span class="changes" title="{changedCount} {t("sidebarChangedFiles")}"><Circle size={8} weight="fill" /> {changedCount}</span>
       {/if}
     {:else}
-      <span class="no-repo">No git</span>
+      <span class="no-repo">{t("sidebarNoGit")}</span>
     {/if}
   </div>
 {/if}

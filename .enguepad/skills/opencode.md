@@ -1,3 +1,11 @@
+---
+name: engue
+description: |
+  EnguePad multi-instance communication skill. Use whenever working with an EnguePad
+  instance, sending mascot events, previews, or approval requests. Triggers for any
+  task involving EnguePad integration, mascot control, or desktop editor coordination.
+---
+
 # Skill: EnguePad Multi-Instance Communication
 
 EnguePad es un editor de código desktop (Tauri) con mascota interactiva y sistema de IPC.
@@ -5,10 +13,7 @@ Este skill permite que OpenCode se comunique con la instancia activa de EnguePad
 
 ## Requisito previo
 
-Asegurate de que `enguepad_cli` esté compilado y disponible:
-```bash
-cargo build --bin enguepad_cli
-```
+Asegurate de que `enguepad_cli` esté en PATH. Instalalo desde EnguePad (Settings → CLI → Install CLI to PATH) o compilalo con `cargo build --bin enguepad_cli`.
 
 ## Comandos principales
 

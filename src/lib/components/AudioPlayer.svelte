@@ -1,6 +1,7 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
   import { onMount } from "svelte";
+  import { t } from "$lib/i18n";
   import { MusicNotes } from "phosphor-svelte";
 
   let { path }: { path: string } = $props();
@@ -52,7 +53,7 @@
       <track kind="captions" />
     </audio>
   {:else}
-    <span class="loading">Loading...</span>
+    <span class="loading">{t("mediaLoading")}</span>
   {/if}
 </div>
 

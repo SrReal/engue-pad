@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { LayoutNode, TabGroup, Split, Tab } from "./types";
 import { createDefaultLayout, createTabGroup, createSplit } from "./types";
+import { t } from "$lib/i18n";
 
 const MAX_TABS_PER_GROUP = 20;
 
@@ -106,7 +107,7 @@ function findTabById(root: LayoutNode, id: string): { nodeId: string; tabId: str
   return findTabById(root.first, id) ?? findTabById(root.second, id);
 }
 
-export function addTerminal(nodeId: string, title = "Terminal", cwd?: string, shell?: string): void {
+export function addTerminal(nodeId: string, title = t("terminalDefaultTitle"), cwd?: string, shell?: string): void {
   const tab: Tab = {
     id: crypto.randomUUID(),
     title,
@@ -152,7 +153,7 @@ export function addSearchTab(nodeId: string, query: string, global: boolean, res
   }
   const tab: Tab = {
     id,
-    title: global ? `🔍 ${query}` : `🔍 ${query} (file)`,
+    title: global ? `🔍 ${query}` : `🔍 ${query} ${t("searchTabFileSuffix")}`,
     type: "search",
     content: JSON.stringify({ query, global, results }),
   };

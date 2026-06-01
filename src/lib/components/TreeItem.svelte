@@ -348,6 +348,7 @@
     class:file={node.entry.is_file}
     class:selected={$selectedTreePath === node.entry.path}
     class:drop-target={$fileDrag.target === node.entry.path && node.entry.is_dir}
+    data-drop-label={$fileDrag.target === node.entry.path && node.entry.is_dir ? t("treeMoveHere") : ""}
     class:is-dragging={$fileDrag.path === node.entry.path}
     onclick={handleClick}
     oncontextmenu={handleContextMenu}
@@ -441,7 +442,7 @@
   }
 
   .item-row.drop-target.directory::after {
-    content: "move here";
+    content: attr(data-drop-label);
     margin-left: auto;
     font-size: 10px;
     color: var(--accent-color, #4a9eff);

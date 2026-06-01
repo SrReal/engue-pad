@@ -3,6 +3,7 @@
   import { invoke } from "@tauri-apps/api/core";
   import { addPreview } from "$lib/layout/store.svelte";
   import { triggerMascotEvent } from "$lib/mascot/store.svelte";
+  import { t } from "$lib/i18n";
   import Editor from "./Editor.svelte";
 
   let { nodeId, tabId, path, initialContent = "", dirty = false }: {
@@ -38,7 +39,7 @@
       .replace(/^\> (.*$)/gim, "<blockquote>$1</blockquote>")
       .replace(/\*\*(.*)\*\*/gim, "<b>$1</b>")
       .replace(/\*(.*)\*/gim, "<i>$1</i>")
-      .replace(/\[([^\]]+)\]\(([^\)]+)\)/gim, '<a href="$2" title="Ctrl+Click to open">$1</a>')
+      .replace(/\[([^\]]+)\]\(([^\)]+)\)/gim, `<a href="$2" title="${t("markdownCtrlClick")}">$1</a>`)
       .replace(/\n/gim, "<br>");
     return html;
   }
@@ -66,13 +67,13 @@
 
 <div class="markdown-viewer">
   <div class="toolbar">
-    <button class="toggle-btn" class:active={!showRendered} onclick={() => showRendered = false}>Raw</button>
-    <button class="toggle-btn" class:active={showRendered} onclick={() => showRendered = true}>Preview</button>
+    <button class="toggle-btn" class:active={!showRendered} onclick={() => showRendered = false}>{t("markdownRaw")}</button>
+    <button class="toggle-btn" class:active={showRendered} onclick={() => showRendered = true}>{t("markdownPreview")}</button>
   </div>
   {#if showRendered}
     <div class="rendered" onclick={handleRenderedClick}>
       {#if isLoading}
-        <div class="loading">Loading...</div>
+        <div class="loading">{t("mediaLoading")}</div>
       {:else}
         {@html renderedHtml}
       {/if}

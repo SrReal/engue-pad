@@ -11,6 +11,7 @@
   import { appSettings } from "$lib/workspace/settingsStore.svelte";
   import { triggerMascotEvent } from "$lib/mascot/store.svelte";
   import { terminalClipboardStore } from "$lib/terminal/clipboardStore";
+  import { t } from "$lib/i18n";
 
   let { nodeId, tabId, cwd, shell }: {
     nodeId: string;
@@ -113,7 +114,7 @@
       },
       {
         hover: (e, uri) => {
-          (e.target as HTMLElement).title = "Ctrl+Click to open preview";
+          (e.target as HTMLElement).title = t("terminalOpenPreview");
         },
         leave: (e, uri) => {
           (e.target as HTMLElement).title = "";
@@ -195,7 +196,7 @@
         rows,
       });
     } catch (e) {
-      term.writeln(`Failed to start terminal: ${e}`);
+      term.writeln(`${t("terminalFailedStart")}: ${e}`);
       return;
     }
 

@@ -113,16 +113,16 @@
 
 <div class="todo-panel">
   {#if todoStore.loading}
-    <div class="loading">Loading...</div>
+    <div class="loading">{t("loading")}</div>
   {:else if todoStore.parsed.sections.length === 0}
     <div class="empty">
       <span class="empty-icon"><NotePencil size={24} /></span>
-      <span class="empty-text">No tasks yet</span>
-      <button class="add-section-btn" onclick={() => addingSection = true}>Add section</button>
+      <span class="empty-text">{t("todoNoTasks")}</span>
+      <button class="add-section-btn" onclick={() => addingSection = true}>{t("todoAddSection")}</button>
     </div>
   {:else}
     <div class="header">
-      <span class="progress-bar" title="{progressPercent(todoStore.parsed)}% complete">
+      <span class="progress-bar" title="{progressPercent(todoStore.parsed)}% {t("todoProgressComplete")}">
         <span class="progress-fill" style:width="{progressPercent(todoStore.parsed)}%"></span>
       </span>
       <span class="progress-text">{todoStore.parsed.completed}/{todoStore.parsed.total}</span>
@@ -158,8 +158,8 @@
                 {section.title}
               </span>
               <div class="section-actions">
-                <button class="action-btn" title="Rename" onclick={() => startEditSection(section)}><PencilSimple size={14} /></button>
-                <button class="action-btn danger" title="Delete section" onclick={() => deleteTodoSection(section.startLine, section.endLine)}><X size={14} /></button>
+                <button class="action-btn" title={t("todoRenameSection")} onclick={() => startEditSection(section)}><PencilSimple size={14} /></button>
+                <button class="action-btn danger" title={t("todoDeleteSection")} onclick={() => deleteTodoSection(section.startLine, section.endLine)}><X size={14} /></button>
               </div>
             {/if}
           </div>
@@ -202,7 +202,7 @@
                   >{task.text}</span>
                 </label>
                 <div class="task-actions">
-                  <button class="action-btn danger" title="Delete" onclick={() => deleteTodoTask(task.lineIndex)}><X size={14} /></button>
+                  <button class="action-btn danger" title={t("todoDeleteTask")} onclick={() => deleteTodoTask(task.lineIndex)}><X size={14} /></button>
                 </div>
               </div>
             {/if}
@@ -234,7 +234,7 @@
           autofocus
         />
       {:else}
-        <button class="add-section-btn" onclick={() => addingSection = true}>+ New section</button>
+        <button class="add-section-btn" onclick={() => addingSection = true}>{t("todoNewSection")}</button>
       {/if}
     </div>
   {/if}

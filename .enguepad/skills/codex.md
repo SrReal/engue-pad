@@ -1,3 +1,11 @@
+---
+name: engue
+description: |
+  EnguePad multi-instance communication skill. Use whenever working with an EnguePad
+  instance, sending mascot events, previews, or approval requests. Triggers for any
+  task involving EnguePad integration, mascot control, or desktop editor coordination.
+---
+
 # Skill: EnguePad Multi-Instance Communication
 
 EnguePad es un editor de código desktop con mascota interactiva.
@@ -6,7 +14,7 @@ que tiene abierto el proyecto.
 
 ## Requisito previo
 
-`enguepad_cli` debe estar en PATH. Se compila junto con la app Tauri.
+`enguepad_cli` debe estar en PATH. Instalalo desde EnguePad (Settings → CLI → Install CLI to PATH) o compilalo con `cargo build --bin enguepad_cli`.
 
 ## Comandos disponibles
 

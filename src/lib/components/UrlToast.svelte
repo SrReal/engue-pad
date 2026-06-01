@@ -3,6 +3,7 @@
   import { openUrl } from "@tauri-apps/plugin-opener";
   import { addPreview, layoutState } from "$lib/layout/store.svelte";
   import { triggerMascotEvent } from "$lib/mascot/store.svelte";
+  import { t } from "$lib/i18n";
   import { X } from "phosphor-svelte";
 
   function dismiss(url: string, terminalId: string) {
@@ -32,16 +33,16 @@
       <div class="url-toast">
         <span class="url-text">{detected.url}</span>
         <button class="url-action" onclick={() => openPreview(detected.url, detected.terminalId)} type="button">
-          Open preview
+          {t("toastOpenPreview")}
         </button>
         <button class="url-action secondary" onclick={() => openExternal(detected.url, detected.terminalId)} type="button">
-          External
+          {t("toastExternal")}
         </button>
         <button
           class="url-dismiss"
           onclick={() => dismiss(detected.url, detected.terminalId)}
           type="button"
-          aria-label="Dismiss"
+          aria-label={t("toastDismiss")}
         >
           <X size={14} />
         </button>

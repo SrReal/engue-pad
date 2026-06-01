@@ -261,7 +261,7 @@
   role="tabpanel"
   tabindex="0"
 >
-  <div class="tab-bar" role="toolbar" aria-label="Tabs" tabindex="0">
+  <div class="tab-bar" role="toolbar" aria-label={t("tabBarAriaLabel")} tabindex="0">
     <button class="tab-add" onclick={() => { addTerminal(node.id, t("terminalDefaultTitle"), workspaceInfo.rootPath ?? undefined); triggerMascotEvent("terminal_created"); }} title={t("tabNewTerminal")} type="button"><TerminalWindow size={16} /></button>
     <div class="tabs-scroll" bind:this={tabBarRef}>
       {#each node.tabs as tab, index (tab.id)}

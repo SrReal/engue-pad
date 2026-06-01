@@ -1,18 +1,95 @@
 <script lang="ts">
   import { getDefaultSettings, saveSettings, type AppSettings } from "$lib/workspace/settings";
   import { appSettings, updateAppSettings } from "$lib/workspace/settingsStore.svelte";
-  import { X } from "phosphor-svelte";
+  import { X, Copy } from "phosphor-svelte";
   import { t, setLocale } from "$lib/i18n";
+  import { invoke } from "@tauri-apps/api/core";
+
+  function copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text).catch((e) => console.error("Copy failed:", e));
+  }
 
   let { show = $bindable(false) }: { show?: boolean } = $props();
-  let activeTab = $state<"general" | "editor" | "terminal" | "git">("general");
+  let activeTab = $state<"general" | "editor" | "terminal" | "git" | "cli">("general");
   let draft = $state<AppSettings>(getDefaultSettings());
+
+  let cliInstalled = $state(false);
+  let cliPath = $state<string | null>(null);
+  let cliInstallLoading = $state(false);
+  let cliInstallError = $state<string | null>(null);
+  let os = $state<string>("macos");
 
   $effect(() => {
     if (show) {
       draft = { ...getDefaultSettings(), ...appSettings };
     }
   });
+
+  $effect(() => {
+    if (activeTab === "cli" && show) {
+      checkCliStatus();
+      detectOs();
+    }
+  });
+
+  async function detectOs() {
+    try {
+      const result = await invoke<string>("get_os");
+      os = result;
+    } catch (e) {
+      console.error("Failed to detect OS:", e);
+    }
+  }
+
+  async function checkCliStatus() {
+    try {
+      const status = await invoke<{ installed: boolean; path?: string }>("is_cli_installed");
+      cliInstalled = status.installed;
+      cliPath = status.path ?? null;
+      cliInstallError = null;
+    } catch (e) {
+      console.error("Failed to check CLI status:", e);
+    }
+  }
+
+  function getClaudeCmd(): string {
+    if (os === "windows") {
+      return `New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\\.claude\\skills\\engue"\nCopy-Item ".enguepad\\skills\\claude-code.md" "$env:USERPROFILE\\.claude\\skills\\engue\\SKILL.md"`;
+    }
+    return "mkdir -p ~/.claude/skills/engue\ncp .enguepad/skills/claude-code.md ~/.claude/skills/engue/SKILL.md";
+  }
+
+  function getCodexCmd(): string {
+    if (os === "windows") {
+      return `New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\\.codex\\skills"\nCopy-Item ".enguepad\\skills\\codex.md" "$env:USERPROFILE\\.codex\\skills\\enguepad.md"`;
+    }
+    return "mkdir -p ~/.codex/skills\ncp .enguepad/skills/codex.md ~/.codex/skills/enguepad.md";
+  }
+
+  function getOpencodeCmd(): string {
+    if (os === "windows") {
+      return `New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\\.opencode\\skills"\nCopy-Item ".enguepad\\skills\\opencode.md" "$env:USERPROFILE\\.opencode\\skills\\enguepad.md"`;
+    }
+    return "mkdir -p ~/.opencode/skills\ncp .enguepad/skills/opencode.md ~/.opencode/skills/enguepad.md";
+  }
+
+  async function installCli() {
+    cliInstallLoading = true;
+    cliInstallError = null;
+    try {
+      const result = await invoke<{ success: boolean; path?: string; error?: string }>("install_cli");
+      if (result.success) {
+        cliInstalled = true;
+        cliPath = result.path ?? null;
+      } else {
+        cliInstallError = result.error ?? t("settingsCliUnknownError");
+      }
+    } catch (e) {
+      cliInstallError = String(e);
+    } finally {
+      cliInstallLoading = false;
+    }
+  }
 
   function update<K extends keyof AppSettings>(key: K, value: AppSettings[K]) {
     draft = { ...draft, [key]: value };
@@ -53,6 +130,7 @@
           <button class="tab-btn" class:active={activeTab === "editor"} onclick={() => activeTab = "editor"}>{t("settingsTabEditor")}</button>
           <button class="tab-btn" class:active={activeTab === "terminal"} onclick={() => activeTab = "terminal"}>{t("settingsTabTerminal")}</button>
           <button class="tab-btn" class:active={activeTab === "git"} onclick={() => activeTab = "git"}>{t("settingsTabGit")}</button>
+          <button class="tab-btn" class:active={activeTab === "cli"} onclick={() => activeTab = "cli"}>{t("settingsTabCli")}</button>
         </div>
         <div class="tab-content">
           {#if activeTab === "general"}
@@ -149,6 +227,69 @@
                 <input type="checkbox" checked={draft.git?.showIndicators ?? true} onchange={(e) => updateNested("git", "showIndicators", e.currentTarget.checked)} />
                 <span>{t("settingsGitShowIndicators")}</span>
               </label>
+            </div>
+          {:else if activeTab === "cli"}
+            <div class="section cli-section">
+              <h4 class="cli-title">{t("settingsCliTitle")}</h4>
+              <p class="cli-description">{t("settingsCliDescription")}</p>
+
+              <div class="cli-status">
+                {#if cliInstalled}
+                  <div class="cli-status-badge installed">✓ {t("settingsCliStatusInstalled")}</div>
+                  {#if cliPath}
+                    <div class="cli-status-path">{t("settingsCliInstalledAt")} {cliPath}</div>
+                  {/if}
+                {:else}
+                  <div class="cli-status-badge not-installed">✗ {t("settingsCliStatusNotInstalled")}</div>
+                {/if}
+              </div>
+
+              {#if !cliInstalled}
+                <button class="btn primary" onclick={installCli} disabled={cliInstallLoading}>
+                  {cliInstallLoading ? t("settingsCliInstalling") : t("settingsCliInstallBtn")}
+                </button>
+              {/if}
+
+              {#if cliInstallError}
+                <div class="cli-error">{t("settingsCliInstallError")} {cliInstallError}</div>
+              {/if}
+
+              <hr class="cli-divider" />
+
+              <div class="cli-agent">
+                <div class="cli-agent-name">{t("settingsCliClaudeCode")}</div>
+                <p class="cli-step">{t("settingsCliStepInstall")}</p>
+                <div class="cli-code-wrap">
+                  <pre class="cli-code"><code>{getClaudeCmd()}</code></pre>
+                  <button class="cli-copy" onclick={() => copyToClipboard(getClaudeCmd())} title={t("settingsCliCopy")}>
+                    <Copy size={14} />
+                  </button>
+                </div>
+              </div>
+
+              <div class="cli-agent">
+                <div class="cli-agent-name">{t("settingsCliCodex")}</div>
+                <p class="cli-step">{t("settingsCliStepInstall")}</p>
+                <div class="cli-code-wrap">
+                  <pre class="cli-code"><code>{getCodexCmd()}</code></pre>
+                  <button class="cli-copy" onclick={() => copyToClipboard(getCodexCmd())} title={t("settingsCliCopy")}>
+                    <Copy size={14} />
+                  </button>
+                </div>
+              </div>
+
+              <div class="cli-agent">
+                <div class="cli-agent-name">{t("settingsCliOpencode")}</div>
+                <p class="cli-step">{t("settingsCliStepInstall")}</p>
+                <div class="cli-code-wrap">
+                  <pre class="cli-code"><code>{getOpencodeCmd()}</code></pre>
+                  <button class="cli-copy" onclick={() => copyToClipboard(getOpencodeCmd())} title={t("settingsCliCopy")}>
+                    <Copy size={14} />
+                  </button>
+                </div>
+              </div>
+
+              <p class="cli-ready">{t("settingsCliStepReady")}</p>
             </div>
           {/if}
         </div>
@@ -347,6 +488,145 @@
 
   .btn.primary:hover {
     background: var(--accent-hover, #0d8cff);
+  }
+
+  .cli-section {
+    gap: 18px;
+  }
+
+  .cli-title {
+    margin: 0 0 4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color, #ccc);
+  }
+
+  .cli-description {
+    margin: 0 0 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-muted, #888);
+  }
+
+  .cli-agent {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .cli-agent-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-color, #4a9eff);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .cli-step {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-muted, #888);
+  }
+
+  .cli-code-wrap {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .cli-code {
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-surface, #111827);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--text-color, #ccc);
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  .cli-code code {
+    font-family: inherit;
+    background: none;
+    padding: 0;
+  }
+
+  .cli-copy {
+    flex-shrink: 0;
+    background: var(--bg-surface, #252526);
+    border: 1px solid var(--border-color, #333);
+    color: var(--text-muted, #888);
+    border-radius: 6px;
+    padding: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+  }
+
+  .cli-copy:hover {
+    background: var(--bg-tab-hover, #3d3d3d);
+    color: var(--accent-color, #4a9eff);
+    border-color: var(--accent-color, #4a9eff);
+  }
+
+  .cli-ready {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: var(--text-muted, #888);
+    font-style: italic;
+  }
+
+  .cli-status {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .cli-status-badge {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    width: fit-content;
+  }
+
+  .cli-status-badge.installed {
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.1);
+  }
+
+  .cli-status-badge.not-installed {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+  }
+
+  .cli-status-path {
+    font-size: 11px;
+    color: var(--text-muted, #888);
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+
+  .cli-error {
+    font-size: 12px;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.08);
+    padding: 6px 8px;
+    border-radius: 4px;
+  }
+
+  .cli-divider {
+    border: none;
+    border-top: 1px solid var(--border-color, #333);
+    margin: 8px 0;
   }
 
 </style>

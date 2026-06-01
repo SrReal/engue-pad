@@ -1,3 +1,12 @@
+---
+name: engue
+description: |
+  EnguePad multi-instance communication skill. Use this skill whenever the user is working
+  in a project that has an EnguePad instance open, or when they want to communicate with
+  EnguePad (mascot events, previews, approvals). Automatically triggers for any task
+  involving EnguePad integration, mascot control, or desktop editor coordination.
+---
+
 # Skill: EnguePad Multi-Instance Communication
 
 EnguePad es un editor de código desktop (Tauri + Svelte) con mascota interactiva.
@@ -6,11 +15,7 @@ que tiene abierto el proyecto actual.
 
 ## Requisito previo
 
-Asegurate de que `enguepad_cli` esté en PATH. Se compila junto con la app:
-```bash
-# Desde el directorio del proyecto
-cargo build --bin enguepad_cli
-```
+Asegurate de que `enguepad_cli` esté en PATH. La forma más fácil es instalarlo desde EnguePad (Settings → CLI → Install CLI to PATH). Alternativamente, compilalo con `cargo build --bin enguepad_cli`.
 
 ## Comandos disponibles
 
@@ -18,21 +23,12 @@ cargo build --bin enguepad_cli
 ```bash
 enguepad_cli instances
 ```
-Usalo para verificar que hay una instancia activa antes de enviar eventos.
 
 ### Enviar eventos
 ```bash
-# Notificar progreso (muestra toast en la instancia)
 enguepad_cli notify --event "mascot" --payload '{"state":"wave"}'
-
-# Abrir preview embebido
 enguepad_cli preview http://localhost:5173
-
-# Cambiar estado de mascota
 enguepad_cli mascot jump
-
-# Con filtro por proyecto
-enguepad_cli mascot jump --project "mi-proyecto"
 ```
 
 ### Solicitar aprobación del usuario

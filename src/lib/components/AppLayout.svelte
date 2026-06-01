@@ -25,10 +25,10 @@ import { loadProjectMascotConfig } from "$lib/mascot/projectStore.svelte";
 import type { SemanticEvent } from "$lib/mascot/types";
   import { SidebarSimple, FolderOpen, NotePencil, PawPrint, Gear, AppWindow } from "phosphor-svelte";
   import { setLocale, t } from "$lib/i18n";
-  const projectName = $derived(workspaceInfo.rootPath ? workspaceInfo.rootPath.split(/[\\/]/).pop() ?? "EnguePad" : "EnguePad");
+  const projectName = $derived(workspaceInfo.rootPath ? workspaceInfo.rootPath.split(/[\\/]/).pop() ?? t("appName") : t("appName"));
 
   $effect(() => {
-    const title = projectName || "EnguePad";
+    const title = projectName || t("appName");
     document.title = title;
     getCurrentWebviewWindow().setTitle(title).catch(() => {});
   });
@@ -439,7 +439,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
   <header class="top-bar">
     <div class="app-brand">
       <img class="brand-icon" src="/favicon.png" alt="" />
-      <span class="app-name">EnguePad</span>
+      <span class="app-name">{t("appName")}</span>
     </div>
     <div class="header-actions">
       <button class="icon-btn" onclick={toggleSidebar} title={t("headerToggleSidebar")}><SidebarSimple size={18} /></button>

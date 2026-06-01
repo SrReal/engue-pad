@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
+  import { t } from "$lib/i18n";
   import { EditorView, keymap } from "@codemirror/view";
   import { EditorState, type Extension } from "@codemirror/state";
   import { oneDark } from "@codemirror/theme-one-dark";
@@ -317,7 +318,7 @@
 
 <div class="editor-wrapper">
   {#if isLoading}
-    <div class="loading">Loading...</div>
+    <div class="loading">{t("mediaLoading")}</div>
   {/if}
   <div class="editor-container" bind:this={containerRef}></div>
 </div>

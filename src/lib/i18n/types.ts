@@ -54,6 +54,7 @@ export type Dictionary = {
   tabUntitled: string;
   tabHintOpenFile: string;
   tabMoveHere: string;
+  tabBarAriaLabel: string;
   tabUnsavedChangesTitle: string;
   tabUnsavedChangesBody: string;
   tabClosePanelBody: string;
@@ -70,6 +71,25 @@ export type Dictionary = {
   settingsTabEditor: string;
   settingsTabTerminal: string;
   settingsTabGit: string;
+  settingsTabCli: string;
+  settingsCliTitle: string;
+  settingsCliDescription: string;
+  settingsCliClaudeCode: string;
+  settingsCliCodex: string;
+  settingsCliOpencode: string;
+  settingsCliStepInstall: string;
+  settingsCliStepReady: string;
+  settingsCliCopy: string;
+  settingsCliMac: string;
+  settingsCliLinux: string;
+  settingsCliWindows: string;
+  settingsCliStatusInstalled: string;
+  settingsCliStatusNotInstalled: string;
+  settingsCliInstallBtn: string;
+  settingsCliInstalling: string;
+  settingsCliInstalledAt: string;
+  settingsCliInstallError: string;
+  settingsCliUnknownError: string;
   settingsUiFontSize: string;
   settingsZoom: string;
   settingsRestoreLayout: string;
@@ -219,6 +239,8 @@ export type Dictionary = {
   mascotScopeProject: string;
   mascotRow: string;
   mascotNoPhrase: string;
+  mascotNa: string;
+  mascotTestVoicePhrase: string;
 
   // Mascot Event Labels
   eventIdle: string;
@@ -261,4 +283,15 @@ export type Dictionary = {
 
   // Terminal default title
   terminalDefaultTitle: string;
+
+  // Search tab suffix
+  searchTabFileSuffix: string;
+
+  // Search results
+  searchNoResults: string;
+  searchResultLine: string;
+
+  // Mascot debug panel
+  mascotMode: string;
+  mascotSize: string;
 };

@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Split } from "$lib/layout/types";
   import { setSplitRatio, removeNode } from "$lib/layout/store.svelte";
+  import { t } from "$lib/i18n";
   import LayoutNode from "./LayoutNode.svelte";
 
   let { node }: { node: Split } = $props();
@@ -69,7 +70,7 @@
 
   {#if contextMenu}
     <div class="context-menu" style:left="{contextMenu.x}px" style:top="{contextMenu.y}px">
-      <button onclick={handleRemoveSplit}>Remove split</button>
+      <button onclick={handleRemoveSplit}>{t("splitRemoveSplit")}</button>
     </div>
   {/if}
   <div class="pane" style:flex={1 - node.ratio}>

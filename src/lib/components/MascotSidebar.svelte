@@ -78,7 +78,7 @@
   }
 
   function testVoice() {
-    speak("¡Hola! Esto es una prueba de voz.");
+    speak(t("mascotTestVoicePhrase"));
   }
 
   function setMode(mode: "disabled" | "compact" | "animated") {
@@ -314,8 +314,8 @@
       <div class="field">
         <span>{t("mascotLanguage")}</span>
         <select value={mascotSettings.voiceLang} onchange={(e) => setVoiceLang(e.currentTarget.value)}>
-          <option value="es-ES">Español</option>
-          <option value="en-US">English</option>
+          <option value="es-ES">{t("settingsLanguageSpanish")}</option>
+          <option value="en-US">{t("settingsLanguageEnglish")}</option>
         </select>
       </div>
       <div class="field">
@@ -394,7 +394,7 @@
         <div class="info-row"><span>{t("mascotName")}</span> {mascotData.pet.name}</div>
         <div class="info-row"><span>{t("mascotFrame")}</span> {mascotData.pet.frameWidth}x{mascotData.pet.frameHeight}</div>
         <div class="info-row"><span>{t("mascotFramesPerState")}</span> {mascotData.pet.framesPerState}</div>
-        <div class="info-row"><span>{t("mascotFramesPerRow")}</span> {mascotData.pet.framesPerRow?.join(", ") ?? "N/A"}</div>
+        <div class="info-row"><span>{t("mascotFramesPerRow")}</span> {mascotData.pet.framesPerRow?.join(", ") ?? t("mascotNa")}</div>
         <div class="info-row"><span>{t("mascotLoop")}</span> {mascotData.pet.loopMs}ms</div>
       {:else}
         <div class="info-row muted">{t("mascotNoMascotLoaded")}</div>

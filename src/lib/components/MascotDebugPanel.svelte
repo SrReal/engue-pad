@@ -1,6 +1,7 @@
 <script lang="ts">
   import { mascotSettings, mascotState, mascotData, updateMascotSettings, setMascotState } from "$lib/mascot/store.svelte";
   import { playTone, speak } from "$lib/mascot/sounds";
+  import { t } from "$lib/i18n";
   import type { PetState } from "$lib/mascot/types";
 
   const STATES: number[] = [0, 1, 2, 3, 4, 5, 6, 7];
@@ -16,7 +17,7 @@
   }
 
   function testVoice() {
-    speak("¡Hola! Esto es una prueba de voz.");
+    speak(t("mascotTestVoicePhrase"));
   }
 
   function setMode(mode: "disabled" | "compact" | "animated") {
@@ -38,63 +39,63 @@
 
 <div class="debug-panel">
   <div class="section">
-    <h3>Estados</h3>
+    <h3>{t("mascotStates")}</h3>
     <div class="btn-grid">
       {#each STATES as state}
         <button class="btn state-btn" class:active={mascotState.currentState === state} onclick={() => triggerState(state)}>
-          Fila {state}
+          {t("mascotRow")} {state}
         </button>
       {/each}
     </div>
   </div>
 
   <div class="section">
-    <h3>Audio</h3>
+    <h3>{t("mascotAudio")}</h3>
     <div class="row">
-      <button class="btn" onclick={testSound}>Probar sonido</button>
-      <button class="btn" onclick={testVoice}>Probar voz</button>
+      <button class="btn" onclick={testSound}>{t("mascotTestSound")}</button>
+      <button class="btn" onclick={testVoice}>{t("mascotTestVoice")}</button>
     </div>
     <div class="row">
       <label class="check-label">
         <input type="checkbox" checked={mascotSettings.soundEnabled} onchange={toggleSound} />
-        Sonido
+        {t("mascotSound")}
       </label>
       <label class="check-label">
         <input type="checkbox" checked={mascotSettings.voiceEnabled} onchange={toggleVoice} />
-        Voz
+        {t("mascotVoice")}
       </label>
     </div>
   </div>
 
   <div class="section">
-    <h3>Modo</h3>
+    <h3>{t("mascotMode")}</h3>
     <div class="row">
-      <button class="btn" class:active={mascotSettings.mode === "disabled"} onclick={() => setMode("disabled")}>Disabled</button>
-      <button class="btn" class:active={mascotSettings.mode === "compact"} onclick={() => setMode("compact")}>Compact</button>
-      <button class="btn" class:active={mascotSettings.mode === "animated"} onclick={() => setMode("animated")}>Animated</button>
+      <button class="btn" class:active={mascotSettings.mode === "disabled"} onclick={() => setMode("disabled")}>{t("mascotDisabled")}</button>
+      <button class="btn" class:active={mascotSettings.mode === "compact"} onclick={() => setMode("compact")}>{t("mascotCompact")}</button>
+      <button class="btn" class:active={mascotSettings.mode === "animated"} onclick={() => setMode("animated")}>{t("mascotAnimated")}</button>
     </div>
   </div>
 
   <div class="section">
-    <h3>Tamaño</h3>
+    <h3>{t("mascotSize")}</h3>
     <div class="row">
-      <button class="btn" class:active={mascotSettings.size === "small"} onclick={() => setSize("small")}>Small</button>
-      <button class="btn" class:active={mascotSettings.size === "normal"} onclick={() => setSize("normal")}>Normal</button>
+      <button class="btn" class:active={mascotSettings.size === "small"} onclick={() => setSize("small")}>{t("mascotSmall")}</button>
+      <button class="btn" class:active={mascotSettings.size === "normal"} onclick={() => setSize("normal")}>{t("mascotNormal")}</button>
     </div>
   </div>
 
   <div class="section">
-    <h3>Info</h3>
+    <h3>{t("mascotInfo")}</h3>
     {#if mascotData.pet}
-      <div class="info-row"><span>Nombre:</span> {mascotData.pet.name}</div>
-      <div class="info-row"><span>Slug:</span> {mascotData.pet.slug}</div>
-      <div class="info-row"><span>Frame:</span> {mascotData.pet.frameWidth}x{mascotData.pet.frameHeight}</div>
-      <div class="info-row"><span>Frames/estado:</span> {mascotData.pet.framesPerState}</div>
-      <div class="info-row"><span>Frames por fila:</span> {mascotData.pet.framesPerRow?.join(", ") ?? "N/A"}</div>
-      <div class="info-row"><span>Loop:</span> {mascotData.pet.loopMs}ms</div>
-      <div class="info-row"><span>Estados:</span> {mascotData.pet.states.join(", ")}</div>
+      <div class="info-row"><span>{t("mascotName")}</span> {mascotData.pet.name}</div>
+      <div class="info-row"><span>{t("mascotSlug")}</span> {mascotData.pet.slug}</div>
+      <div class="info-row"><span>{t("mascotFrame")}</span> {mascotData.pet.frameWidth}x{mascotData.pet.frameHeight}</div>
+      <div class="info-row"><span>{t("mascotFramesPerState")}</span> {mascotData.pet.framesPerState}</div>
+      <div class="info-row"><span>{t("mascotFramesPerRow")}</span> {mascotData.pet.framesPerRow?.join(", ") ?? t("mascotNa")}</div>
+      <div class="info-row"><span>{t("mascotLoop")}</span> {mascotData.pet.loopMs}ms</div>
+      <div class="info-row"><span>{t("mascotStates")}</span> {mascotData.pet.states.join(", ")}</div>
     {:else}
-      <div class="info-row muted">Ninguna mascota cargada</div>
+      <div class="info-row muted">{t("mascotNoMascotLoaded")}</div>
     {/if}
   </div>
 </div>
