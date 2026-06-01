@@ -269,36 +269,58 @@
     if (!rootPath) return;
 
     let timeout: ReturnType<typeof setTimeout> | null = null;
+    let pollInterval: ReturnType<typeof setInterval> | null = null;
+    let lastSnapshot = "";
+
+    function buildSnapshot(nodes: TreeNode[]): string {
+      return nodes.map((n) => `${n.entry.name}:${n.entry.is_dir ? "d" : "f"}`).join("|");
+    }
+
+    async function pollChanges() {
+      if (isReloading) return;
+      try {
+        const nodes = await loadDirectory(rootPath);
+        const snap = buildSnapshot(nodes);
+        if (lastSnapshot && snap !== lastSnapshot) {
+          console.log("[FileTree] poll detected change, reloading tree");
+          reloadTree();
+        }
+        lastSnapshot = snap;
+      } catch {
+        // ignore poll errors
+      }
+    }
 
     async function startWatch() {
       console.log("[FileTree] starting watch for", rootPath);
       try {
         const { watch } = await import("@tauri-apps/plugin-fs");
-        console.log("[FileTree] watch imported successfully");
         stopWatch = await watch(
           rootPath,
-          (event) => {
-            console.log("[FileTree] watch event received:", event);
+          () => {
             if (isReloading) return;
             if (timeout) clearTimeout(timeout);
-            timeout = setTimeout(() => {
-              console.log("[FileTree] debounce elapsed, reloading tree");
-              reloadTree();
-            }, 500);
+            timeout = setTimeout(() => reloadTree(), 500);
           },
           { recursive: true, delayMs: 500 }
         );
-        console.log("[FileTree] watch registered, stopWatch =", typeof stopWatch);
+        console.log("[FileTree] native watch active");
       } catch (e) {
-        console.error("[FileTree] failed to start watch:", e);
+        const msg = String(e);
+        console.error("[FileTree] native watch failed:", msg);
+        if (msg.includes("Command watch not found") || msg.includes("not found")) {
+          console.log("[FileTree] falling back to polling every 2s");
+          pollInterval = setInterval(pollChanges, 2000);
+          pollChanges(); // initial snapshot
+        }
       }
     }
 
     startWatch();
 
     return () => {
-      console.log("[FileTree] cleaning up watch");
       if (timeout) clearTimeout(timeout);
+      if (pollInterval) clearInterval(pollInterval);
       stopWatch?.();
       stopWatch = null;
     };
