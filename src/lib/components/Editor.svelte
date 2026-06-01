@@ -369,10 +369,6 @@
   onDestroy(() => {
     if (debounceTimer) clearTimeout(debounceTimer);
     if (scrollSaveTimer) clearTimeout(scrollSaveTimer);
-    // Final scroll backup in case throttle didn't fire yet
-    if (view) {
-      setEditorScroll(tabId, view.scrollDOM.scrollTop);
-    }
     // Auto-save onFocusChange when editor component is unmounted (tab switch)
     const mode = appSettings.editor?.autoSave ?? "off";
     if (mode === "onFocusChange" && view) {
