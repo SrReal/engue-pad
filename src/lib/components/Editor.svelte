@@ -22,6 +22,7 @@
   import { type EditorSettings } from "$lib/workspace/settings";
   import { appSettings } from "$lib/workspace/settingsStore.svelte";
   import { triggerMascotEvent } from "$lib/mascot/store.svelte";
+  import { getEditorScroll, setEditorScroll } from "$lib/editor/editorScrollStore.svelte";
   import { showMinimap } from "@replit/codemirror-minimap";
 
   let { nodeId, tabId, path, language, initialContent = "", dirty = false }: {
@@ -334,10 +335,21 @@
     if (path && !dirty) {
       loadFile();
     }
+    // Restore previous scroll position after a short delay so CM renders
+    requestAnimationFrame(() => {
+      const savedScroll = getEditorScroll(tabId);
+      if (savedScroll > 0 && view) {
+        view.scrollDOM.scrollTop = savedScroll;
+      }
+    });
   });
 
   onDestroy(() => {
     if (debounceTimer) clearTimeout(debounceTimer);
+    // Save scroll position
+    if (view) {
+      setEditorScroll(tabId, view.scrollDOM.scrollTop);
+    }
     // Auto-save onFocusChange when editor component is unmounted (tab switch)
     const mode = appSettings.editor?.autoSave ?? "off";
     if (mode === "onFocusChange" && view) {

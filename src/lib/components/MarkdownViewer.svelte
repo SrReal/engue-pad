@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { addPreview } from "$lib/layout/store.svelte";
   import { triggerMascotEvent } from "$lib/mascot/store.svelte";
   import { t } from "$lib/i18n";
+  import { getMarkdownView, setMarkdownView } from "$lib/editor/markdownViewStore.svelte";
   import Editor from "./Editor.svelte";
 
   let { nodeId, tabId, path, initialContent = "", dirty = false }: {
@@ -14,9 +15,11 @@
     dirty?: boolean;
   } = $props();
 
-  let showRendered = $state(true);
+  const saved = getMarkdownView(tabId);
+  let showRendered = $state(saved.showRendered);
   let renderedHtml = $state("");
   let isLoading = $state(false);
+  let renderedRef = $state<HTMLDivElement | null>(null);
 
   async function loadAndRender() {
     if (!path) return;
@@ -56,6 +59,11 @@
     triggerMascotEvent("preview_opened");
   }
 
+  function setRendered(v: boolean) {
+    showRendered = v;
+    setMarkdownView(tabId, { showRendered: v });
+  }
+
   onMount(() => {
     if (path && !dirty) {
       loadAndRender();
@@ -63,15 +71,31 @@
       renderedHtml = renderMarkdown(initialContent);
     }
   });
+
+  // Restore scroll when preview renders and content is ready
+  $effect(() => {
+    if (showRendered && renderedRef && !isLoading) {
+      const savedTop = getMarkdownView(tabId).scrollTop;
+      if (savedTop > 0) {
+        renderedRef.scrollTop = savedTop;
+      }
+    }
+  });
+
+  onDestroy(() => {
+    if (renderedRef) {
+      setMarkdownView(tabId, { scrollTop: renderedRef.scrollTop });
+    }
+  });
 </script>
 
 <div class="markdown-viewer">
   <div class="toolbar">
-    <button class="toggle-btn" class:active={!showRendered} onclick={() => showRendered = false}>{t("markdownRaw")}</button>
-    <button class="toggle-btn" class:active={showRendered} onclick={() => showRendered = true}>{t("markdownPreview")}</button>
+    <button class="toggle-btn" class:active={!showRendered} onclick={() => setRendered(false)}>{t("markdownRaw")}</button>
+    <button class="toggle-btn" class:active={showRendered} onclick={() => setRendered(true)}>{t("markdownPreview")}</button>
   </div>
   {#if showRendered}
-    <div class="rendered" onclick={handleRenderedClick}>
+    <div class="rendered" bind:this={renderedRef} onclick={handleRenderedClick}>
       {#if isLoading}
         <div class="loading">{t("mediaLoading")}</div>
       {:else}
