@@ -3,7 +3,7 @@
   import { listen } from "@tauri-apps/api/event";
   import { invoke } from "@tauri-apps/api/core";
   import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
-  import { layoutState, findAllDirtyTabs, resetLayout, activateNextTab, activatePrevTab, closeActiveTab, addPreview, addSearchTab } from "$lib/layout/store.svelte";
+  import { layoutState, findAllDirtyTabs, resetLayout, activateNextTab, activatePrevTab, closeActiveTab, addPreview, addSearchTab, addTab } from "$lib/layout/store.svelte";
   import { workspaceInfo, loadWorkspace, scheduleSaveWorkspace } from "$lib/workspace/store.svelte";
   import { todoStore, setTodoPath, ensureTodoFile, loadTodoFile } from "$lib/todo/store.svelte";
   import { loadSettings, saveSettings, addRecentFolder } from "$lib/workspace/settings";
@@ -18,6 +18,7 @@
   import ApprovalModal from "./ApprovalModal.svelte";
   import LoadingScreen from "./LoadingScreen.svelte";
   import WelcomeScreen from "./WelcomeScreen.svelte";
+  import CommandPalette from "./CommandPalette.svelte";
   import MascotPanel from "./MascotPanel.svelte";
   import MascotSidebar from "./MascotSidebar.svelte";
   import { open, confirm } from "@tauri-apps/plugin-dialog";
@@ -60,6 +61,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
   let approvalMessage = $state("");
 
   let isLoading = $state(true);
+  let showCommandPalette = $state(false);
   let recentFolders = $state<string[]>([]);
 
   let searchQuery = $state("");
@@ -426,6 +428,13 @@ import type { SemanticEvent } from "$lib/mascot/types";
     const mod = e.ctrlKey || e.metaKey;
     if (!mod) return;
 
+    if (e.key === "p") {
+      e.preventDefault();
+      if (workspaceInfo.rootPath) {
+        showCommandPalette = true;
+      }
+      return;
+    }
     if (e.key === "w") {
       e.preventDefault();
       closeActiveTab();
@@ -437,6 +446,11 @@ import type { SemanticEvent } from "$lib/mascot/types";
       else activateNextTab();
       return;
     }
+  }
+
+  function openFileFromPalette(path: string) {
+    const nodeId = layoutState.activeNodeId ?? layoutState.root.id;
+    addTab(nodeId, { id: path, title: path.split(/[\\/]/).pop() ?? path, path });
   }
 
   $effect(() => {
@@ -569,6 +583,9 @@ import type { SemanticEvent } from "$lib/mascot/types";
   <SettingsModal bind:show={showSettings} />
   {#if showApproval}
     <ApprovalModal requestId={approvalRequestId} message={approvalMessage} onClose={() => showApproval = false} />
+  {/if}
+  {#if showCommandPalette && workspaceInfo.rootPath}
+    <CommandPalette rootPath={workspaceInfo.rootPath} onSelect={openFileFromPalette} onClose={() => showCommandPalette = false} />
   {/if}
   {#if workspaceInfo.rootPath}
     <MascotPanel />

@@ -148,6 +148,34 @@ fn search_files(path: String, query: String) -> Result<Vec<String>, String> {
     Ok(results)
 }
 
+#[tauri::command]
+fn list_project_files(path: String) -> Result<Vec<String>, String> {
+    let root = Path::new(&path);
+    if !root.is_dir() {
+        return Err(format!("Path is not a directory: {}", path));
+    }
+    let mut files = Vec::new();
+    fn walk(dir: &Path, files: &mut Vec<String>) -> Result<(), std::io::Error> {
+        for entry in fs::read_dir(dir)? {
+            let entry = entry?;
+            let name = entry.file_name().to_string_lossy().to_string();
+            if should_ignore(&name) {
+                continue;
+            }
+            let path_str = entry.path().to_string_lossy().to_string();
+            if entry.path().is_dir() {
+                walk(&entry.path(), files)?;
+            } else {
+                files.push(path_str);
+            }
+        }
+        Ok(())
+    }
+    walk(root, &mut files).map_err(|e| e.to_string())?;
+    files.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+    Ok(files)
+}
+
 #[derive(Debug, Serialize)]
 pub struct SearchMatch {
     path: String,
@@ -722,7 +750,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .manage(Arc::clone(&terminal_manager))
-        .invoke_handler(tauri::generate_handler![greet, list_directory, read_file, read_file_bytes, write_file, write_file_bytes, remove_file, ensure_dir, dir_exists, read_file_meta, get_app_data_dir, exit_app, rename_file, remove_dir_all, run_command, git_status, search_files, find_in_file, find_in_project, terminal::create_terminal, terminal::write_terminal, terminal::resize_terminal, terminal::get_terminal_cwd, terminal::kill_terminal, terminal::get_terminal_processes, get_app_stats, create_new_window, spawn_new_instance, get_cli_args, get_os, is_cli_installed, install_cli, instance::get_instance_info, instance::list_instances, instance::set_instance_workspace, instance::send_event_to_instance, instance::respond_approval])
+        .invoke_handler(tauri::generate_handler![greet, list_directory, list_project_files, read_file, read_file_bytes, write_file, write_file_bytes, remove_file, ensure_dir, dir_exists, read_file_meta, get_app_data_dir, exit_app, rename_file, remove_dir_all, run_command, git_status, search_files, find_in_file, find_in_project, terminal::create_terminal, terminal::write_terminal, terminal::resize_terminal, terminal::get_terminal_cwd, terminal::kill_terminal, terminal::get_terminal_processes, get_app_stats, create_new_window, spawn_new_instance, get_cli_args, get_os, is_cli_installed, install_cli, instance::get_instance_info, instance::list_instances, instance::set_instance_workspace, instance::send_event_to_instance, instance::respond_approval])
         .setup(|app| {
             let handle = app.handle().clone();
             let instance_manager = Arc::new(instance::InstanceManager::new(handle));
