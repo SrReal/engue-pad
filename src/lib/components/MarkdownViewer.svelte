@@ -27,10 +27,19 @@
     try {
       const content = await invoke<string>("read_file", { path });
       renderedHtml = renderMarkdown(content);
+      // Wait for {@html} to inject and DOM to measure before restoring scroll
+      requestAnimationFrame(() => requestAnimationFrame(restoreScroll));
     } catch (e) {
       console.error("Failed to read markdown:", e);
     } finally {
       isLoading = false;
+    }
+  }
+
+  function restoreScroll() {
+    const savedTop = getMarkdownView(tabId).scrollTop;
+    if (savedTop > 0 && renderedRef) {
+      renderedRef.scrollTop = savedTop;
     }
   }
 
@@ -69,25 +78,14 @@
       loadAndRender();
     } else if (initialContent) {
       renderedHtml = renderMarkdown(initialContent);
+      requestAnimationFrame(() => requestAnimationFrame(restoreScroll));
     }
   });
 
-  // Restore scroll when preview renders and content is ready
-  let scrollRestored = $state(false);
+  // Restore scroll when switching back from raw to preview
   $effect(() => {
-    if (showRendered && renderedRef && !isLoading && !scrollRestored) {
-      const savedTop = getMarkdownView(tabId).scrollTop;
-      if (savedTop > 0) {
-        // Wait for DOM to have height after {@html} injects content
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            if (renderedRef) {
-              renderedRef.scrollTop = savedTop;
-              scrollRestored = true;
-            }
-          });
-        });
-      }
+    if (showRendered && renderedRef) {
+      requestAnimationFrame(() => requestAnimationFrame(restoreScroll));
     }
   });
 

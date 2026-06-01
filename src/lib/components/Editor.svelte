@@ -68,6 +68,13 @@
     }
   }
 
+  function restoreScroll() {
+    const savedScroll = getEditorScroll(tabId);
+    if (savedScroll > 0 && view) {
+      view.scrollDOM.scrollTop = savedScroll;
+    }
+  }
+
   async function loadFile() {
     if (!path) return;
     isLoading = true;
@@ -82,6 +89,8 @@
           changes: { from: 0, to: view.state.doc.length, insert: result.content },
         });
         isSettingContent = false;
+        // Wait for CM to measure and render the new content, then restore scroll
+        requestAnimationFrame(() => requestAnimationFrame(restoreScroll));
       }
     } catch (e) {
       console.error("Failed to read file:", e);
@@ -334,14 +343,11 @@
     buildEditor();
     if (path && !dirty) {
       loadFile();
+    } else {
+      // No file to load: content is already in the editor from doc/init,
+      // restore scroll after content is measured
+      requestAnimationFrame(() => requestAnimationFrame(restoreScroll));
     }
-    // Restore previous scroll position after CM has rendered content
-    setTimeout(() => {
-      const savedScroll = getEditorScroll(tabId);
-      if (savedScroll > 0 && view) {
-        view.scrollDOM.scrollTop = savedScroll;
-      }
-    }, 120);
   });
 
   onDestroy(() => {
