@@ -10,6 +10,7 @@ export type EditorSettings = {
   showLineNumbers: boolean;
   highlightActiveLine: boolean;
   minimap: boolean;
+  autoSave?: "off" | "onFocusChange" | "afterDelay";
 };
 
 export type TerminalSettings = {

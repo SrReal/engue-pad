@@ -111,6 +111,10 @@ export type Dictionary = {
   settingsEditorShowLineNumbers: string;
   settingsEditorHighlightActiveLine: string;
   settingsEditorMinimap: string;
+  settingsEditorAutoSave: string;
+  settingsEditorAutoSaveOff: string;
+  settingsEditorAutoSaveFocus: string;
+  settingsEditorAutoSaveDelay: string;
   settingsTerminalDefaultShell: string;
   settingsTerminalShellPlaceholder: string;
   settingsTerminalScrollback: string;

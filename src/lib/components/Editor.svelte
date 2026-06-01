@@ -38,6 +38,8 @@
   let isLoading = $state(false);
   let currentContent = $state("");
   let isSettingContent = $state(false);
+  let savedContent = $state(initialContent);
+  let debounceTimer = $state<ReturnType<typeof setTimeout> | null>(null);
 
   $effect(() => {
     currentContent = initialContent;
@@ -70,6 +72,7 @@
     try {
       const result = await invoke<{ content: string; lineEnding: string }>("read_file_meta", { path });
       currentContent = result.content;
+      savedContent = result.content;
       setTabLineEnding(nodeId, tabId, result.lineEnding);
       if (view) {
         isSettingContent = true;
@@ -90,11 +93,33 @@
     const content = view.state.doc.toString();
     try {
       await invoke("write_file", { path, contents: content });
+      savedContent = content;
       markTabSaved(nodeId, tabId);
       triggerMascotEvent("task_done");
     } catch (e) {
       console.error("Failed to save file:", e);
       triggerMascotEvent("error");
+    }
+  }
+
+  function scheduleAutoSave() {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    const mode = appSettings.editor?.autoSave ?? "off";
+    if (mode !== "afterDelay") return;
+    debounceTimer = setTimeout(() => {
+      const content = view?.state.doc.toString() ?? "";
+      if (content !== savedContent) {
+        saveFile();
+      }
+    }, 1000);
+  }
+
+  function handleFocusOut() {
+    const mode = appSettings.editor?.autoSave ?? "off";
+    if (mode !== "onFocusChange") return;
+    const content = view?.state.doc.toString() ?? "";
+    if (content !== savedContent) {
+      saveFile();
     }
   }
 
@@ -143,6 +168,7 @@
         const content = update.state.doc.toString();
         currentContent = content;
         updateTabContent(nodeId, tabId, content);
+        scheduleAutoSave();
       }
     });
 
@@ -290,6 +316,7 @@
   });
 
   onDestroy(() => {
+    if (debounceTimer) clearTimeout(debounceTimer);
     view?.destroy();
   });
 
@@ -316,7 +343,7 @@
 
 </script>
 
-<div class="editor-wrapper">
+<div class="editor-wrapper" onfocusout={handleFocusOut}>
   {#if isLoading}
     <div class="loading">{t("mediaLoading")}</div>
   {/if}

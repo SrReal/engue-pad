@@ -197,6 +197,14 @@
                 <input type="checkbox" checked={draft.editor?.minimap ?? false} onchange={(e) => updateNested("editor", "minimap", e.currentTarget.checked)} />
                 <span>{t("settingsEditorMinimap")}</span>
               </label>
+              <label class="field">
+                <span>{t("settingsEditorAutoSave")}</span>
+                <select value={draft.editor?.autoSave ?? "off"} onchange={(e) => updateNested("editor", "autoSave", e.currentTarget.value)}>
+                  <option value="off">{t("settingsEditorAutoSaveOff")}</option>
+                  <option value="onFocusChange">{t("settingsEditorAutoSaveFocus")}</option>
+                  <option value="afterDelay">{t("settingsEditorAutoSaveDelay")}</option>
+                </select>
+              </label>
             </div>
           {:else if activeTab === "terminal"}
             <div class="section">
