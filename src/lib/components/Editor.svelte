@@ -40,6 +40,7 @@
   let isSettingContent = $state(false);
   let savedContent = $state(initialContent);
   let debounceTimer = $state<ReturnType<typeof setTimeout> | null>(null);
+  let editorHadFocus = $state(false);
 
   $effect(() => {
     currentContent = initialContent;
@@ -314,11 +315,29 @@
     if (path && !dirty) {
       loadFile();
     }
-    // Attach blur listener to CodeMirror's contenteditable element after a tick
-    requestAnimationFrame(() => {
-      const cmContent = containerRef?.querySelector(".cm-content") as HTMLElement | null;
-      cmContent?.addEventListener("blur", handleFocusOut);
-    });
+    // Global focus tracking: save when focus moves away from this editor
+    function onFocusIn(e: FocusEvent) {
+      const target = e.target as HTMLElement | null;
+      const stillInside = target && containerRef?.contains(target);
+      if (editorHadFocus && !stillInside) {
+        handleFocusOut();
+      }
+      editorHadFocus = stillInside ?? false;
+    }
+    document.addEventListener("focusin", onFocusIn);
+
+    // Save when window loses focus (alt-tab, click other app)
+    function onWindowBlur() {
+      if (editorHadFocus) {
+        handleFocusOut();
+      }
+    }
+    window.addEventListener("blur", onWindowBlur);
+
+    return () => {
+      document.removeEventListener("focusin", onFocusIn);
+      window.removeEventListener("blur", onWindowBlur);
+    };
   });
 
   onDestroy(() => {
