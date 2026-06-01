@@ -314,10 +314,11 @@
     if (path && !dirty) {
       loadFile();
     }
-    containerRef?.addEventListener("focusout", handleFocusOut, true);
-    return () => {
-      containerRef?.removeEventListener("focusout", handleFocusOut, true);
-    };
+    // Attach blur listener to CodeMirror's contenteditable element after a tick
+    requestAnimationFrame(() => {
+      const cmContent = containerRef?.querySelector(".cm-content") as HTMLElement | null;
+      cmContent?.addEventListener("blur", handleFocusOut);
+    });
   });
 
   onDestroy(() => {
