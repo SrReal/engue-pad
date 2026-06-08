@@ -23,6 +23,8 @@ jobs:
             target: ''
 
     runs-on: ${{ matrix.platform }}
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
