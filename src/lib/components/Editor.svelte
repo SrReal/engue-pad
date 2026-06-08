@@ -152,6 +152,16 @@
     triggerMascotEvent("task_done");
   }
 
+  export function scrollToLine(line: number) {
+    if (!view) return;
+    const lineObj = view.state.doc.line(Math.min(line, view.state.doc.lines));
+    view.dispatch({
+      selection: { anchor: lineObj.from, head: lineObj.from },
+      scrollIntoView: true,
+    });
+    view.focus();
+  }
+
   function buildEditor() {
     if (!containerRef) return;
 

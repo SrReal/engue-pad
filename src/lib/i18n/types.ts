@@ -299,6 +299,12 @@ export type Dictionary = {
   mascotMode: string;
   mascotSize: string;
 
+  // Symbol panel
+  symbolPanelTitle: string;
+  symbolPanelSearch: string;
+  symbolPanelEmpty: string;
+  symbolPanelNoResults: string;
+
   // Welcome screen
   welcomeOpenFolder: string;
   welcomeRecentFolders: string;

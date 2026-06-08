@@ -276,6 +276,11 @@ export const en: Dictionary = {
   mascotMode: "Mode",
   mascotSize: "Size",
 
+  symbolPanelTitle: "Outline",
+  symbolPanelSearch: "Filter symbols...",
+  symbolPanelEmpty: "No symbols found",
+  symbolPanelNoResults: "No matching symbols",
+
   welcomeOpenFolder: "Open Folder",
   welcomeRecentFolders: "Recent Projects",
   welcomeNoRecent: "No recent projects",

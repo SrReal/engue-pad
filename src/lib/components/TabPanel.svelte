@@ -17,6 +17,7 @@
   import ImageViewer from "./ImageViewer.svelte";
   import AudioPlayer from "./AudioPlayer.svelte";
   import SearchResults from "./SearchResults.svelte";
+  import SymbolPanel from "./SymbolPanel.svelte";
 
   let { node }: { node: TabGroup } = $props();
   let isActive = $derived(layoutState.activeNodeId === node.id);
@@ -55,6 +56,10 @@
   }
   function isAudio(path: string): boolean {
     return /\.(mp3|wav|ogg|flac|m4a|aac|wma|opus)$/i.test(path);
+  }
+
+  function isJsTs(lang?: string): boolean {
+    return lang === "javascript" || lang === "typescript";
   }
 
   $effect(() => {
@@ -360,15 +365,23 @@
                   dirty={tab.dirty}
                 />
               {:else}
-                <Editor
-                  bind:this={editorRefs[tab.id]}
-                  nodeId={node.id}
-                  tabId={tab.id}
-                  path={tab.path}
-                  language={tab.language}
-                  initialContent={tab.content ?? ""}
-                  dirty={tab.dirty}
-                />
+                <div class="editor-with-symbols">
+                  <Editor
+                    bind:this={editorRefs[tab.id]}
+                    nodeId={node.id}
+                    tabId={tab.id}
+                    path={tab.path}
+                    language={tab.language}
+                    initialContent={tab.content ?? ""}
+                    dirty={tab.dirty}
+                  />
+                  {#if isJsTs(tab.language)}
+                    <SymbolPanel
+                      content={tab.content ?? ""}
+                      onJump={(line) => editorRefs[tab.id]?.scrollToLine(line)}
+                    />
+                  {/if}
+                </div>
               {/if}
             {/key}
           {/if}
@@ -674,6 +687,18 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+  }
+
+  .editor-with-symbols {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .editor-with-symbols :global(.editor-wrapper) {
+    flex: 1;
+    min-width: 0;
   }
 
   .terminal-tab-content {
