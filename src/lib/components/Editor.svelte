@@ -97,9 +97,10 @@
           changes: { from: 0, to: view.state.doc.length, insert: result.content },
         });
         isSettingContent = false;
-        // Wait for CM to measure and render the new content, then restore scroll
         requestAnimationFrame(() => requestAnimationFrame(restoreScroll));
       }
+      updateTabContent(nodeId, tabId, result.content);
+      markTabSaved(nodeId, tabId);
     } catch (e) {
       console.error("Failed to read file:", e);
     } finally {

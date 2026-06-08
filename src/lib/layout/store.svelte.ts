@@ -179,7 +179,7 @@ export function addTab(nodeId: string, tab: Tab): void {
 
       const previewIndex = node.tabs.findIndex((t) => t.preview);
       const enrichedTab = tab.path
-        ? { ...tab, language: detectLanguage(tab.path), dirty: false, preview: true }
+        ? { ...tab, type: tab.type ?? "editor", language: detectLanguage(tab.path), dirty: false, preview: true }
         : tab;
 
       let newTabs: Tab[];
