@@ -1,12 +1,16 @@
 <script lang="ts">
   import { t } from "$lib/i18n";
   import { extractJsTsSymbols } from "$lib/editor/symbols";
+  import { requestEditorJump } from "$lib/editor/editorJumpStore.svelte";
+  import { activeEditorSymbols } from "$lib/editor/activeSymbolsStore.svelte";
   import { Function, Cube, Lightning, Plus } from "phosphor-svelte";
 
-  let { content, onJump }: { content: string; onJump: (line: number) => void } = $props();
-
-  let symbols = $derived(extractJsTsSymbols(content));
   let query = $state("");
+  let symbols = $derived(
+    activeEditorSymbols.language === "javascript" || activeEditorSymbols.language === "typescript"
+      ? extractJsTsSymbols(activeEditorSymbols.content)
+      : []
+  );
   let filtered = $derived(
     symbols.filter((s) => s.name.toLowerCase().includes(query.toLowerCase()))
   );
@@ -26,7 +30,7 @@
   {:else}
     <div class="symbol-list">
       {#each filtered as symbol}
-        <button class="symbol-item {symbol.type}" onclick={() => onJump(symbol.line)}>
+        <button class="symbol-item {symbol.type}" onclick={() => requestEditorJump(symbol.line)}>
           {#if symbol.type === "function"}
             <Function size={12} />
           {:else if symbol.type === "class"}

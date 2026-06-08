@@ -17,7 +17,7 @@
   import ImageViewer from "./ImageViewer.svelte";
   import AudioPlayer from "./AudioPlayer.svelte";
   import SearchResults from "./SearchResults.svelte";
-  import SymbolPanel from "./SymbolPanel.svelte";
+  import { setActiveEditorSymbols } from "$lib/editor/activeSymbolsStore.svelte";
 
   let { node }: { node: TabGroup } = $props();
   let isActive = $derived(layoutState.activeNodeId === node.id);
@@ -56,10 +56,6 @@
   }
   function isAudio(path: string): boolean {
     return /\.(mp3|wav|ogg|flac|m4a|aac|wma|opus)$/i.test(path);
-  }
-
-  function isJsTs(lang?: string): boolean {
-    return lang === "javascript" || lang === "typescript";
   }
 
   $effect(() => {
@@ -157,6 +153,14 @@
       setTimeout(() => {
         terminalRefs[activeTab.id]?.resizeTerminal();
       }, 50);
+    }
+  });
+
+  // Publish active editor content for the sidebar outline panel
+  $effect(() => {
+    const activeTab = node.tabs.find((t) => t.id === node.activeTabId);
+    if (isActive && activeTab?.type === "editor") {
+      setActiveEditorSymbols(activeTab.content ?? "", activeTab.path, activeTab.language);
     }
   });
 
@@ -365,23 +369,15 @@
                   dirty={tab.dirty}
                 />
               {:else}
-                <div class="editor-with-symbols">
-                  <Editor
-                    bind:this={editorRefs[tab.id]}
-                    nodeId={node.id}
-                    tabId={tab.id}
-                    path={tab.path}
-                    language={tab.language}
-                    initialContent={tab.content ?? ""}
-                    dirty={tab.dirty}
-                  />
-                  {#if isJsTs(tab.language)}
-                    <SymbolPanel
-                      content={tab.content ?? ""}
-                      onJump={(line) => editorRefs[tab.id]?.scrollToLine(line)}
-                    />
-                  {/if}
-                </div>
+                <Editor
+                  bind:this={editorRefs[tab.id]}
+                  nodeId={node.id}
+                  tabId={tab.id}
+                  path={tab.path}
+                  language={tab.language}
+                  initialContent={tab.content ?? ""}
+                  dirty={tab.dirty}
+                />
               {/if}
             {/key}
           {/if}
@@ -687,18 +683,6 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-  }
-
-  .editor-with-symbols {
-    display: flex;
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .editor-with-symbols :global(.editor-wrapper) {
-    flex: 1;
-    min-width: 0;
   }
 
   .terminal-tab-content {

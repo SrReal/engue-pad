@@ -12,6 +12,7 @@
   import FileTree from "./FileTree.svelte";
   import TodoPanel from "./TodoPanel.svelte";
   import SidebarFooter from "./SidebarFooter.svelte";
+  import SymbolPanel from "./SymbolPanel.svelte";
   import AppFooter from "./AppFooter.svelte";
   import UrlToast from "./UrlToast.svelte";
   import SettingsModal from "./SettingsModal.svelte";
@@ -41,6 +42,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
   let lastSidebarWidth = $state(240);
   let refreshSignal = $state(0);
   let showSettings = $state(false);
+  let sidebarMode = $state<"files" | "outline">("files");
 
   let rightSidebarWidth = $state(260);
   let isResizingRightSidebar = $state(false);
@@ -522,8 +524,16 @@ import type { SemanticEvent } from "$lib/mascot/types";
   <div class="body">
     {#if workspaceInfo.rootPath}
       <aside class="sidebar" class:collapsed={sidebarCollapsed} style:width="{sidebarCollapsed ? 0 : sidebarWidth}px">
+        <div class="sidebar-tabs">
+          <button class="sidebar-tab" class:active={sidebarMode === "files"} onclick={() => sidebarMode = "files"}>{t("treeOpen")}</button>
+          <button class="sidebar-tab" class:active={sidebarMode === "outline"} onclick={() => sidebarMode = "outline"}>{t("symbolPanelTitle")}</button>
+        </div>
         <div class="sidebar-content">
-          <FileTree rootPath={workspaceInfo.rootPath} {refreshSignal} />
+          {#if sidebarMode === "files"}
+            <FileTree rootPath={workspaceInfo.rootPath} {refreshSignal} />
+          {:else}
+            <SymbolPanel />
+          {/if}
         </div>
         <SidebarFooter />
       </aside>
@@ -748,6 +758,31 @@ import type { SemanticEvent } from "$lib/mascot/types";
     min-width: 0;
     border: none;
     box-shadow: none;
+  }
+
+  .sidebar-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color, #333);
+    flex-shrink: 0;
+  }
+
+  .sidebar-tab {
+    flex: 1;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted, #888);
+    padding: 6px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+
+  .sidebar-tab.active {
+    color: var(--accent-color, #4a9eff);
+    border-bottom-color: var(--accent-color, #4a9eff);
   }
 
   .sidebar-content {
