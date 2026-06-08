@@ -72,14 +72,11 @@
 
   function saveScroll() {
     if (!view) return;
-    const top = view.scrollDOM.scrollTop;
-    console.log("[Editor] saveScroll", top);
-    setEditorScroll(tabId, top);
+    setEditorScroll(tabId, view.scrollDOM.scrollTop);
   }
 
   function restoreScroll() {
     const savedScroll = getEditorScroll(tabId);
-    console.log("[Editor] restoreScroll target", savedScroll, "current", view?.scrollDOM.scrollTop);
     if (savedScroll > 0 && view) {
       view.scrollDOM.scrollTop = savedScroll;
     }
@@ -112,19 +109,13 @@
   export async function saveFile() {
     if (!path || !view) return;
     const content = view.state.doc.toString();
-    if (content === savedContent) {
-      console.log("[Editor] saveFile: content unchanged, skipping");
-      return;
-    }
-    console.log("[Editor] saveFile: saving", path);
+    if (content === savedContent) return;
     try {
       await invoke("write_file", { path, contents: content });
       savedContent = content;
       markTabSaved(nodeId, tabId);
       triggerMascotEvent("task_done");
-      console.log("[Editor] saveFile: success");
     } catch (e) {
-      console.error("[Editor] saveFile: failed", e);
       triggerMascotEvent("error");
     }
   }
@@ -142,19 +133,10 @@
   }
 
   export function handleFocusOut() {
-    console.log("[Editor] handleFocusOut called");
     const mode = appSettings.editor?.autoSave ?? "off";
-    if (mode !== "onFocusChange") {
-      console.log("[Editor] handleFocusOut: autoSave mode is", mode, ", skipping");
-      return;
-    }
+    if (mode !== "onFocusChange") return;
     const content = view?.state.doc.toString() ?? "";
-    if (content !== savedContent) {
-      console.log("[Editor] handleFocusOut: content changed, saving");
-      saveFile();
-    } else {
-      console.log("[Editor] handleFocusOut: content unchanged, skipping");
-    }
+    if (content !== savedContent) saveFile();
   }
 
   export async function format() {
@@ -162,10 +144,7 @@
     const content = view.state.doc.toString();
     const lineEnding = view.state.lineBreak;
     const formatted = await formatContent(content, lineEnding === "\r\n" ? "CRLF" : "LF", language);
-    if (formatted === content) {
-      console.log("[Editor] already formatted, nothing to do");
-      return;
-    }
+    if (formatted === content) return;
     view.dispatch({
       changes: { from: 0, to: view.state.doc.length, insert: formatted },
     });
@@ -343,10 +322,7 @@
     });
 
     // Auto-save on focus change: listen blur on CodeMirror's contenteditable element
-    view.contentDOM.addEventListener("blur", () => {
-      console.log("[Editor] contentDOM blur fired");
-      handleFocusOut();
-    });
+    view.contentDOM.addEventListener("blur", () => handleFocusOut());
 
     // Save scroll position while scrolling (throttled)
     view.scrollDOM.addEventListener("scroll", () => {
@@ -373,10 +349,7 @@
     const mode = appSettings.editor?.autoSave ?? "off";
     if (mode === "onFocusChange" && view) {
       const content = view.state.doc.toString();
-      if (content !== savedContent) {
-        console.log("[Editor] onDestroy: saving before unmount");
-        saveFile();
-      }
+      if (content !== savedContent) saveFile();
     }
     view?.destroy();
   });
@@ -395,7 +368,6 @@
 
   $effect(() => {
     if (formatRequest.tabId === tabId) {
-      console.log("[Editor] format triggered for tab", tabId);
       format().catch((e) => console.error("[Editor] format failed:", e));
       formatRequest.tabId = null;
     }

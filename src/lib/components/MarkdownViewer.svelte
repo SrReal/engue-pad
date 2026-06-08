@@ -24,9 +24,7 @@
 
   function saveScroll() {
     if (!renderedRef) return;
-    const top = renderedRef.scrollTop;
-    console.log("[MarkdownViewer] saveScroll", top);
-    setMarkdownView(tabId, { scrollTop: top });
+    setMarkdownView(tabId, { scrollTop: renderedRef.scrollTop });
   }
 
   function handleScroll() {
@@ -36,7 +34,6 @@
 
   function restoreScroll() {
     const savedTop = getMarkdownView(tabId).scrollTop;
-    console.log("[MarkdownViewer] restoreScroll target", savedTop, "current", renderedRef?.scrollTop);
     if (savedTop > 0 && renderedRef) {
       renderedRef.scrollTop = savedTop;
     }

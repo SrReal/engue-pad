@@ -282,7 +282,6 @@
         const nodes = await loadDirectory(rootPath);
         const snap = buildSnapshot(nodes);
         if (lastSnapshot && snap !== lastSnapshot) {
-          console.log("[FileTree] poll detected change, reloading tree");
           reloadTree();
         }
         lastSnapshot = snap;
@@ -292,7 +291,6 @@
     }
 
     async function startWatch() {
-      console.log("[FileTree] starting watch for", rootPath);
       try {
         const { watch } = await import("@tauri-apps/plugin-fs");
         stopWatch = await watch(
@@ -304,15 +302,9 @@
           },
           { recursive: true, delayMs: 500 }
         );
-        console.log("[FileTree] native watch active");
-      } catch (e) {
-        const msg = String(e);
-        console.error("[FileTree] native watch failed:", msg);
-        if (msg.includes("Command watch not found") || msg.includes("not found")) {
-          console.log("[FileTree] falling back to polling every 2s");
-          pollInterval = setInterval(pollChanges, 2000);
-          pollChanges(); // initial snapshot
-        }
+      } catch {
+        pollInterval = setInterval(pollChanges, 2000);
+        pollChanges();
       }
     }
 
