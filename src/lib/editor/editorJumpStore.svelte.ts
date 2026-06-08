@@ -1,9 +1,9 @@
-export const editorJumpRequest = $state<{ line: number; nonce: number } | null>(null);
+export const editorJumpState = $state<{ line: number; nonce: number } | null>(null);
 
 export function requestEditorJump(line: number) {
-  editorJumpRequest = { line, nonce: Date.now() };
+  editorJumpState = { line, nonce: Date.now() };
 }
 
 export function clearEditorJumpRequest() {
-  editorJumpRequest = null;
+  editorJumpState = null;
 }
