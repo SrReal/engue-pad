@@ -23,7 +23,7 @@
   import { appSettings } from "$lib/workspace/settingsStore.svelte";
   import { triggerMascotEvent } from "$lib/mascot/store.svelte";
   import { getEditorScroll, setEditorScroll } from "$lib/editor/editorScrollStore.svelte";
-  import { editorJumpRequest } from "$lib/editor/editorJumpStore.svelte";
+  import { editorJumpRequest, clearEditorJumpRequest } from "$lib/editor/editorJumpStore.svelte";
   import { showMinimap } from "@replit/codemirror-minimap";
 
   let { nodeId, tabId, path, language, initialContent = "", dirty = false }: {
@@ -388,7 +388,7 @@
     const req = editorJumpRequest;
     if (req && view) {
       scrollToLine(req.line);
-      editorJumpRequest = null;
+      clearEditorJumpRequest();
     }
   });
 

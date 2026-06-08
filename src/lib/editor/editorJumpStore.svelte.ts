@@ -3,3 +3,7 @@ export const editorJumpRequest = $state<{ line: number; nonce: number }> | null>
 export function requestEditorJump(line: number) {
   editorJumpRequest = { line, nonce: Date.now() };
 }
+
+export function clearEditorJumpRequest() {
+  editorJumpRequest = null;
+}
