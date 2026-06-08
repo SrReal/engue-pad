@@ -1,6 +1,6 @@
 <script lang="ts">
   import { t } from "$lib/i18n";
-  import { extractJsTsSymbols, type SymbolInfo } from "$lib/editor/symbols";
+  import { extractJsTsSymbols } from "$lib/editor/symbols";
   import { Function, Cube, Lightning, Plus } from "phosphor-svelte";
 
   let { content, onJump }: { content: string; onJump: (line: number) => void } = $props();
@@ -10,13 +10,6 @@
   let filtered = $derived(
     symbols.filter((s) => s.name.toLowerCase().includes(query.toLowerCase()))
   );
-
-  const typeIcon: Record<SymbolInfo["type"], typeof Function> = {
-    function: Function,
-    class: Cube,
-    arrow: Lightning,
-    method: Plus,
-  };
 </script>
 
 <div class="symbol-panel">
@@ -34,8 +27,15 @@
     <div class="symbol-list">
       {#each filtered as symbol}
         <button class="symbol-item {symbol.type}" onclick={() => onJump(symbol.line)}>
-          {#const Icon = typeIcon[symbol.type]}
-          <Icon size={12} />
+          {#if symbol.type === "function"}
+            <Function size={12} />
+          {:else if symbol.type === "class"}
+            <Cube size={12} />
+          {:else if symbol.type === "arrow"}
+            <Lightning size={12} />
+          {:else}
+            <Plus size={12} />
+          {/if}
           <span class="symbol-name">{symbol.name}</span>
           <span class="symbol-line">:{symbol.line}</span>
         </button>
