@@ -82,6 +82,11 @@
   }
 
   function handleMouseDown(e: MouseEvent, tabId: string) {
+    if (e.button === 1) {
+      e.preventDefault();
+      handleClose(tabId, e);
+      return;
+    }
     const target = e.target as HTMLElement;
     if (target.closest(".tab-close")) return;
     e.preventDefault();
