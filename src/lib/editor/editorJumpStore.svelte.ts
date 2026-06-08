@@ -1,9 +1,11 @@
-export let editorJumpState = $state<{ line: number; nonce: number } | null>(null);
+export const editorJump = $state({ line: 0, nonce: 0, active: false });
 
 export function requestEditorJump(line: number) {
-  editorJumpState = { line, nonce: Date.now() };
+  editorJump.line = line;
+  editorJump.nonce = Date.now();
+  editorJump.active = true;
 }
 
 export function clearEditorJumpRequest() {
-  editorJumpState = null;
+  editorJump.active = false;
 }
