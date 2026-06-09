@@ -4,7 +4,7 @@ pub mod instance;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager, WebviewUrl};
 
@@ -416,72 +416,32 @@ fn git_status(cwd: String) -> Result<GitStatus, String> {
 }
 
 #[tauri::command]
-fn get_app_stats(
-    state: tauri::State<Arc<terminal::TerminalManager>>,
-) -> Result<AppStats, String> {
+fn get_app_stats() -> Result<AppStats, String> {
+    use std::sync::Mutex;
     use sysinfo::{Pid, System};
-    let mut system = System::new_all();
+
+    // Reuse a single System instance across calls so cpu_usage() has a valid baseline delta.
+    static SYSTEM: Mutex<Option<System>> = Mutex::new(None);
+    let mut guard = SYSTEM.lock().map_err(|_| "System lock failed")?;
+    // Use new_all() once so CPU baselines are properly initialised; keep the same System afterwards.
+    let system = guard.get_or_insert_with(System::new_all);
+
+    let pid = Pid::from(std::process::id() as usize);
+    // Refresh ALL processes to ensure cpu_usage() has a valid global baseline.
     system.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
     system.refresh_cpu_usage();
 
-    let terminal_root_pids: HashSet<u32> = state.get_terminal_root_pids().into_iter().collect();
-
-    // Build full app tree (all descendants of main process).
-    let root_pid = Pid::from(std::process::id() as usize);
-    let mut app_pids = HashSet::new();
-    app_pids.insert(root_pid);
-
-    let processes = system.processes();
-    let mut changed = true;
-    while changed {
-        changed = false;
-        for (pid, process) in processes {
-            if app_pids.contains(pid) {
-                continue;
-            }
-            if let Some(parent) = process.parent() {
-                if app_pids.contains(&parent) {
-                    app_pids.insert(*pid);
-                    changed = true;
-                }
-            }
-        }
+    if let Some(proc) = system.process(pid) {
+        Ok(AppStats {
+            cpu: proc.cpu_usage(),
+            memory_mb: proc.memory() / 1024 / 1024,
+        })
+    } else {
+        Ok(AppStats {
+            cpu: 0.0,
+            memory_mb: 0,
+        })
     }
-
-    // Build terminal descendant tree.
-    let mut terminal_pids = terminal_root_pids.clone();
-    let mut t_changed = true;
-    while t_changed {
-        t_changed = false;
-        for (pid, process) in processes {
-            if terminal_pids.contains(&pid.as_u32()) {
-                continue;
-            }
-            if let Some(parent) = process.parent() {
-                if terminal_pids.contains(&parent.as_u32()) {
-                    terminal_pids.insert(pid.as_u32());
-                    t_changed = true;
-                }
-            }
-        }
-    }
-
-    let mut total_cpu = 0.0f32;
-    let mut total_memory = 0u64;
-    for pid in &app_pids {
-        if terminal_pids.contains(&pid.as_u32()) {
-            continue;
-        }
-        if let Some(proc) = system.process(*pid) {
-            total_cpu += proc.cpu_usage();
-            total_memory += proc.memory();
-        }
-    }
-
-    Ok(AppStats {
-        cpu: total_cpu,
-        memory_mb: total_memory / 1024 / 1024,
-    })
 }
 
 fn create_main_window(app: &AppHandle) {

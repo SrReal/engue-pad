@@ -53,7 +53,7 @@
 
   onMount(() => {
     refresh();
-    const interval = setInterval(refresh, 3000);
+    const interval = setInterval(refresh, 5000);
     return () => clearInterval(interval);
   });
 </script>

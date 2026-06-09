@@ -60,7 +60,7 @@
       } catch {
         // ignore
       }
-    }, 2000);
+    }, 5000);
     return () => clearInterval(interval);
   });
 </script>

@@ -276,6 +276,8 @@
     unlisten?.();
     unlistenClosed?.();
     if (idleTimeout) clearTimeout(idleTimeout);
+    // Ensure the PTY process is killed on the backend before disposing the xterm widget
+    invoke("kill_terminal", { terminalId: tabId }).catch(() => {});
     terminal?.dispose();
   });
 

@@ -52,6 +52,38 @@ impl TerminalManager {
         }
     }
 
+    fn kill_process_tree(&self, root_pid: u32) {
+        let mut system = System::new_all();
+        system.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
+
+        let mut pids_to_kill = HashSet::new();
+        pids_to_kill.insert(root_pid);
+
+        let processes = system.processes();
+        let mut changed = true;
+        while changed {
+            changed = false;
+            for (pid, process) in processes {
+                let pid_u32 = pid.as_u32();
+                if pids_to_kill.contains(&pid_u32) {
+                    continue;
+                }
+                if let Some(parent) = process.parent() {
+                    if pids_to_kill.contains(&parent.as_u32()) {
+                        pids_to_kill.insert(pid_u32);
+                        changed = true;
+                    }
+                }
+            }
+        }
+
+        for pid in pids_to_kill {
+            if let Some(proc) = system.process(sysinfo::Pid::from(pid as usize)) {
+                let _ = proc.kill();
+            }
+        }
+    }
+
     pub fn create_terminal(
         &self,
         app_handle: AppHandle,
@@ -61,10 +93,19 @@ impl TerminalManager {
         cols: u16,
         rows: u16,
     ) -> Result<(), String> {
+        // Kill any existing session for this terminal_id before creating a new one
         {
             let mut sessions = self.sessions.lock().unwrap();
-            if sessions.remove(&terminal_id).is_some() {
-                self.terminal_pids.lock().unwrap().remove(&terminal_id);
+            let existing = sessions.remove(&terminal_id);
+            let mut terminal_pids = self.terminal_pids.lock().unwrap();
+            terminal_pids.remove(&terminal_id);
+
+            if let Some(session) = existing {
+                if let Some(root_pid) = session.child_pid {
+                    drop(sessions);
+                    drop(terminal_pids);
+                    self.kill_process_tree(root_pid);
+                }
             }
         }
 
@@ -178,8 +219,16 @@ impl TerminalManager {
 
     pub fn kill(&self, terminal_id: String) -> Result<(), String> {
         let mut sessions = self.sessions.lock().unwrap();
-        sessions.remove(&terminal_id);
+        let session = sessions.remove(&terminal_id);
         self.terminal_pids.lock().unwrap().remove(&terminal_id);
+        
+        if let Some(session) = session {
+            if let Some(root_pid) = session.child_pid {
+                // Must drop locks before calling kill_process_tree to avoid deadlock
+                drop(sessions);
+                self.kill_process_tree(root_pid);
+            }
+        }
         Ok(())
     }
 
