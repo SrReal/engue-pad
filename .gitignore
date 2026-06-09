@@ -1,6 +1,10 @@
 .enguepad/
 !.enguepad/skills/
 resources/
+recursos/
+.vscode/
+ROADMAP.md
+TODO.md
 .DS_Store
 node_modules
 /build
