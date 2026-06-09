@@ -8,6 +8,8 @@
 
 EnguePad is a modern cross-platform code editor built with **Tauri v2**, **Svelte 5**, and **TypeScript**. It combines the speed of a native desktop app with the flexibility of web technologies, giving you a responsive editing experience without the bloat of traditional IDEs.
 
+![EnguePad Preview](preview.png)
+
 ---
 
 ## Features
