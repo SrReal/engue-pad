@@ -156,18 +156,6 @@
         const data = new Uint8Array(event.payload.data);
         term.write(data);
 
-        // Scan output for URLs (strip ANSI color codes first).
-        const text = textDecoder.decode(data, { stream: true });
-        const cleanText = stripAnsi(text);
-        urlBuffer += cleanText;
-        if (urlBuffer.length > 4096) {
-          urlBuffer = urlBuffer.slice(-2048);
-        }
-        const matches = urlBuffer.matchAll(urlRegex);
-        for (const match of matches) {
-          reportUrl(match[0], tabId);
-        }
-
         // Reset idle timer
         if (idleTimeout) clearTimeout(idleTimeout);
         idleTimeout = setTimeout(() => {

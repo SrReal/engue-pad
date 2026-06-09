@@ -139,6 +139,12 @@ impl TerminalManager {
                 .map_err(|e| format!("Failed to take writer: {}", e))?,
         ));
 
+        // Immediately clear the screen for PowerShell to hide the startup banner
+        if shell.to_lowercase().contains("powershell") || shell.to_lowercase().contains("pwsh") {
+            let _ = writer.lock().unwrap().write_all(b"\x1b[2J\x1b[H");
+            let _ = writer.lock().unwrap().flush();
+        }
+
         let sessions = Arc::clone(&self.sessions);
         let id = terminal_id.clone();
 

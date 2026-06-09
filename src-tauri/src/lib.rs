@@ -315,6 +315,11 @@ fn run_command(input: RunCommandInput) -> Result<RunCommandOutput, String> {
     let mut cmd = {
         let mut c = Command::new(&input.command);
         c.args(&input.args);
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            c.creation_flags(0x08000000); // CREATE_NO_WINDOW
+        }
         c
     };
 
@@ -366,7 +371,19 @@ fn remove_dir_all(path: String) -> Result<(), String> {
 fn git_status(cwd: String) -> Result<GitStatus, String> {
     use std::process::Command;
 
-    let is_repo = Command::new("git")
+    #[cfg(windows)]
+    fn new_git_command() -> Command {
+        use std::os::windows::process::CommandExt;
+        let mut c = Command::new("git");
+        c.creation_flags(0x08000000); // CREATE_NO_WINDOW
+        c
+    }
+    #[cfg(not(windows))]
+    fn new_git_command() -> Command {
+        Command::new("git")
+    }
+
+    let is_repo = new_git_command()
         .args(["rev-parse", "--is-inside-work-tree"])
         .current_dir(&cwd)
         .output()
@@ -381,7 +398,7 @@ fn git_status(cwd: String) -> Result<GitStatus, String> {
         });
     }
 
-    let branch = Command::new("git")
+    let branch = new_git_command()
         .args(["branch", "--show-current"])
         .current_dir(&cwd)
         .output()
@@ -396,7 +413,7 @@ fn git_status(cwd: String) -> Result<GitStatus, String> {
         .unwrap_or_default();
 
     let mut files = HashMap::new();
-    if let Ok(output) = Command::new("git")
+    if let Ok(output) = new_git_command()
         .args(["status", "--porcelain"])
         .current_dir(&cwd)
         .output()
