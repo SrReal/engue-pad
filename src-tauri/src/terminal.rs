@@ -124,6 +124,10 @@ impl TerminalManager {
         if let Some(dir) = cwd {
             cmd.cwd(dir);
         }
+        if std::env::var("TERM").is_err() {
+            cmd.env("TERM", "xterm-256color");
+        }
+        cmd.env("COLORTERM", "truecolor");
 
         let child = pair
             .slave
