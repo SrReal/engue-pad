@@ -26,10 +26,6 @@ export function t(key: keyof Dictionary, ...args: (string | number)[]): string {
   return value;
 }
 
-export function tMascotPhrase(key: keyof Dictionary): string {
-  return t(key);
-}
-
 // Default export for convenience
 export { en, es };
 export type { Dictionary };

@@ -5,7 +5,6 @@
   import { workspaceInfo } from "$lib/workspace/store.svelte";
   import { confirm } from "@tauri-apps/plugin-dialog";
   import { get } from "svelte/store";
-  import { triggerMascotEvent } from "$lib/mascot/store.svelte";
   import { X, ArrowsOutLineVertical, ArrowsOutLineHorizontal, TerminalWindow, Globe } from "phosphor-svelte";
   import { t } from "$lib/i18n";
   import { formatFile } from "$lib/editor/formatter";
@@ -172,13 +171,11 @@
       if (!confirmed) return;
     }
     closeTab(node.id, tabId);
-    triggerMascotEvent("idle");
   }
 
   function handleActivate(tabId: string) {
     setActiveTab(node.id, tabId);
     setActiveNode(node.id);
-    triggerMascotEvent("keep_working");
   }
 
   function handlePanelClick() {
@@ -228,7 +225,6 @@
       renameTab(node.id, tabId, renameValue.trim() || t("tabUntitled"));
       renamingTabId = null;
       renameValue = "";
-      triggerMascotEvent("file_renamed");
     }
   }
 
@@ -276,7 +272,7 @@
   tabindex="0"
 >
   <div class="tab-bar" role="toolbar" aria-label={t("tabBarAriaLabel")} tabindex="0">
-    <button class="tab-add" onclick={() => { addTerminal(node.id, t("terminalDefaultTitle"), workspaceInfo.rootPath ?? undefined); triggerMascotEvent("terminal_created"); }} title={t("tabNewTerminal")} type="button"><TerminalWindow size={16} /></button>
+    <button class="tab-add" onclick={() => addTerminal(node.id, t("terminalDefaultTitle"), workspaceInfo.rootPath ?? undefined)} title={t("tabNewTerminal")} type="button"><TerminalWindow size={16} /></button>
     <div class="tabs-scroll" bind:this={tabBarRef}>
       {#each node.tabs as tab, index (tab.id)}
         <div
@@ -325,8 +321,8 @@
       {/each}
     </div>
     <div class="panel-actions">
-      <button class="panel-action-btn" onclick={() => { splitNode(node.id, 'horizontal'); triggerMascotEvent("panel_split"); }} title={t("tabSplitHorizontal")} type="button"><ArrowsOutLineHorizontal size={14} /></button>
-      <button class="panel-action-btn" onclick={() => { splitNode(node.id, 'vertical'); triggerMascotEvent("panel_split"); }} title={t("tabSplitVertical")} type="button"><ArrowsOutLineVertical size={14} /></button>
+      <button class="panel-action-btn" onclick={() => splitNode(node.id, 'horizontal')} title={t("tabSplitHorizontal")} type="button"><ArrowsOutLineHorizontal size={14} /></button>
+      <button class="panel-action-btn" onclick={() => splitNode(node.id, 'vertical')} title={t("tabSplitVertical")} type="button"><ArrowsOutLineVertical size={14} /></button>
       <button class="panel-action-btn close" onclick={handleClosePanel} title={t("tabClosePanel")} type="button"><X size={14} /></button>
     </div>
   </div>

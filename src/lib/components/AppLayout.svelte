@@ -3,30 +3,26 @@
   import { listen } from "@tauri-apps/api/event";
   import { invoke } from "@tauri-apps/api/core";
   import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
-  import { layoutState, findAllDirtyTabs, resetLayout, activateNextTab, activatePrevTab, closeActiveTab, addPreview, addSearchTab, addTab } from "$lib/layout/store.svelte";
+  import { layoutState, findAllDirtyTabs, resetLayout, activateNextTab, activatePrevTab, closeActiveTab, addSearchTab, addTab } from "$lib/layout/store.svelte";
   import { workspaceInfo, loadWorkspace, scheduleSaveWorkspace } from "$lib/workspace/store.svelte";
   import { todoStore, setTodoPath, ensureTodoFile, loadTodoFile } from "$lib/todo/store.svelte";
+  import { ensureNotesFile, loadNotesFile, resetNotesStore } from "$lib/notes/store.svelte";
   import { loadSettings, saveSettings, addRecentFolder } from "$lib/workspace/settings";
   import { appSettings, updateAppSettings } from "$lib/workspace/settingsStore.svelte";
   import LayoutNode from "./LayoutNode.svelte";
   import FileTree from "./FileTree.svelte";
   import TodoPanel from "./TodoPanel.svelte";
+  import NotesPanel from "./NotesPanel.svelte";
   import SidebarFooter from "./SidebarFooter.svelte";
   import SymbolPanel from "./SymbolPanel.svelte";
   import AppFooter from "./AppFooter.svelte";
   import UrlToast from "./UrlToast.svelte";
   import SettingsModal from "./SettingsModal.svelte";
-  import ApprovalModal from "./ApprovalModal.svelte";
   import LoadingScreen from "./LoadingScreen.svelte";
   import WelcomeScreen from "./WelcomeScreen.svelte";
   import CommandPalette from "./CommandPalette.svelte";
-  import MascotPanel from "./MascotPanel.svelte";
-  import MascotSidebar from "./MascotSidebar.svelte";
   import { open, confirm } from "@tauri-apps/plugin-dialog";
-  import { triggerMascotEvent, updateMascotSettings, applyMascotConfig, loadMascot } from "$lib/mascot/store.svelte";
-import { loadProjectMascotConfig } from "$lib/mascot/projectStore.svelte";
-import type { SemanticEvent } from "$lib/mascot/types";
-  import { SidebarSimple, FolderOpen, NotePencil, PawPrint, Gear, AppWindow } from "phosphor-svelte";
+  import { SidebarSimple, FolderOpen, NotePencil, Gear } from "phosphor-svelte";
   import { setLocale, t } from "$lib/i18n";
   const projectName = $derived(workspaceInfo.rootPath ? workspaceInfo.rootPath.split(/[\\/]/).pop() ?? t("appName") : t("appName"));
 
@@ -43,24 +39,14 @@ import type { SemanticEvent } from "$lib/mascot/types";
   let refreshSignal = $state(0);
   let showSettings = $state(false);
   let sidebarMode = $state<"files" | "outline">("files");
+  let rightSidebarMode = $state<"todo" | "notes">("todo");
 
   let rightSidebarWidth = $state(260);
   let isResizingRightSidebar = $state(false);
   let rightSidebarCollapsed = $state(false);
   let lastRightSidebarWidth = $state(260);
 
-  let mascotSidebarWidth = $state(260);
-  let isResizingMascotSidebar = $state(false);
-  let mascotSidebarCollapsed = $state(true);
-  let lastMascotSidebarWidth = $state(260);
-
   let unlistenClose: (() => void) | null = null;
-  let unlistenExternal: (() => void) | null = null;
-  let unlistenApproval: (() => void) | null = null;
-
-  let showApproval = $state(false);
-  let approvalRequestId = $state("");
-  let approvalMessage = $state("");
 
   let isLoading = $state(true);
   let showCommandPalette = $state(false);
@@ -69,28 +55,13 @@ import type { SemanticEvent } from "$lib/mascot/types";
   let searchQuery = $state("");
 
   onMount(async () => {
-    const args = await invoke<string[]>("get_cli_args");
-    const noRestoreProject = args.includes("--no-restore-project");
-
     const settings = await loadSettings();
     updateAppSettings(settings);
     recentFolders = settings.recentFolders ?? [];
     if (settings.locale) {
       setLocale(settings.locale);
     }
-    if (settings.mascot?.enabled && (!settings.mascot.position || (settings.mascot.position.x <= 50 && settings.mascot.position.y <= 50))) {
-      const size = settings.mascot.size === "small" ? 96 : 160;
-      const pos = {
-        x: Math.round((window.innerWidth - size) / 2),
-        y: Math.round((window.innerHeight - size) / 2),
-      };
-      updateMascotSettings({ position: pos });
-      if (appSettings.mascot) {
-        appSettings.mascot.position = pos;
-      }
-      await saveSettings(appSettings);
-    }
-    if (!noRestoreProject && settings.restoreLayout !== false && settings.lastProjectPath) {
+    if (settings.restoreLayout !== false && settings.lastProjectPath) {
       const exists = await invoke<boolean>("dir_exists", { path: settings.lastProjectPath });
       if (exists) {
         workspaceInfo.rootPath = settings.lastProjectPath;
@@ -105,16 +76,9 @@ import type { SemanticEvent } from "$lib/mascot/types";
     if (typeof settings.rightSidebarCollapsed === "boolean") {
       rightSidebarCollapsed = settings.rightSidebarCollapsed;
     }
-    if (typeof settings.rightSidebarWidth === "number" && settings.rightSidebarWidth >= 160) {
+    if (typeof settings.rightSidebarWidth === "number" && settings.rightSidebarWidth >= 160 && settings.rightSidebarWidth <= 700) {
       rightSidebarWidth = settings.rightSidebarWidth;
       lastRightSidebarWidth = settings.rightSidebarWidth;
-    }
-    if (typeof settings.mascotSidebarCollapsed === "boolean") {
-      mascotSidebarCollapsed = settings.mascotSidebarCollapsed;
-    }
-    if (typeof settings.mascotSidebarWidth === "number" && settings.mascotSidebarWidth >= 160) {
-      mascotSidebarWidth = settings.mascotSidebarWidth;
-      lastMascotSidebarWidth = settings.mascotSidebarWidth;
     }
 
     unlistenClose = await listen("request-app-close", async () => {
@@ -129,38 +93,10 @@ import type { SemanticEvent } from "$lib/mascot/types";
         await invoke("exit_app");
       }
     });
-
-    unlistenExternal = await listen("external-event", (ev) => {
-      const data = ev.payload as { event: string; payload?: unknown };
-      console.log("[external-event]", data.event, data.payload);
-      if (data.event === "mascot") {
-        const p = data.payload as { state?: string } | undefined;
-        if (p?.state) triggerMascotEvent(p.state as SemanticEvent);
-      } else if (data.event === "open_preview") {
-        const p = data.payload as { url?: string } | undefined;
-        if (p?.url) {
-          const nodeId = layoutState.activeNodeId ?? layoutState.root.id;
-          addPreview(nodeId, p.url);
-          triggerMascotEvent("preview_opened");
-        }
-      }
-    });
-
-    unlistenApproval = await listen("approval-request", (ev) => {
-      const data = ev.payload as { request_id?: string; message?: string };
-      if (data.request_id) {
-        approvalRequestId = data.request_id;
-        approvalMessage = data.message ?? "";
-        showApproval = true;
-        triggerMascotEvent("approval_request");
-      }
-    });
   });
 
   onDestroy(() => {
     unlistenClose?.();
-    unlistenExternal?.();
-    unlistenApproval?.();
   });
 
   let gitRefreshInterval = $state(5000);
@@ -169,42 +105,12 @@ import type { SemanticEvent } from "$lib/mascot/types";
     const root = workspaceInfo.rootPath;
     if (root) {
       Promise.all([
-        loadWorkspace(root).then(() => {
-          if (workspaceInfo.workspaceId) {
-            const projectName = root.split(/[\\/]/).pop() ?? "";
-            invoke("set_instance_workspace", {
-              workspaceId: workspaceInfo.workspaceId,
-              projectName,
-              rootPath: root,
-            }).catch(() => {});
-          }
-        }).catch(() => {
+        loadWorkspace(root).catch(() => {
           // Directory no longer exists; reset
           workspaceInfo.rootPath = null;
         }),
         loadSettings().then(async (s) => {
           gitRefreshInterval = (s.git?.refreshInterval ?? 5) * 1000;
-          const scope = s.mascotScope ?? "global";
-          if (scope === "project") {
-            const projectConfig = await loadProjectMascotConfig(root);
-            if (projectConfig) {
-              applyMascotConfig(projectConfig);
-              if (projectConfig.currentMascot) {
-                loadMascot(projectConfig.currentMascot);
-              }
-            } else if (s.mascot) {
-              applyMascotConfig(s.mascot);
-              if (s.mascot.currentMascot) {
-                loadMascot(s.mascot.currentMascot);
-              }
-            }
-          } else if (s.mascot) {
-            applyMascotConfig(s.mascot);
-            if (s.mascot.enabled && s.mascot.currentMascot) {
-              loadMascot(s.mascot.currentMascot);
-              triggerMascotEvent("starting_task");
-            }
-          }
         }),
       ]).finally(() => {
         isLoading = false;
@@ -243,7 +149,6 @@ import type { SemanticEvent } from "$lib/mascot/types";
     } else {
       sidebarWidth = lastSidebarWidth || 240;
     }
-    triggerMascotEvent("starting_task");
   }
 
   function onRightSidebarPointerDown(e: PointerEvent) {
@@ -254,7 +159,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
   function onRightSidebarPointerMove(e: PointerEvent) {
     if (!isResizingRightSidebar) return;
     const w = window.innerWidth - e.clientX;
-    rightSidebarWidth = Math.max(200, Math.min(400, w));
+    rightSidebarWidth = Math.max(200, Math.min(700, w));
     if (rightSidebarWidth > 40) lastRightSidebarWidth = rightSidebarWidth;
   }
 
@@ -271,35 +176,6 @@ import type { SemanticEvent } from "$lib/mascot/types";
       rightSidebarWidth = lastRightSidebarWidth || 260;
     }
     saveSidebarState();
-    triggerMascotEvent("starting_task");
-  }
-
-  function onMascotSidebarPointerDown(e: PointerEvent) {
-    isResizingMascotSidebar = true;
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  }
-
-  function onMascotSidebarPointerMove(e: PointerEvent) {
-    if (!isResizingMascotSidebar) return;
-    const w = window.innerWidth - e.clientX;
-    mascotSidebarWidth = Math.max(200, Math.min(400, w));
-    if (mascotSidebarWidth > 40) lastMascotSidebarWidth = mascotSidebarWidth;
-  }
-
-  function onMascotSidebarPointerUp() {
-    isResizingMascotSidebar = false;
-  }
-
-  function toggleMascotSidebar() {
-    mascotSidebarCollapsed = !mascotSidebarCollapsed;
-    if (mascotSidebarCollapsed) {
-      lastMascotSidebarWidth = mascotSidebarWidth;
-      mascotSidebarWidth = 0;
-    } else {
-      mascotSidebarWidth = lastMascotSidebarWidth || 260;
-    }
-    saveSidebarState();
-    triggerMascotEvent("starting_task");
   }
 
   function saveSidebarState() {
@@ -308,17 +184,13 @@ import type { SemanticEvent } from "$lib/mascot/types";
       lastProjectPath: workspaceInfo.rootPath,
       rightSidebarCollapsed,
       rightSidebarWidth: rightSidebarCollapsed ? lastRightSidebarWidth : rightSidebarWidth,
-      mascotSidebarCollapsed,
-      mascotSidebarWidth: mascotSidebarCollapsed ? lastMascotSidebarWidth : mascotSidebarWidth,
     });
   }
 
   $effect(() => {
-    if (isResizingRightSidebar || isResizingMascotSidebar) return;
+    if (isResizingRightSidebar) return;
     const _w = rightSidebarWidth;
     const _c = rightSidebarCollapsed;
-    const _mw = mascotSidebarWidth;
-    const _mc = mascotSidebarCollapsed;
     if (workspaceInfo.rootPath) {
       saveSidebarState();
     }
@@ -348,7 +220,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
       todoStore.content = "";
       todoStore.parsed = { sections: [], total: 0, completed: 0 };
       todoStore.loading = false;
-      workspaceInfo.workspaceId = null;
+      resetNotesStore();
       refreshSignal++;
       workspaceInfo.rootPath = selected;
       const updated = addRecentFolder(appSettings, selected);
@@ -376,7 +248,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
     todoStore.content = "";
     todoStore.parsed = { sections: [], total: 0, completed: 0 };
     todoStore.loading = false;
-    workspaceInfo.workspaceId = null;
+    resetNotesStore();
     refreshSignal++;
     workspaceInfo.rootPath = path;
     const updated = addRecentFolder(appSettings, path);
@@ -388,10 +260,6 @@ import type { SemanticEvent } from "$lib/mascot/types";
     const filtered = recentFolders.filter((p) => p !== path);
     recentFolders = filtered;
     await saveSettings({ ...appSettings, recentFolders: filtered });
-  }
-
-  async function openNewWindow() {
-    await invoke("spawn_new_instance");
   }
 
   function findActiveEditorTab(): { path?: string } | null {
@@ -485,6 +353,36 @@ import type { SemanticEvent } from "$lib/mascot/types";
     };
   });
 
+  $effect(() => {
+    const root = workspaceInfo.rootPath;
+    if (!root) return;
+    const notesPath = `${root}/.enguepad/notes.md`;
+
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    let unwatch: (() => void) | null = null;
+
+    async function startWatch() {
+      await ensureNotesFile(notesPath);
+      try {
+        const { watch } = await import("@tauri-apps/plugin-fs");
+        unwatch = await watch(notesPath, () => {
+          if (timeout) clearTimeout(timeout);
+          timeout = setTimeout(() => {
+            loadNotesFile(notesPath);
+          }, 300);
+        });
+      } catch {
+        // watch not available
+      }
+    }
+    startWatch();
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+      unwatch?.();
+    };
+  });
+
 </script>
 
 <svelte:window onkeydown={handleGlobalKeydown} />
@@ -502,10 +400,8 @@ import type { SemanticEvent } from "$lib/mascot/types";
       <button class="icon-btn" onclick={openFolder} title={t("headerOpenFolder")}><FolderOpen size={18} /></button>
       {#if workspaceInfo.rootPath}
         <button class="icon-btn" class:active={!rightSidebarCollapsed} onclick={toggleRightSidebar} title={t("headerToggleTasksSidebar")}><NotePencil size={18} /></button>
-        <button class="icon-btn" class:active={!mascotSidebarCollapsed} onclick={toggleMascotSidebar} title={t("headerMascot")}><PawPrint size={18} /></button>
       {/if}
       <button class="icon-btn" onclick={() => showSettings = true} title={t("headerSettings")}><Gear size={18} /></button>
-      <button class="icon-btn" onclick={openNewWindow} title={t("headerNewInstance")}><AppWindow size={18} /></button>
       {#if workspaceInfo.rootPath}
         <div class="header-search">
           <input
@@ -559,21 +455,6 @@ import type { SemanticEvent } from "$lib/mascot/types";
       {/if}
     </main>
     {#if workspaceInfo.rootPath}
-      {#if !mascotSidebarCollapsed}
-        <div
-          class="sidebar-divider"
-          onpointerdown={onMascotSidebarPointerDown}
-          onpointermove={onMascotSidebarPointerMove}
-          onpointerup={onMascotSidebarPointerUp}
-          role="separator"
-          aria-orientation="vertical"
-        ></div>
-      {/if}
-      <aside class="mascot-sidebar" class:collapsed={mascotSidebarCollapsed} style:width="{mascotSidebarCollapsed ? 0 : mascotSidebarWidth}px">
-        {#if !mascotSidebarCollapsed}
-          <MascotSidebar />
-        {/if}
-      </aside>
       {#if !rightSidebarCollapsed}
         <div
           class="sidebar-divider"
@@ -585,20 +466,26 @@ import type { SemanticEvent } from "$lib/mascot/types";
         ></div>
       {/if}
       <aside class="right-sidebar" class:collapsed={rightSidebarCollapsed} style:width="{rightSidebarCollapsed ? 0 : rightSidebarWidth}px">
-        <TodoPanel />
+        {#if !rightSidebarCollapsed}
+          <div class="right-sidebar-tabs">
+            <button class="right-sidebar-tab" class:active={rightSidebarMode === "todo"} onclick={() => rightSidebarMode = "todo"}>{t("rightSidebarTabTodo")}</button>
+            <button class="right-sidebar-tab" class:active={rightSidebarMode === "notes"} onclick={() => rightSidebarMode = "notes"}>{t("rightSidebarTabNotes")}</button>
+          </div>
+          <div class="right-sidebar-content">
+            {#if rightSidebarMode === "todo"}
+              <TodoPanel />
+            {:else}
+              <NotesPanel />
+            {/if}
+          </div>
+        {/if}
       </aside>
     {/if}
   </div>
   <UrlToast />
   <SettingsModal bind:show={showSettings} />
-  {#if showApproval}
-    <ApprovalModal requestId={approvalRequestId} message={approvalMessage} onClose={() => showApproval = false} />
-  {/if}
   {#if showCommandPalette && workspaceInfo.rootPath}
     <CommandPalette rootPath={workspaceInfo.rootPath} onSelect={openFileFromPalette} onClose={() => showCommandPalette = false} />
-  {/if}
-  {#if workspaceInfo.rootPath}
-    <MascotPanel />
   {/if}
   {#if isLoading}
     <LoadingScreen />
@@ -709,8 +596,7 @@ import type { SemanticEvent } from "$lib/mascot/types";
   }
 
   .sidebar,
-  .right-sidebar,
-  .mascot-sidebar {
+  .right-sidebar {
     border: 1px solid var(--border-color, #333);
     border-radius: 8px;
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
@@ -732,27 +618,43 @@ import type { SemanticEvent } from "$lib/mascot/types";
     background: var(--bg-sidebar, #252526);
     flex-shrink: 0;
     min-width: 200px;
-    max-width: 400px;
+    max-width: 700px;
+  }
+
+  .right-sidebar-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color, #333);
+    flex-shrink: 0;
+  }
+
+  .right-sidebar-tab {
+    flex: 1;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted, #888);
+    padding: 6px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+
+  .right-sidebar-tab.active {
+    color: var(--accent-color, #4a9eff);
+    border-bottom-color: var(--accent-color, #4a9eff);
+  }
+
+  .right-sidebar-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .right-sidebar.collapsed {
-    overflow: hidden;
-    padding: 0;
-    min-width: 0;
-    border: none;
-    box-shadow: none;
-  }
-
-  .mascot-sidebar {
-    display: flex;
-    flex-direction: column;
-    background: var(--bg-sidebar, #252526);
-    flex-shrink: 0;
-    min-width: 320px;
-    max-width: 400px;
-  }
-
-  .mascot-sidebar.collapsed {
     overflow: hidden;
     padding: 0;
     min-width: 0;

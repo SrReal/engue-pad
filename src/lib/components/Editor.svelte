@@ -21,7 +21,6 @@
   import { formatRequest } from "$lib/editor/formatRequest.svelte";
   import { type EditorSettings } from "$lib/workspace/settings";
   import { appSettings } from "$lib/workspace/settingsStore.svelte";
-  import { triggerMascotEvent } from "$lib/mascot/store.svelte";
   import { getEditorScroll, setEditorScroll } from "$lib/editor/editorScrollStore.svelte";
   import { editorJump, clearEditorJumpRequest } from "$lib/editor/editorJumpStore.svelte";
   import { showMinimap } from "@replit/codemirror-minimap";
@@ -116,9 +115,8 @@
       await invoke("write_file", { path, contents: content });
       savedContent = content;
       markTabSaved(nodeId, tabId);
-      triggerMascotEvent("task_done");
     } catch (e) {
-      triggerMascotEvent("error");
+      console.error("Failed to save file:", e);
     }
   }
 
@@ -151,7 +149,6 @@
       changes: { from: 0, to: view.state.doc.length, insert: formatted },
     });
     updateTabContent(nodeId, tabId, formatted);
-    triggerMascotEvent("task_done");
   }
 
   export function scrollToLine(line: number) {

@@ -2,7 +2,6 @@
   import { detectedUrls, clearUrl } from "$lib/terminal/urlDetector";
   import { openUrl } from "@tauri-apps/plugin-opener";
   import { addPreview, layoutState } from "$lib/layout/store.svelte";
-  import { triggerMascotEvent } from "$lib/mascot/store.svelte";
   import { t } from "$lib/i18n";
   import { X } from "phosphor-svelte";
 
@@ -13,7 +12,6 @@
   function openPreview(url: string, terminalId: string) {
     const nodeId = layoutState.activeNodeId ?? layoutState.root.id;
     addPreview(nodeId, url);
-    triggerMascotEvent("preview_opened");
     clearUrl(url, terminalId);
   }
 

@@ -21,7 +21,7 @@ EnguePad is a modern cross-platform code editor built with **Tauri v2**, **Svelt
 - **Multi-language support** — Syntax highlighting for JS, TS, HTML, CSS, Python, JSON, Markdown, and more
 - **Auto-save** — `afterDelay` and `onFocusChange` modes
 - **Command palette** — Quick file navigation and actions
-- **Mascot companion** — Customizable animated assistant with events and phrases
+- **Tabbed right sidebar** — Switch between **Tasks** (markdown TODO list with sections/progress) and **Notes** (free-form markdown editor with syntax highlighting, line numbers, and auto-save)
 - **i18n** — English/Spanish interface
 - **Customizable themes** — Modern dark UI with accent color support
 - **Markdown live preview** — Toggle between raw and rendered with scroll persistence
@@ -90,16 +90,16 @@ npm run tauri build
 ```
 src/
   lib/
-    components/      # UI components (Editor, TabPanel, FileTree, etc.)
+    components/      # UI components (Editor, TabPanel, FileTree, NotesPanel, etc.)
     editor/          # CodeMirror extensions, symbol parser, formatter
     i18n/            # Translation dictionaries (en/es)
     layout/          # Split panel layout engine and tab state
-    mascot/          # Companion system (sprites, events, phrases)
+    notes/           # Free-form markdown notes store (per-project)
     todo/            # TODO list parser and store
     workspace/       # Project settings, recent folders, persistence
   routes/            # SvelteKit routes
 src-tauri/
-  src/               # Rust backend (file I/O, terminal, IPC, CLI)
+  src/               # Rust backend (file I/O, terminal, git status, process stats)
   capabilities/      # Tauri capability definitions
 ```
 

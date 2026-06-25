@@ -1,5 +1,4 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { MascotSettings } from "$lib/mascot/types";
 
 export type EditorSettings = {
   fontSize: number;
@@ -30,8 +29,6 @@ export type AppSettings = {
   recentFolders?: string[];
   rightSidebarCollapsed?: boolean;
   rightSidebarWidth?: number;
-  mascotSidebarCollapsed?: boolean;
-  mascotSidebarWidth?: number;
   uiFontSize?: number;
   zoom?: number;
   restoreLayout?: boolean;
@@ -40,8 +37,6 @@ export type AppSettings = {
   editor?: EditorSettings;
   terminal?: TerminalSettings;
   git?: GitSettings;
-  mascot?: MascotSettings;
-  mascotScope?: "global" | "project";
 };
 
 const SETTINGS_FILE = "settings.json";
@@ -69,28 +64,12 @@ const DEFAULT_GIT: GitSettings = {
   showIndicators: true,
 };
 
-const DEFAULT_MASCOT: MascotSettings = {
-  mode: "disabled",
-  size: "normal",
-  enabled: false,
-  soundEnabled: true,
-  volume: 0.5,
-  voiceEnabled: false,
-  voiceLang: "es-ES",
-  voiceGender: "female",
-  currentMascot: null,
-  position: null,
-  eventPhrases: {},
-};
-
 export function getDefaultSettings(): Required<Omit<AppSettings, "lastProjectPath" | "recentFolders">> & { lastProjectPath: string | null; recentFolders: string[] } {
   return {
     lastProjectPath: null,
     recentFolders: [],
     rightSidebarCollapsed: false,
     rightSidebarWidth: 260,
-    mascotSidebarCollapsed: true,
-    mascotSidebarWidth: 260,
     uiFontSize: 13,
     zoom: 1,
     restoreLayout: true,
@@ -99,8 +78,6 @@ export function getDefaultSettings(): Required<Omit<AppSettings, "lastProjectPat
     editor: { ...DEFAULT_EDITOR },
     terminal: { ...DEFAULT_TERMINAL },
     git: { ...DEFAULT_GIT },
-    mascot: { ...DEFAULT_MASCOT },
-    mascotScope: "global",
   };
 }
 

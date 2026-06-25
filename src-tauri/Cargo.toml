@@ -28,7 +28,4 @@ tauri-plugin-fs = "2.5.1"
 tauri-plugin-clipboard-manager = "2"
 portable-pty = "0.9.0"
 sysinfo = "0.33"
-uuid = { version = "1", features = ["v4"] }
-clap = { version = "4", features = ["derive"] }
-dirs = "5"
 

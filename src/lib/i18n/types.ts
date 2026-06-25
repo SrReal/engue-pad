@@ -9,9 +9,7 @@ export type Dictionary = {
   headerOpenFolder: string;
   headerRefreshTree: string;
   headerToggleTasksSidebar: string;
-  headerMascot: string;
   headerSettings: string;
-  headerNewInstance: string;
   headerSearchPlaceholder: string;
 
   // Tree Item context menu
@@ -71,25 +69,6 @@ export type Dictionary = {
   settingsTabEditor: string;
   settingsTabTerminal: string;
   settingsTabGit: string;
-  settingsTabCli: string;
-  settingsCliTitle: string;
-  settingsCliDescription: string;
-  settingsCliClaudeCode: string;
-  settingsCliCodex: string;
-  settingsCliOpencode: string;
-  settingsCliStepInstall: string;
-  settingsCliStepReady: string;
-  settingsCliCopy: string;
-  settingsCliMac: string;
-  settingsCliLinux: string;
-  settingsCliWindows: string;
-  settingsCliStatusInstalled: string;
-  settingsCliStatusNotInstalled: string;
-  settingsCliInstallBtn: string;
-  settingsCliInstalling: string;
-  settingsCliInstalledAt: string;
-  settingsCliInstallError: string;
-  settingsCliUnknownError: string;
   settingsUiFontSize: string;
   settingsZoom: string;
   settingsRestoreLayout: string;
@@ -100,9 +79,6 @@ export type Dictionary = {
   settingsLanguage: string;
   settingsLanguageEnglish: string;
   settingsLanguageSpanish: string;
-  settingsMascotScope: string;
-  settingsMascotGlobal: string;
-  settingsMascotPerProject: string;
   settingsEditorFontSize: string;
   settingsEditorLineHeight: string;
   settingsEditorWordWrap: string;
@@ -133,11 +109,6 @@ export type Dictionary = {
   statusUtf8: string;
   statusLf: string;
   statusCrlf: string;
-
-  // Approval Modal
-  approvalTitle: string;
-  approvalNo: string;
-  approvalYes: string;
 
   // Image / Audio / Editor
   mediaLoading: string;
@@ -204,87 +175,6 @@ export type Dictionary = {
   // Loading Screen
   loadingScreenDefault: string;
 
-  // Mascot
-  mascotDisabled: string;
-  mascotCompact: string;
-  mascotAnimated: string;
-  mascotSmall: string;
-  mascotNormal: string;
-  mascotTestSound: string;
-  mascotTestVoice: string;
-  mascotSound: string;
-  mascotVoice: string;
-  mascotVolume: string;
-  mascotLanguage: string;
-  mascotTone: string;
-  mascotGenderMan: string;
-  mascotGenderWoman: string;
-  mascotGenderBoy: string;
-  mascotGenderGirl: string;
-  mascotNoMascotLoaded: string;
-  mascotNoMascots: string;
-  mascotImportFromFolder: string;
-  mascotName: string;
-  mascotSlug: string;
-  mascotFrame: string;
-  mascotFramesPerState: string;
-  mascotFramesPerRow: string;
-  mascotLoop: string;
-  mascotStates: string;
-  mascotConfig: string;
-  mascotMascots: string;
-  mascotAppearance: string;
-  mascotAudio: string;
-  mascotEventMappings: string;
-  mascotPhrases: string;
-  mascotManualStates: string;
-  mascotInfo: string;
-  mascotScopeGlobal: string;
-  mascotScopeProject: string;
-  mascotRow: string;
-  mascotNoPhrase: string;
-  mascotNa: string;
-  mascotTestVoicePhrase: string;
-
-  // Mascot Event Labels
-  eventIdle: string;
-  eventWaitingResponse: string;
-  eventTaskDone: string;
-  eventError: string;
-  eventStartingTask: string;
-  eventKeepWorking: string;
-  eventGetAttention: string;
-  eventWaitingCommand: string;
-  eventTerminalClosed: string;
-  eventTerminalCreated: string;
-  eventPanelSplit: string;
-  eventPreviewOpened: string;
-  eventFileRenamed: string;
-  eventImageOpened: string;
-  eventAudioOpened: string;
-  eventMaximized: string;
-  eventRestored: string;
-  eventApprovalRequest: string;
-
-  // Mascot Default Phrases
-  phraseIdle: string;
-  phraseTaskDone: string;
-  phraseError: string;
-  phraseStartingTask: string;
-  phraseKeepWorking: string;
-  phraseWaitingResponse: string;
-  phraseWaitingCommand: string;
-  phraseTerminalClosed: string;
-  phraseTerminalCreated: string;
-  phrasePanelSplit: string;
-  phrasePreviewOpened: string;
-  phraseFileRenamed: string;
-  phraseImageOpened: string;
-  phraseAudioOpened: string;
-  phraseMaximized: string;
-  phraseRestored: string;
-  phraseApprovalRequest: string;
-
   // Terminal default title
   terminalDefaultTitle: string;
 
@@ -294,10 +184,6 @@ export type Dictionary = {
   // Search results
   searchNoResults: string;
   searchResultLine: string;
-
-  // Mascot debug panel
-  mascotMode: string;
-  mascotSize: string;
 
   // Symbol panel
   symbolPanelTitle: string;
@@ -310,4 +196,11 @@ export type Dictionary = {
   welcomeRecentFolders: string;
   welcomeNoRecent: string;
   welcomeRemoveRecent: string;
+
+  // Right sidebar tabs
+  rightSidebarTabTodo: string;
+  rightSidebarTabNotes: string;
+
+  // Notes panel
+  notesPlaceholder: string;
 };

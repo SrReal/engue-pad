@@ -6,10 +6,8 @@
   import { FitAddon } from "@xterm/addon-fit";
   import { WebLinksAddon } from "@xterm/addon-web-links";
   import "@xterm/xterm/css/xterm.css";
-  import { reportUrl } from "$lib/terminal/urlDetector";
   import { addPreview } from "$lib/layout/store.svelte";
   import { appSettings } from "$lib/workspace/settingsStore.svelte";
-  import { triggerMascotEvent } from "$lib/mascot/store.svelte";
   import { terminalClipboardStore } from "$lib/terminal/clipboardStore";
   import { t } from "$lib/i18n";
 
@@ -24,11 +22,6 @@
   let terminal = $state<XTerm | null>(null);
   let fitAddon = $state<FitAddon | null>(null);
   let unlisten = $state<UnlistenFn | null>(null);
-  let unlistenClosed = $state<UnlistenFn | null>(null);
-  let textDecoder = $state(new TextDecoder());
-  let urlBuffer = $state("");
-  let idleTimeout = $state<ReturnType<typeof setTimeout> | null>(null);
-  const IDLE_MS = 5000;
   const TERMINAL_PROMPT_COLOR = "#0EA5FF";
 
   function normalizeHexColor(color: string): string {
@@ -109,7 +102,6 @@
         if (e.ctrlKey || e.metaKey) {
           e.preventDefault();
           addPreview(nodeId, uri);
-          triggerMascotEvent("preview_opened");
         }
       },
       {
@@ -144,33 +136,13 @@
 
     const effectiveShell = shell || tSettings.defaultShell || (navigator.platform.startsWith("Win") ? "powershell.exe" : "zsh");
 
-    const urlRegex = /https?:\/\/[^\s'"\)\]>]+/g;
-
-    function stripAnsi(str: string): string {
-      // eslint-disable-next-line no-control-regex
-      return str.replace(/\x1b\[[0-9;]*m/g, "");
-    }
-
     const listener = await listen<{ terminal_id: string; data: number[] }>("terminal-output", (event) => {
       if (event.payload.terminal_id === tabId) {
         const data = new Uint8Array(event.payload.data);
         term.write(data);
-
-        // Reset idle timer
-        if (idleTimeout) clearTimeout(idleTimeout);
-        idleTimeout = setTimeout(() => {
-          triggerMascotEvent("waiting_command");
-        }, IDLE_MS);
       }
     });
     unlisten = listener;
-
-    const closedListener = await listen<{ terminal_id: string }>("terminal-closed", (event) => {
-      if (event.payload.terminal_id === tabId) {
-        triggerMascotEvent("terminal_closed");
-      }
-    });
-    unlistenClosed = closedListener;
 
     // Kill any stale PTY before creating a new one (handles app refresh)
     await invoke("kill_terminal", { terminalId: tabId }).catch(() => {});
@@ -209,6 +181,7 @@
 
       if (e.key === "c" && e.ctrlKey && !e.shiftKey) {
         if (term.hasSelection()) {
+          e.preventDefault();
           navigator.clipboard.writeText(term.getSelection()).catch(() => {});
           return false;
         }
@@ -216,6 +189,7 @@
       }
 
       if (e.key === "v" && e.ctrlKey && !e.shiftKey) {
+        e.preventDefault();
         navigator.clipboard.readText().then((text) => {
           if (text) {
             invoke("write_terminal", { terminalId: tabId, data: Array.from(new TextEncoder().encode(text)) }).catch(() => {});
@@ -226,6 +200,7 @@
 
       if (e.key === "x" && e.ctrlKey && !e.shiftKey) {
         if (term.hasSelection()) {
+          e.preventDefault();
           navigator.clipboard.writeText(term.getSelection()).catch(() => {});
           term.clearSelection();
           return false;
@@ -233,18 +208,25 @@
         return true;
       }
 
+      // Backspace: always send DEL (0x7f) — fixes Mac sending wrong byte
+      if (e.key === "Backspace" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        invoke("write_terminal", { terminalId: tabId, data: [0x7f] }).catch(() => {});
+        return false;
+      }
+
+      // Forward Delete: send CSI 3~
+      if (e.key === "Delete" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        invoke("write_terminal", { terminalId: tabId, data: Array.from(new TextEncoder().encode("\x1b[3~")) }).catch(() => {});
+        return false;
+      }
+
       return true;
     });
 
     term.onData((data) => {
       invoke("write_terminal", { terminalId: tabId, data: Array.from(new TextEncoder().encode(data)) });
-      if (data.trim().length > 0 && data.includes("\r")) {
-        triggerMascotEvent("keep_working");
-      }
-      if (idleTimeout) clearTimeout(idleTimeout);
-      idleTimeout = setTimeout(() => {
-        triggerMascotEvent("waiting_command");
-      }, IDLE_MS);
     });
 
     terminal = term;
@@ -262,8 +244,6 @@
 
   onDestroy(() => {
     unlisten?.();
-    unlistenClosed?.();
-    if (idleTimeout) clearTimeout(idleTimeout);
     // Ensure the PTY process is killed on the backend before disposing the xterm widget
     invoke("kill_terminal", { terminalId: tabId }).catch(() => {});
     terminal?.dispose();

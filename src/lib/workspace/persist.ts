@@ -30,7 +30,6 @@ export type PersistedSplit = {
 export type PersistedNode = PersistedSplit | PersistedTabGroup;
 
 export type WorkspaceData = {
-  workspaceId: string;
   version: number;
   layout: {
     root: PersistedNode;

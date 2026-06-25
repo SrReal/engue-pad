@@ -2,7 +2,6 @@
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { addPreview } from "$lib/layout/store.svelte";
-  import { triggerMascotEvent } from "$lib/mascot/store.svelte";
   import { t } from "$lib/i18n";
   import { getMarkdownView, setMarkdownView } from "$lib/editor/markdownViewStore.svelte";
   import Editor from "./Editor.svelte";
@@ -76,7 +75,6 @@
     if (!href) return;
     e.preventDefault();
     addPreview(nodeId, href);
-    triggerMascotEvent("preview_opened");
   }
 
   function setRendered(v: boolean) {

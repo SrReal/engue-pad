@@ -8,7 +8,6 @@
   import TreeItem from "./TreeItem.svelte";
   import { fileDrag } from "$lib/tree/fileDragStore";
   import { selectedTreePath } from "$lib/tree/selectedStore";
-  import { triggerMascotEvent } from "$lib/mascot/store.svelte";
   import FileIcon from "./FileIcon.svelte";
   import { t } from "$lib/i18n";
 
@@ -93,13 +92,6 @@
     node.expanded = true;
   }
 
-  function isImage(path: string): boolean {
-    return /\.(png|jpe?g|gif|webp|svg|bmp|ico|tiff?)$/i.test(path);
-  }
-  function isAudio(path: string): boolean {
-    return /\.(mp3|wav|ogg|flac|m4a|aac|wma|opus)$/i.test(path);
-  }
-
   function handleFileClick() {
     if (node.entry.is_file) {
       const activeNodeId = layoutState.activeNodeId ?? layoutState.root.id;
@@ -108,9 +100,6 @@
         title: node.entry.name,
         path: node.entry.path,
       });
-      if (isImage(node.entry.path)) triggerMascotEvent("image_opened");
-      else if (isAudio(node.entry.path)) triggerMascotEvent("audio_opened");
-      else triggerMascotEvent("starting_task");
     }
   }
 
@@ -247,7 +236,6 @@
     const activeNodeId = layoutState.activeNodeId ?? layoutState.root.id;
     addTerminal(activeNodeId, t("terminalDefaultTitle"), getTargetDirectory());
     closeContextMenu();
-    triggerMascotEvent("terminal_created");
   }
 
   async function revealInFinder() {
