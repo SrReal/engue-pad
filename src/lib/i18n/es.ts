@@ -9,6 +9,7 @@ export const es: Dictionary = {
   headerOpenFolder: "Abrir carpeta",
   headerRefreshTree: "Refrescar árbol",
   headerToggleTasksSidebar: "Alternar sidebar de tareas",
+  headerNewWindow: "Nueva ventana",
   headerSettings: "Configuración",
   headerSearchPlaceholder: "Buscar en proyecto... (Pulsar Enter)",
 
@@ -181,4 +182,8 @@ export const es: Dictionary = {
   rightSidebarTabNotes: "Notas",
 
   notesPlaceholder: "Escribí lo que quieras... se guarda solo.",
+
+  unsupportedFileTitle: "No se puede abrir este tipo de archivo",
+  unsupportedFileBody: "EnguePad solo puede editar archivos de texto. Abrilo con la aplicación predeterminada.",
+  unsupportedFileOpen: "Abrir en app predeterminada",
 };

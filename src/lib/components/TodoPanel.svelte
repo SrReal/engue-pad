@@ -118,7 +118,19 @@
     <div class="empty">
       <span class="empty-icon"><NotePencil size={24} /></span>
       <span class="empty-text">{t("todoNoTasks")}</span>
-      <button class="add-section-btn" onclick={() => addingSection = true}>{t("todoAddSection")}</button>
+      {#if addingSection}
+        <input
+          class="new-section-input"
+          type="text"
+          placeholder={t("todoSectionPlaceholder")}
+          bind:value={newSectionValue}
+          onkeydown={handleSectionKeydown}
+          onblur={() => { if (!newSectionValue.trim()) addingSection = false; }}
+          autofocus
+        />
+      {:else}
+        <button class="add-section-btn" onclick={() => addingSection = true}>{t("todoAddSection")}</button>
+      {/if}
     </div>
   {:else}
     <div class="header">

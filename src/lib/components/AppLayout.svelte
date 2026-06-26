@@ -22,7 +22,7 @@
   import WelcomeScreen from "./WelcomeScreen.svelte";
   import CommandPalette from "./CommandPalette.svelte";
   import { open, confirm } from "@tauri-apps/plugin-dialog";
-  import { SidebarSimple, FolderOpen, NotePencil, Gear } from "phosphor-svelte";
+  import { SidebarSimple, FolderOpen, NotePencil, Gear, SquaresFour } from "phosphor-svelte";
   import { setLocale, t } from "$lib/i18n";
   const projectName = $derived(workspaceInfo.rootPath ? workspaceInfo.rootPath.split(/[\\/]/).pop() ?? t("appName") : t("appName"));
 
@@ -61,7 +61,10 @@
     if (settings.locale) {
       setLocale(settings.locale);
     }
-    if (settings.restoreLayout !== false && settings.lastProjectPath) {
+    const isFresh = new URLSearchParams(window.location.search).get("fresh") === "1";
+    if (isFresh) {
+      isLoading = false;
+    } else if (settings.restoreLayout !== false && settings.lastProjectPath) {
       const exists = await invoke<boolean>("dir_exists", { path: settings.lastProjectPath });
       if (exists) {
         workspaceInfo.rootPath = settings.lastProjectPath;
@@ -81,14 +84,20 @@
       lastRightSidebarWidth = settings.rightSidebarWidth;
     }
 
-    unlistenClose = await listen("request-app-close", async () => {
+    unlistenClose = await listen<string>("request-app-close", async (event) => {
+      const { getCurrentWindow } = await import("@tauri-apps/api/window");
+      const myLabel = getCurrentWindow().label;
+      if (event.payload !== myLabel) return;
       const dirtyTabs = findAllDirtyTabs(layoutState.root);
       if (dirtyTabs.length > 0) {
         const names = dirtyTabs.map((t) => `"${t.title}"`).join(", ");
         const confirmed = await confirm(t("dialogQuitBody", names), { title: t("dialogQuitTitle"), kind: "warning" });
-        if (confirmed) {
-          await invoke("exit_app");
-        }
+        if (!confirmed) return;
+      }
+      const { WebviewWindow } = await import("@tauri-apps/api/webviewWindow");
+      const all = await WebviewWindow.getAll();
+      if (all.length > 1) {
+        await invoke("close_current_window");
       } else {
         await invoke("exit_app");
       }
@@ -358,13 +367,16 @@
     if (!root) return;
     const notesPath = `${root}/.enguepad/notes.md`;
 
+    let cancelled = false;
     let timeout: ReturnType<typeof setTimeout> | null = null;
     let unwatch: (() => void) | null = null;
 
     async function startWatch() {
       await ensureNotesFile(notesPath);
+      if (cancelled) return;
       try {
         const { watch } = await import("@tauri-apps/plugin-fs");
+        if (cancelled) return;
         unwatch = await watch(notesPath, () => {
           if (timeout) clearTimeout(timeout);
           timeout = setTimeout(() => {
@@ -378,6 +390,42 @@
     startWatch();
 
     return () => {
+      cancelled = true;
+      if (timeout) clearTimeout(timeout);
+      unwatch?.();
+    };
+  });
+
+  $effect(() => {
+    const root = workspaceInfo.rootPath;
+    if (root) return;
+    let cancelled = false;
+    let unwatch: (() => void) | null = null;
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    (async () => {
+      try {
+        const appDataDir = await invoke<string>("get_app_data_dir");
+        if (cancelled || !appDataDir) return;
+        await invoke("ensure_dir", { path: appDataDir });
+        const notesPath = `${appDataDir}/notes.md`;
+        await ensureNotesFile(notesPath);
+        try {
+          const { watch } = await import("@tauri-apps/plugin-fs");
+          unwatch = await watch(notesPath, () => {
+            if (timeout) clearTimeout(timeout);
+            timeout = setTimeout(() => {
+              loadNotesFile(notesPath);
+            }, 300);
+          });
+        } catch {
+          // watch not available
+        }
+      } catch (e) {
+        console.error("Failed to init global notes", e);
+      }
+    })();
+    return () => {
+      cancelled = true;
       if (timeout) clearTimeout(timeout);
       unwatch?.();
     };
@@ -398,6 +446,7 @@
         <button class="icon-btn" onclick={toggleSidebar} title={t("headerToggleSidebar")}><SidebarSimple size={18} /></button>
       {/if}
       <button class="icon-btn" onclick={openFolder} title={t("headerOpenFolder")}><FolderOpen size={18} /></button>
+      <button class="icon-btn" onclick={() => invoke("create_new_window")} title={t("headerNewWindow")}><SquaresFour size={18} /></button>
       {#if workspaceInfo.rootPath}
         <button class="icon-btn" class:active={!rightSidebarCollapsed} onclick={toggleRightSidebar} title={t("headerToggleTasksSidebar")}><NotePencil size={18} /></button>
       {/if}

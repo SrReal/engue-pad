@@ -9,6 +9,7 @@ export type Dictionary = {
   headerOpenFolder: string;
   headerRefreshTree: string;
   headerToggleTasksSidebar: string;
+  headerNewWindow: string;
   headerSettings: string;
   headerSearchPlaceholder: string;
 
@@ -203,4 +204,9 @@ export type Dictionary = {
 
   // Notes panel
   notesPlaceholder: string;
+
+  // Unsupported file
+  unsupportedFileTitle: string;
+  unsupportedFileBody: string;
+  unsupportedFileOpen: string;
 };

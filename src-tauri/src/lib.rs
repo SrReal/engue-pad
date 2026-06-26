@@ -357,6 +357,11 @@ fn exit_app(app_handle: AppHandle) {
 }
 
 #[tauri::command]
+fn close_current_window(window: tauri::WebviewWindow) -> Result<(), String> {
+    window.destroy().map_err(|e| format!("Failed to close window: {e}"))
+}
+
+#[tauri::command]
 fn rename_file(from: String, to: String) -> Result<(), String> {
     fs::rename(&from, &to).map_err(|e| format!("Failed to rename: {}", e))
 }
@@ -484,6 +489,25 @@ fn create_main_window(app: &AppHandle) {
         .build();
 }
 
+#[tauri::command]
+fn create_new_window(app: AppHandle) -> Result<(), String> {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    static COUNTER: AtomicUsize = AtomicUsize::new(1);
+    let id = COUNTER.fetch_add(1, Ordering::SeqCst);
+    let label = format!("window-{id}");
+    let monitor = app.primary_monitor().map_err(|e| e.to_string())?.ok_or("no monitor")?;
+    let size = monitor.size();
+    let width = (size.width as f64 * 0.5).round();
+    let height = (size.height as f64 * 0.5).round();
+    tauri::WebviewWindowBuilder::new(&app, label, WebviewUrl::App("/?fresh=1".into()))
+        .title("EnguePad")
+        .inner_size(width, height)
+        .center()
+        .build()
+        .map_err(|e| format!("Failed to create window: {e}"))?;
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let terminal_manager = Arc::new(terminal::TerminalManager::new());
@@ -494,7 +518,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .manage(Arc::clone(&terminal_manager))
-        .invoke_handler(tauri::generate_handler![greet, list_directory, list_project_files, read_file, read_file_bytes, write_file, write_file_bytes, remove_file, ensure_dir, dir_exists, read_file_meta, get_app_data_dir, exit_app, rename_file, remove_dir_all, run_command, git_status, search_files, find_in_file, find_in_project, terminal::create_terminal, terminal::write_terminal, terminal::resize_terminal, terminal::get_terminal_cwd, terminal::kill_terminal, terminal::get_terminal_processes, get_app_stats])
+        .invoke_handler(tauri::generate_handler![greet, list_directory, list_project_files, read_file, read_file_bytes, write_file, write_file_bytes, remove_file, ensure_dir, dir_exists, read_file_meta, get_app_data_dir, exit_app, close_current_window, rename_file, remove_dir_all, run_command, git_status, search_files, find_in_file, find_in_project, terminal::create_terminal, terminal::write_terminal, terminal::resize_terminal, terminal::get_terminal_cwd, terminal::kill_terminal, terminal::get_terminal_processes, get_app_stats, create_new_window])
         .setup(|app| {
             create_main_window(&app.handle().clone());
             Ok(())
@@ -502,8 +526,7 @@ pub fn run() {
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
-                let app_handle = window.app_handle().clone();
-                let _ = app_handle.emit("request-app-close", ());
+                let _ = window.emit("request-app-close", window.label().to_string());
             }
         })
         .run(tauri::generate_context!())

@@ -5,7 +5,8 @@
   import { workspaceInfo } from "$lib/workspace/store.svelte";
   import { confirm } from "@tauri-apps/plugin-dialog";
   import { get } from "svelte/store";
-  import { X, ArrowsOutLineVertical, ArrowsOutLineHorizontal, TerminalWindow, Globe } from "phosphor-svelte";
+  import { X, ArrowsOutLineVertical, ArrowsOutLineHorizontal, TerminalWindow, Globe, WarningCircle, ArrowSquareOut } from "phosphor-svelte";
+  import { openPath } from "@tauri-apps/plugin-opener";
   import { t } from "$lib/i18n";
   import { formatFile } from "$lib/editor/formatter";
   import FileIcon from "./FileIcon.svelte";
@@ -55,6 +56,10 @@
   }
   function isAudio(path: string): boolean {
     return /\.(mp3|wav|ogg|flac|m4a|aac|wma|opus)$/i.test(path);
+  }
+  const UNSUPPORTED_EXT = /\.(pdf|xlsx?|docx?|pptx?|zip|rar|7z|tar|gz|bz2|exe|dll|so|dylib|bin|iso|dmg|class|jar|war|psd|ai|sketch|fig|numbers|key|pages)$/i;
+  function isUnsupported(path: string): boolean {
+    return UNSUPPORTED_EXT.test(path);
   }
 
   $effect(() => {
@@ -354,6 +359,16 @@
             <ImageViewer path={tab.path} />
           {:else if isAudio(tab.path)}
             <AudioPlayer path={tab.path} />
+          {:else if isUnsupported(tab.path)}
+            <div class="unsupported-file">
+              <span class="unsupported-icon"><WarningCircle size={32} /></span>
+              <span class="unsupported-title">{t("unsupportedFileTitle")}</span>
+              <span class="unsupported-body">{t("unsupportedFileBody")}</span>
+              <button class="unsupported-open-btn" onclick={() => openPath(tab.path!)}>
+                <ArrowSquareOut size={14} />
+                <span>{t("unsupportedFileOpen")}</span>
+              </button>
+            </div>
           {:else}
             {#key tab.id}
               {#if tab.language === "markdown"}
@@ -732,6 +747,50 @@
     height: 100%;
     color: var(--text-muted, #888);
     font-size: 14px;
+  }
+
+  .unsupported-file {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 100%;
+    padding: 24px;
+    text-align: center;
+    color: var(--text-color, #ccc);
+  }
+  .unsupported-icon {
+    color: var(--warning, #f59e0b);
+    opacity: 0.7;
+  }
+  .unsupported-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-color, #ccc);
+  }
+  .unsupported-body {
+    font-size: 13px;
+    color: var(--text-muted, #888);
+    max-width: 360px;
+    line-height: 1.5;
+  }
+  .unsupported-open-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    margin-top: 4px;
+    background: var(--bg-panel, #1e1e1e);
+    border: 1px solid var(--border, #333);
+    border-radius: 6px;
+    color: var(--text-color, #ccc);
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .unsupported-open-btn:hover {
+    background: var(--bg-hover, #2a2a2a);
+    border-color: var(--accent-cyan, #0ea5ff);
   }
 
   .empty-actions {

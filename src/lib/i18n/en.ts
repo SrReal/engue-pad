@@ -9,6 +9,7 @@ export const en: Dictionary = {
   headerOpenFolder: "Open folder",
   headerRefreshTree: "Refresh tree",
   headerToggleTasksSidebar: "Toggle tasks sidebar",
+  headerNewWindow: "New window",
   headerSettings: "Settings",
   headerSearchPlaceholder: "Search project... (Press Enter)",
 
@@ -181,4 +182,8 @@ export const en: Dictionary = {
   rightSidebarTabNotes: "Notes",
 
   notesPlaceholder: "Write anything here... saved automatically.",
+
+  unsupportedFileTitle: "Cannot open this file type",
+  unsupportedFileBody: "EnguePad can only edit text-based files. Open it with the default application instead.",
+  unsupportedFileOpen: "Open in default app",
 };

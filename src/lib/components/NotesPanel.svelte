@@ -2,7 +2,6 @@
   import { onMount, onDestroy } from "svelte";
   import { notesStore, setNotesContent } from "$lib/notes/store.svelte";
   import { t } from "$lib/i18n";
-  import { NoteBlank } from "phosphor-svelte";
   import { EditorView, keymap, lineNumbers } from "@codemirror/view";
   import { EditorState, type Extension } from "@codemirror/state";
   import { oneDark } from "@codemirror/theme-one-dark";
@@ -98,11 +97,6 @@
 <div class="notes-panel">
   {#if notesStore.loading}
     <div class="loading">{t("loading")}</div>
-  {:else if !notesStore.path}
-    <div class="empty">
-      <span class="empty-icon"><NoteBlank size={28} /></span>
-      <span class="empty-text">{t("notesPlaceholder")}</span>
-    </div>
   {:else}
     <div class="notes-editor" bind:this={containerRef}></div>
   {/if}
@@ -119,8 +113,7 @@
     font-size: 13px;
   }
 
-  .loading,
-  .empty {
+  .loading {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -130,16 +123,6 @@
     color: var(--text-muted, #888);
     padding: 24px 12px;
     text-align: center;
-  }
-
-  .empty-icon {
-    opacity: 0.5;
-  }
-
-  .empty-text {
-    font-size: 12px;
-    line-height: 1.5;
-    max-width: 220px;
   }
 
   .notes-editor {
