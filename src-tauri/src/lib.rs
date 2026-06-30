@@ -490,7 +490,7 @@ fn create_main_window(app: &AppHandle) {
 }
 
 #[tauri::command]
-fn create_new_window(app: AppHandle) -> Result<(), String> {
+async fn create_new_window(app: AppHandle) -> Result<(), String> {
     use std::sync::atomic::{AtomicUsize, Ordering};
     static COUNTER: AtomicUsize = AtomicUsize::new(1);
     let id = COUNTER.fetch_add(1, Ordering::SeqCst);
