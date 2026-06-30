@@ -499,7 +499,7 @@ fn create_new_window(app: AppHandle) -> Result<(), String> {
     let size = monitor.size();
     let width = (size.width as f64 * 0.5).round();
     let height = (size.height as f64 * 0.5).round();
-    tauri::WebviewWindowBuilder::new(&app, label, WebviewUrl::App("/?fresh=1".into()))
+    tauri::WebviewWindowBuilder::new(&app, label, WebviewUrl::App("/".into()))
         .title("EnguePad")
         .inner_size(width, height)
         .center()

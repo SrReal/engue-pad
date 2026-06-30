@@ -61,7 +61,13 @@
     if (settings.locale) {
       setLocale(settings.locale);
     }
-    const isFresh = new URLSearchParams(window.location.search).get("fresh") === "1";
+    const isFresh = (() => {
+      try {
+        return getCurrentWebviewWindow().label !== "main";
+      } catch {
+        return false;
+      }
+    })();
     if (isFresh) {
       isLoading = false;
     } else if (settings.restoreLayout !== false && settings.lastProjectPath) {
@@ -85,8 +91,7 @@
     }
 
     unlistenClose = await listen<string>("request-app-close", async (event) => {
-      const { getCurrentWindow } = await import("@tauri-apps/api/window");
-      const myLabel = getCurrentWindow().label;
+      const myLabel = getCurrentWebviewWindow().label;
       if (event.payload !== myLabel) return;
       const dirtyTabs = findAllDirtyTabs(layoutState.root);
       if (dirtyTabs.length > 0) {
